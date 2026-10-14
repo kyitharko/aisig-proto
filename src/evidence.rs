@@ -5,6 +5,8 @@
 
 use std::collections::HashMap;
 
+use crate::codec::TypeTag;
+use crate::crypto;
 use crate::model::{AssetRef, PublicKey, Ts, Window};
 
 /// The evidence source could not be consulted.
@@ -62,8 +64,39 @@ pub enum ObjStatus {
     Unknown,
 }
 
+/// Exact-object status identity (spec §6): a record answers only for this key.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct StatusKey {
+    pub org_id: String,
+    pub object_type: TypeTag,
+    pub id: String,
+    pub version: u32,
+    /// SHA-256 of `signed_bytes(object_type, payload)`.
+    pub digest: [u8; 32],
+}
+
+impl StatusKey {
+    /// Derive the key from an object's identifying fields and its exact signed payload bytes.
+    pub fn for_object(
+        org_id: &str,
+        object_type: TypeTag,
+        id: &str,
+        version: u32,
+        payload: &[u8],
+    ) -> Self {
+        StatusKey {
+            org_id: org_id.to_owned(),
+            object_type,
+            id: id.to_owned(),
+            version,
+            digest: crypto::object_digest(object_type.as_str(), payload),
+        }
+    }
+}
+
 pub trait StatusSource {
-    fn status(&self, id: &str, version: u32) -> Result<ObjStatus, Unavailable>;
+    /// Status of the exact object named by `key`; `Unknown` if no record matches it exactly.
+    fn status(&self, key: &StatusKey) -> Result<ObjStatus, Unavailable>;
 }
 
 #[derive(Clone, Debug, Default)]
@@ -114,19 +147,44 @@ impl TrustedClock for FixedClock {
 
 #[derive(Clone, Debug, Default)]
 pub struct InMemoryStatus {
-    pub entries: HashMap<(String, u32), ObjStatus>,
+    pub entries: HashMap<StatusKey, ObjStatus>,
     pub unavailable: bool,
 }
 
 impl StatusSource for InMemoryStatus {
-    fn status(&self, id: &str, version: u32) -> Result<ObjStatus, Unavailable> {
+    fn status(&self, key: &StatusKey) -> Result<ObjStatus, Unavailable> {
         if self.unavailable {
             return Err(Unavailable);
         }
-        Ok(self
-            .entries
-            .get(&(id.to_owned(), version))
-            .copied()
-            .unwrap_or(ObjStatus::Unknown))
+        Ok(self.entries.get(key).copied().unwrap_or(ObjStatus::Unknown))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn status_answers_only_for_the_exact_object() {
+        let key =
+            |t: TypeTag, id: &str, payload: &[u8]| StatusKey::for_object("org", t, id, 1, payload);
+        let registered = key(TypeTag::AdminDelegation, "x-1", b"{\"a\":1}");
+        let mut src = InMemoryStatus::default();
+        src.entries.insert(registered.clone(), ObjStatus::Active);
+        assert_eq!(src.status(&registered), Ok(ObjStatus::Active));
+        // Same id/version, other type.
+        assert_eq!(
+            src.status(&key(TypeTag::EngagementGrant, "x-1", b"{\"a\":1}")),
+            Ok(ObjStatus::Unknown)
+        );
+        // Same type/id/version, other signed content.
+        assert_eq!(
+            src.status(&key(TypeTag::AdminDelegation, "x-1", b"{\"a\":2}")),
+            Ok(ObjStatus::Unknown)
+        );
+        // Same content, other org.
+        let other_org =
+            StatusKey::for_object("org-2", TypeTag::AdminDelegation, "x-1", 1, b"{\"a\":1}");
+        assert_eq!(src.status(&other_org), Ok(ObjStatus::Unknown));
     }
 }

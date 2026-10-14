@@ -21,7 +21,7 @@ pub struct CaseFile {
 #[serde(deny_unknown_fields)]
 pub struct CaseLabel {
     pub id: String,
-    /// `chain` or `scope_query`.
+    /// `chain`, `exact_node_query` or `subtree_query`.
     pub kind: String,
     /// `Accept`, `Reject`, `Indeterminate`, or a scope answer (`InScope`, `Excluded`, `OutOfScope`).
     pub expected: String,

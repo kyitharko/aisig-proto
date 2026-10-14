@@ -79,7 +79,7 @@
       "chain_aware_exact_match": true,
       "expected": "Accept",
       "id": "V09",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Reject / F / MissingRequiredObject{root}",
@@ -88,7 +88,7 @@
       "chain_aware_exact_match": true,
       "expected": "Accept",
       "id": "V10",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -143,6 +143,24 @@
       "expected": "Reject / N / RootUsageMismatch",
       "id": "R06",
       "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / N / RootOrgMismatch",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / N / RootOrgMismatch",
+      "id": "R07",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / N / RootAlgorithmMismatch",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / N / RootAlgorithmMismatch",
+      "id": "R08",
+      "label_status": "proposed"
     },
     {
       "baseline": "Reject / S / InvalidSignature{G}",
@@ -340,7 +358,7 @@
       "chain_aware_exact_match": true,
       "expected": "Reject / P / TargetInMandatoryExclusion",
       "id": "M04",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -484,7 +502,7 @@
       "chain_aware_exact_match": true,
       "expected": "Reject / P / InadmissibleScope{G}",
       "id": "M20",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -493,7 +511,7 @@
       "chain_aware_exact_match": true,
       "expected": "Reject / P / TestScopeAmplifies",
       "id": "M21",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -651,6 +669,33 @@
     {
       "baseline": "Accept",
       "baseline_class_match": false,
+      "chain_aware": "Indeterminate / X / StatusUnknown{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / X / StatusUnknown{G}",
+      "id": "X07",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / X / StatusUnknown{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / X / StatusUnknown{G}",
+      "id": "X08",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / X / StatusUnknown{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / X / StatusUnknown{G}",
+      "id": "X09",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
       "chain_aware": "Reject / L / WrongAudience{G}",
       "chain_aware_exact_match": true,
       "expected": "Reject / L / WrongAudience{G}",
@@ -790,14 +835,16 @@
       "chain_aware_exact_match": true,
       "expected": "Reject / P / TargetOutsideEnvelope",
       "id": "P03",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     }
   ],
-  "scope_queries": [
+  "scope_lookups": [
     {
       "actual": "InScope",
       "expected": "InScope",
       "id": "Q01",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/reports/q3"
     },
@@ -805,6 +852,8 @@
       "actual": "Excluded",
       "expected": "Excluded",
       "id": "Q02",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/private/report"
     },
@@ -812,6 +861,8 @@
       "actual": "Excluded",
       "expected": "Excluded",
       "id": "Q03",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/private"
     },
@@ -819,6 +870,8 @@
       "actual": "InScope",
       "expected": "InScope",
       "id": "Q04",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/privateer/x"
     },
@@ -826,6 +879,8 @@
       "actual": "Excluded",
       "expected": "Excluded",
       "id": "Q05",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/admin"
     },
@@ -833,6 +888,8 @@
       "actual": "Excluded",
       "expected": "Excluded",
       "id": "Q06",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/admin/users/7"
     },
@@ -840,6 +897,8 @@
       "actual": "OutOfScope",
       "expected": "OutOfScope",
       "id": "Q07",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "db:cluster1/main/hr"
     },
@@ -847,6 +906,8 @@
       "actual": "InScope",
       "expected": "InScope",
       "id": "Q08",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "db:cluster1/main/billing"
     },
@@ -854,6 +915,8 @@
       "actual": "OutOfScope",
       "expected": "OutOfScope",
       "id": "Q09",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/"
     },
@@ -861,12 +924,68 @@
       "actual": "OutOfScope",
       "expected": "OutOfScope",
       "id": "Q10",
+      "label_status": "reviewed",
+      "lookup": "exact_node_query",
       "match": true,
       "probe": "web:http://app.acme.test:80/app/x"
+    },
+    {
+      "actual": "InScope",
+      "expected": "InScope",
+      "id": "Q11",
+      "label_status": "proposed",
+      "lookup": "exact_node_query",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app"
+    },
+    {
+      "actual": "PartiallyAllowed",
+      "expected": "PartiallyAllowed",
+      "id": "U01",
+      "label_status": "proposed",
+      "lookup": "subtree_query",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app"
+    },
+    {
+      "actual": "NoneAllowed",
+      "expected": "NoneAllowed",
+      "id": "U02",
+      "label_status": "proposed",
+      "lookup": "subtree_query",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/admin"
+    },
+    {
+      "actual": "WhollyAllowed",
+      "expected": "WhollyAllowed",
+      "id": "U03",
+      "label_status": "proposed",
+      "lookup": "subtree_query",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/reports"
+    },
+    {
+      "actual": "PartiallyAllowed",
+      "expected": "PartiallyAllowed",
+      "id": "U04",
+      "label_status": "proposed",
+      "lookup": "subtree_query",
+      "match": true,
+      "probe": "db:cluster1/main"
     }
   ],
   "totals": {
     "baseline_all": {
+      "cases": 93,
+      "class_mismatch_reject_vs_indeterminate": 0,
+      "exact_stage_reason_match": 15,
+      "false_accept": 75,
+      "false_reject": 2,
+      "indeterminate": 0,
+      "indeterminate_on_accept_label": 0
+    },
+    "baseline_reviewed_only": {
       "cases": 88,
       "class_mismatch_reject_vs_indeterminate": 0,
       "exact_stage_reason_match": 15,
@@ -875,28 +994,19 @@
       "indeterminate": 0,
       "indeterminate_on_accept_label": 0
     },
-    "baseline_reviewed_only": {
-      "cases": 82,
-      "class_mismatch_reject_vs_indeterminate": 0,
-      "exact_stage_reason_match": 15,
-      "false_accept": 66,
-      "false_reject": 0,
-      "indeterminate": 0,
-      "indeterminate_on_accept_label": 0
-    },
     "chain_aware_all": {
-      "cases": 88,
+      "cases": 93,
       "class_mismatch_reject_vs_indeterminate": 0,
-      "exact_stage_reason_match": 88,
+      "exact_stage_reason_match": 93,
       "false_accept": 0,
       "false_reject": 0,
-      "indeterminate": 8,
+      "indeterminate": 11,
       "indeterminate_on_accept_label": 0
     },
     "chain_aware_reviewed_only": {
-      "cases": 82,
+      "cases": 88,
       "class_mismatch_reject_vs_indeterminate": 0,
-      "exact_stage_reason_match": 82,
+      "exact_stage_reason_match": 88,
       "false_accept": 0,
       "false_reject": 0,
       "indeterminate": 8,

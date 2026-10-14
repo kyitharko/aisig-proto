@@ -13,6 +13,12 @@ pub fn key_id(public_key: &[u8; 32]) -> String {
     hex::encode(Sha256::digest(public_key))
 }
 
+/// digest(X) = SHA-256(signed_bytes(type_tag, payload)) — the content identity used for
+/// exact-object status records (spec §6). Excludes the signature bytes.
+pub fn object_digest(type_tag: &str, payload: &[u8]) -> [u8; 32] {
+    Sha256::digest(signed_bytes(type_tag, payload)).into()
+}
+
 /// True iff the 32 bytes decode to a valid Ed25519 public key.
 pub fn is_valid_public_key(public_key: &[u8; 32]) -> bool {
     VerifyingKey::from_bytes(public_key).is_ok()

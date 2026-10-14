@@ -84,22 +84,65 @@ pub fn scope_within<'a>(child: &Scope<'a>, parent: &Scope<'a>) -> Result<(), Sco
     Ok(())
 }
 
-/// Result of a scope lookup on an accepted grant. Not enforcement (RQ6).
+/// Exact-node lookup result (spec §4.4). Describes one node only, never its subtree.
+/// Not authorization or enforcement (RQ6).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ScopeAnswer {
+pub enum ExactNodeAnswer {
     InScope,
     Excluded,
     OutOfScope,
 }
 
-/// Where `probe` lies relative to Allowed(scope) (spec §4.4).
-pub fn scope_query(scope: &Scope<'_>, probe: &AssetRef) -> ScopeAnswer {
-    if !scope.included.iter().any(|i| probe.within(i)) {
-        ScopeAnswer::OutOfScope
-    } else if scope.excluded.iter().any(|e| probe.within(e)) {
-        ScopeAnswer::Excluded
+/// Classify the single node at the top of `node` against Allowed(scope) (spec §4.4).
+///
+/// The answer covers that node only: `/app` can be `InScope` while `/app/admin` is
+/// `Excluded`. Use [`subtree_lookup`] for questions about a whole subtree.
+pub fn exact_node_lookup(scope: &Scope<'_>, node: &AssetRef) -> ExactNodeAnswer {
+    if !scope.included.iter().any(|i| node.within(i)) {
+        ExactNodeAnswer::OutOfScope
+    } else if scope.excluded.iter().any(|e| node.within(e)) {
+        ExactNodeAnswer::Excluded
     } else {
-        ScopeAnswer::InScope
+        ExactNodeAnswer::InScope
+    }
+}
+
+/// Subtree lookup result (spec §4.4): how much of a probe subtree lies in Allowed(scope).
+/// Not authorization or enforcement (RQ6).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SubtreeAnswer {
+    WhollyAllowed,
+    PartiallyAllowed,
+    NoneAllowed,
+}
+
+/// Classify the whole subtree denoted by `probe` using effective-set semantics (spec §4.4).
+pub fn subtree_lookup(scope: &Scope<'_>, probe: &AssetRef) -> SubtreeAnswer {
+    let single = std::slice::from_ref(probe);
+    let probe_scope = Scope {
+        included: single,
+        excluded: &[],
+    };
+    // A scope with no exclusions is admissible, so ScopeWithin is exact here (spec §4.3).
+    if scope_within(&probe_scope, scope).is_ok() {
+        return SubtreeAnswer::WhollyAllowed;
+    }
+    // Laminar sets: N(i) ∩ N(probe) is the subtree of the deeper node, and it is entirely
+    // removed iff that node lies within some exclusion.
+    let any_allowed = scope.included.iter().any(|i| {
+        let deeper = if probe.within(i) {
+            probe
+        } else if i.within(probe) {
+            i
+        } else {
+            return false;
+        };
+        !scope.excluded.iter().any(|e| deeper.within(e))
+    });
+    if any_allowed {
+        SubtreeAnswer::PartiallyAllowed
+    } else {
+        SubtreeAnswer::NoneAllowed
     }
 }
 
@@ -164,5 +207,61 @@ mod tests {
         };
         assert_eq!(first_inadmissible(&child), Some(&web("/app/private")));
         assert!(scope_within(&child, &parent).is_err());
+    }
+
+    #[test]
+    fn exact_node_vs_subtree_for_app_and_admin() {
+        // Base-grant shape: target /app, exclusions /app/admin and /app/private.
+        let inc = [web("/app")];
+        let exc = [web("/app/admin"), web("/app/private")];
+        let g = Scope {
+            included: &inc,
+            excluded: &exc,
+        };
+        // The node /app is in scope, but its subtree is only partially allowed.
+        assert_eq!(
+            exact_node_lookup(&g, &web("/app")),
+            ExactNodeAnswer::InScope
+        );
+        assert_eq!(
+            subtree_lookup(&g, &web("/app")),
+            SubtreeAnswer::PartiallyAllowed
+        );
+        // /app/admin: excluded as a node and as a whole subtree.
+        assert_eq!(
+            exact_node_lookup(&g, &web("/app/admin")),
+            ExactNodeAnswer::Excluded
+        );
+        assert_eq!(
+            subtree_lookup(&g, &web("/app/admin")),
+            SubtreeAnswer::NoneAllowed
+        );
+        assert_eq!(
+            subtree_lookup(&g, &web("/app/admin/users/7")),
+            SubtreeAnswer::NoneAllowed
+        );
+        // A subtree with no excluded descendants is wholly allowed.
+        assert_eq!(
+            subtree_lookup(&g, &web("/app/reports")),
+            SubtreeAnswer::WhollyAllowed
+        );
+        // Outside every target.
+        assert_eq!(
+            exact_node_lookup(&g, &web("/other")),
+            ExactNodeAnswer::OutOfScope
+        );
+        assert_eq!(
+            subtree_lookup(&g, &web("/other")),
+            SubtreeAnswer::NoneAllowed
+        );
+        // A probe wider than the target contains allowed nodes and others.
+        assert_eq!(
+            exact_node_lookup(&g, &web("/")),
+            ExactNodeAnswer::OutOfScope
+        );
+        assert_eq!(
+            subtree_lookup(&g, &web("/")),
+            SubtreeAnswer::PartiallyAllowed
+        );
     }
 }

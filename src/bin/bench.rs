@@ -96,18 +96,20 @@ fn env(name: &str) -> String {
 fn main() {
     let args = parse_args();
     let scenario = Scenario::base();
-    let bundle = scenario.build();
-    let verifier = scenario.verifier();
+    let prepared = scenario.prepare();
+    let bundle = &prepared.bundle;
+    let verifier = prepared.verifier();
     assert_eq!(
-        verifier.verify(&bundle),
+        verifier.verify(bundle),
         Decision::Accept,
         "base fixture must verify"
     );
-    let chain = decode_chain(&bundle).expect("decodes");
+    let chain = decode_chain(bundle).expect("decodes");
     let view = chain.view();
     let root_key = *scenario.registry.records[ACME].root_key.bytes();
     let (a, d, g) = (&chain.admin, &chain.issuer, &chain.grant);
-    let status: &dyn StatusSource = &scenario.status;
+    let status: &dyn StatusSource = &prepared.status;
+    let keys = chain.status_keys();
 
     let series: Vec<(&str, &str, Vec<RunStats>)> = vec![
         (
@@ -142,22 +144,26 @@ fn main() {
             }),
         ),
         (
-            "status_lookup_x3",
-            "simulated status lookup of C_A, D_U, G (in-memory HashMap)",
+            "status_key_x3",
+            "exact-object status keys of C_A, D_U, G: SHA-256 of signed bytes + key fields",
             measure(&args, || {
-                [
-                    (&a.body.id, a.body.version),
-                    (&d.body.id, d.body.version),
-                    (&g.body.id, g.body.version),
-                ]
-                .iter()
-                .all(|(id, v)| status.status(id, *v) == Ok(ObjStatus::Active))
+                black_box(chain.status_keys())
+                    .iter()
+                    .all(|(_, k)| k.version >= 1)
+            }),
+        ),
+        (
+            "status_lookup_x3",
+            "simulated status lookup of C_A, D_U, G with precomputed keys (in-memory HashMap)",
+            measure(&args, || {
+                keys.iter()
+                    .all(|(_, k)| status.status(k) == Ok(ObjStatus::Active))
             }),
         ),
         (
             "full_chain_verify",
             "decode + anchor + signatures + linkage + policy + binding + time + status",
-            measure(&args, || verifier.verify(&bundle) == Decision::Accept),
+            measure(&args, || verifier.verify(bundle) == Decision::Accept),
         ),
     ];
 

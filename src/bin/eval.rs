@@ -46,7 +46,7 @@ fn main() {
         .filter(|q| q.actual != q.label.expected)
         .count();
     println!(
-        "scope queries: {} total, {} mismatches",
+        "scope lookups: {} total, {} mismatches",
         queries.len(),
         q_bad
     );

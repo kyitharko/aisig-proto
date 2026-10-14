@@ -5,7 +5,10 @@
 
 use std::collections::BTreeSet;
 
-use aisig_proto::asset::{is_admissible, scope_within, Scope};
+use aisig_proto::asset::{
+    exact_node_lookup, is_admissible, scope_within, subtree_lookup, ExactNodeAnswer, Scope,
+    SubtreeAnswer,
+};
 use aisig_proto::experiment::fixture::asset_ref;
 use aisig_proto::model::AssetRef;
 use proptest::prelude::*;
@@ -179,5 +182,39 @@ proptest! {
         if oracle_admissible {
             prop_assert_eq!(impl_within, oracle_subset);
         }
+    }
+
+    /// SO3 (r3): exact-node and subtree lookups agree with the enumeration oracle.
+    #[test]
+    fn so3_lookups_match_oracle((si, se) in scope_strategy(54), probe in 0usize..54) {
+        let u = universe();
+        let pick = |ix: &[usize]| ix.iter().map(|i| u[*i].clone()).collect::<Vec<_>>();
+        let (si, se) = (pick(&si), pick(&se));
+        let probe_key = u[probe].clone();
+        let oracle = OracleScope { inc: &si, exc: &se };
+        let allowed = oracle.allowed(&u);
+        let subtree: Vec<&String> = u.iter().filter(|n| oracle_contains(&probe_key, n)).collect();
+        let n_allowed = subtree.iter().filter(|n| allowed.contains(**n)).count();
+        let want_subtree = if n_allowed == subtree.len() {
+            SubtreeAnswer::WhollyAllowed
+        } else if n_allowed == 0 {
+            SubtreeAnswer::NoneAllowed
+        } else {
+            SubtreeAnswer::PartiallyAllowed
+        };
+        let want_node = if !si.iter().any(|i| oracle_contains(i, &probe_key)) {
+            ExactNodeAnswer::OutOfScope
+        } else if se.iter().any(|e| oracle_contains(e, &probe_key)) {
+            ExactNodeAnswer::Excluded
+        } else {
+            ExactNodeAnswer::InScope
+        };
+
+        let conv = |v: &[String]| v.iter().map(|k| to_asset(k)).collect::<Vec<_>>();
+        let (ai, ae) = (conv(&si), conv(&se));
+        let scope = Scope { included: &ai, excluded: &ae };
+        let p = to_asset(&probe_key);
+        prop_assert_eq!(subtree_lookup(&scope, &p), want_subtree);
+        prop_assert_eq!(exact_node_lookup(&scope, &p), want_node);
     }
 }

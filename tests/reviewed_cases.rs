@@ -22,7 +22,7 @@ fn every_label_has_a_mutation_and_vice_versa() {
         .collect();
     let mutated: BTreeSet<String> = CHAIN_CASE_IDS.iter().map(|s| s.to_string()).collect();
     assert_eq!(labelled, mutated);
-    assert_eq!(labelled.len(), 88);
+    assert_eq!(labelled.len(), 93);
 }
 
 #[test]
@@ -36,16 +36,18 @@ fn label_counts_match_experiment_doc() {
             .count()
     };
     assert_eq!(count(DecisionClass::Accept), 11);
-    assert_eq!(count(DecisionClass::Reject), 69);
-    assert_eq!(count(DecisionClass::Indeterminate), 8);
+    assert_eq!(count(DecisionClass::Reject), 71);
+    assert_eq!(count(DecisionClass::Indeterminate), 11);
     assert_eq!(
         chain
             .iter()
             .filter(|l| l.label_status == "proposed")
             .count(),
-        6
+        5
     );
-    assert_eq!(ls.iter().filter(|l| l.kind == "scope_query").count(), 10);
+    let kind = |k: &str| ls.iter().filter(|l| l.kind == k).count();
+    assert_eq!(kind("exact_node_query"), 11);
+    assert_eq!(kind("subtree_query"), 4);
 }
 
 #[test]
@@ -94,7 +96,8 @@ fn scope_queries_match_labels() {
 #[test]
 fn root_slot_contents_never_change_the_chain_decision() {
     let base = Scenario::base();
-    let expected = base.run();
+    let prepared = base.prepare();
+    let expected = prepared.run();
     let variants: Vec<Option<Vec<u8>>> = vec![
         None,
         Some(Vec::new()),
@@ -105,6 +108,6 @@ fn root_slot_contents_never_change_the_chain_decision() {
     for root in variants {
         let mut bundle = base.build();
         bundle.root = root;
-        assert_eq!(base.verifier().verify(&bundle), expected);
+        assert_eq!(prepared.verifier().verify(&bundle), expected);
     }
 }

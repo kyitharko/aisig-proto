@@ -2,7 +2,9 @@
 //! generator or mutation kind, never computed by the comparator under test.
 //! Seed: AISIG_PROPTEST_SEED (default below); failure persistence is disabled.
 
+use aisig_proto::codec::TypeTag;
 use aisig_proto::decision::{Decision, DecisionClass, Obj, Reason, Slot, Stage};
+use aisig_proto::evidence::ObjStatus;
 use aisig_proto::experiment::fixture::*;
 use aisig_proto::model::{Ts, MAX_RPS};
 use proptest::prelude::*;
@@ -215,5 +217,21 @@ proptest! {
             _ => { s.status.unavailable = true; Decision::indeterminate(Stage::Status, Reason::StatusUnavailable) }
         };
         prop_assert_eq!(s.run(), want);
+    }
+
+    /// r3: a re-issued G (same id/version, one signed field changed) must not inherit the
+    /// original G's Active record. The unchanged G under the same registration accepts.
+    #[test]
+    fn reissued_grant_inherits_no_status(g in valid_grant(), n in 0u32..100_000) {
+        let mut s = g.scenario();
+        let original = s.grant_spec().clone();
+        s.status.extra.push((TypeTag::EngagementGrant, original, ObjStatus::Active));
+        s.status.grant = None;
+        prop_assert_eq!(s.run(), Decision::Accept);
+        put(s.grant(), "engagement_id", json!(format!("eng-reissued-{n}")));
+        prop_assert_eq!(
+            s.run(),
+            Decision::indeterminate(Stage::Status, Reason::StatusUnknown(Obj::Grant))
+        );
     }
 }

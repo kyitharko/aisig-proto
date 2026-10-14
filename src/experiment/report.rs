@@ -2,7 +2,7 @@
 
 use serde_json::{json, Value};
 
-use crate::asset::{scope_query, ScopeAnswer};
+use crate::asset::{exact_node_lookup, subtree_lookup, ExactNodeAnswer, SubtreeAnswer};
 use crate::decision::{Decision, DecisionClass};
 use crate::policy::grant_scope;
 use crate::verifier::decode_chain;
@@ -43,12 +43,21 @@ pub fn run_scope_queries(labels: &[CaseLabel]) -> Vec<QueryRow> {
     let scope = grant_scope(&chain.grant.body);
     labels
         .iter()
-        .filter(|l| l.kind == "scope_query")
+        .filter(|l| l.kind == "exact_node_query" || l.kind == "subtree_query")
         .map(|l| {
-            let answer = match scope_query(&scope, &asset_ref(&l.probe)) {
-                ScopeAnswer::InScope => "InScope",
-                ScopeAnswer::Excluded => "Excluded",
-                ScopeAnswer::OutOfScope => "OutOfScope",
+            let probe = asset_ref(&l.probe);
+            let answer = if l.kind == "exact_node_query" {
+                match exact_node_lookup(&scope, &probe) {
+                    ExactNodeAnswer::InScope => "InScope",
+                    ExactNodeAnswer::Excluded => "Excluded",
+                    ExactNodeAnswer::OutOfScope => "OutOfScope",
+                }
+            } else {
+                match subtree_lookup(&scope, &probe) {
+                    SubtreeAnswer::WhollyAllowed => "WhollyAllowed",
+                    SubtreeAnswer::PartiallyAllowed => "PartiallyAllowed",
+                    SubtreeAnswer::NoneAllowed => "NoneAllowed",
+                }
             };
             QueryRow {
                 label: l.clone(),
@@ -139,8 +148,10 @@ pub fn render_json(rows: &[ChainRow], queries: &[QueryRow]) -> Value {
             "baseline": r.baseline.to_string(),
             "baseline_class_match": Some(r.baseline.class()) == r.label.expected_class(),
         })).collect::<Vec<_>>(),
-        "scope_queries": queries.iter().map(|q| json!({
+        "scope_lookups": queries.iter().map(|q| json!({
             "id": q.label.id,
+            "lookup": q.label.kind,
+            "label_status": q.label.label_status,
             "probe": q.label.probe,
             "expected": q.label.expected,
             "actual": q.actual,
@@ -211,11 +222,15 @@ pub fn render_markdown(rows: &[ChainRow], queries: &[QueryRow]) -> String {
             r.baseline
         ));
     }
-    out.push_str("\n## Scope queries\n\n| ID | Probe | Expected | Actual | Match |\n| --- | --- | --- | --- | --- |\n");
+    out.push_str("\n## Scope lookups (exact-node and subtree; lookups, not enforcement)\n\n");
+    out.push_str("| ID | Lookup | Label status | Probe | Expected | Actual | Match |\n");
+    out.push_str("| --- | --- | --- | --- | --- | --- | --- |\n");
     for q in queries {
         out.push_str(&format!(
-            "| {} | `{}` | {} | {} | {} |\n",
+            "| {} | {} | {} | `{}` | {} | {} | {} |\n",
             q.label.id,
+            q.label.kind,
+            q.label.label_status,
             q.label.probe,
             q.label.expected,
             q.actual,

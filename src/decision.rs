@@ -118,6 +118,8 @@ pub enum Reason {
     // N — anchor
     RegistryUnavailable,
     UnpinnedOrganization,
+    RootOrgMismatch,
+    RootAlgorithmMismatch,
     RootKeyNotPinned,
     RootUsageMismatch,
     RootNotActive,

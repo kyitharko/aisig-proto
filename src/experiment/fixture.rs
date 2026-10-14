@@ -4,6 +4,8 @@
 //! typed model would refuse to represent. All keys derive from public labels and are
 //! deliberately insecure test material.
 
+use std::collections::HashMap;
+
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
@@ -13,7 +15,7 @@ use crate::crypto::{self, SecretKey};
 use crate::decision::{Decision, Slot};
 use crate::evidence::{
     ClockReading, FixedClock, InMemoryBindings, InMemoryRegistry, InMemoryStatus, ObjStatus,
-    RootRecord, RootStatus,
+    RootRecord, RootStatus, StatusKey,
 };
 use crate::model::{AssetRef, PublicKey, Ts, Window};
 use crate::verifier::{Bundle, ChainVerifier, Evidence, ROOT_USAGE};
@@ -213,6 +215,48 @@ fn slot_index(s: Slot) -> usize {
     }
 }
 
+/// Which exact objects the status fixture registers (experiment.md §3, registration rule).
+///
+/// `Some(status)` registers the slot's object exactly as this case's issuer signs it
+/// (after payload/signer mutations, before post-signing tampering). `None` registers nothing.
+#[derive(Clone, Debug)]
+pub struct StatusPlan {
+    pub admin: Option<ObjStatus>,
+    pub issuer: Option<ObjStatus>,
+    pub grant: Option<ObjStatus>,
+    /// Further exact objects to register, e.g. the original G that a case re-issues.
+    pub extra: Vec<(TypeTag, SlotSpec, ObjStatus)>,
+    pub unavailable: bool,
+}
+
+impl Default for StatusPlan {
+    fn default() -> Self {
+        StatusPlan {
+            admin: Some(ObjStatus::Active),
+            issuer: Some(ObjStatus::Active),
+            grant: Some(ObjStatus::Active),
+            extra: Vec::new(),
+            unavailable: false,
+        }
+    }
+}
+
+/// Exact status key of the object a spec signs, or None if its identifying fields are
+/// missing (such objects are rejected at stage F before status is consulted).
+pub fn registration_key(object_type: TypeTag, spec: &SlotSpec) -> Option<StatusKey> {
+    let p = &spec.payload;
+    let org = p.get("org_id")?.as_str()?;
+    let id = p.get("id")?.as_str()?;
+    let version = u32::try_from(p.get("version")?.as_u64()?).ok()?;
+    Some(StatusKey::for_object(
+        org,
+        object_type,
+        id,
+        version,
+        &encode_payload(spec),
+    ))
+}
+
 #[derive(Clone, Debug)]
 pub struct Scenario {
     pub root: Option<SlotSpec>,
@@ -223,7 +267,7 @@ pub struct Scenario {
     pub registry: InMemoryRegistry,
     pub bindings: InMemoryBindings,
     pub clock: FixedClock,
-    pub status: InMemoryStatus,
+    pub status: StatusPlan,
 }
 
 pub fn root_payload(org: &str, label: &str) -> Value {
@@ -334,11 +378,6 @@ impl Scenario {
             unavailable: false,
         };
 
-        let mut status = InMemoryStatus::default();
-        for id in [ADMIN_ID, ISSUER_ID, GRANT_ID] {
-            status.entries.insert((id.into(), 1), ObjStatus::Active);
-        }
-
         Scenario {
             root: Some(SlotSpec::new(
                 TypeTag::OrganizationRoot,
@@ -365,7 +404,7 @@ impl Scenario {
                     epsilon: 2,
                 }),
             },
-            status,
+            status: StatusPlan::default(),
         }
     }
 
@@ -417,11 +456,65 @@ impl Scenario {
         }
     }
 
+    /// The in-memory status source implied by the status plan.
+    pub fn status_source(&self) -> InMemoryStatus {
+        let mut entries = HashMap::new();
+        let slots = [
+            (TypeTag::AdminDelegation, &self.admin, self.status.admin),
+            (TypeTag::IssuerDelegation, &self.issuer, self.status.issuer),
+            (TypeTag::EngagementGrant, &self.grant, self.status.grant),
+        ];
+        for (t, spec, st) in slots {
+            if let (Some(spec), Some(st)) = (spec, st) {
+                if let Some(k) = registration_key(t, spec) {
+                    entries.insert(k, st);
+                }
+            }
+        }
+        for (t, spec, st) in &self.status.extra {
+            if let Some(k) = registration_key(*t, spec) {
+                entries.insert(k, *st);
+            }
+        }
+        InMemoryStatus {
+            entries,
+            unavailable: self.status.unavailable,
+        }
+    }
+
+    /// Build the bundle and materialize the evidence for one verification.
+    pub fn prepare(&self) -> Prepared<'_> {
+        Prepared {
+            scenario: self,
+            bundle: self.build(),
+            status: self.status_source(),
+        }
+    }
+
+    /// Chain-aware decision.
+    pub fn run(&self) -> Decision {
+        self.prepare().run()
+    }
+
+    /// Signature-only baseline decision.
+    pub fn run_baseline(&self) -> Decision {
+        verify_signature_only(&self.build())
+    }
+}
+
+/// A built bundle together with the evidence sources it is verified against.
+pub struct Prepared<'a> {
+    pub scenario: &'a Scenario,
+    pub bundle: Bundle,
+    pub status: InMemoryStatus,
+}
+
+impl Prepared<'_> {
     pub fn evidence(&self) -> Evidence<'_> {
         Evidence {
-            registry: &self.registry,
-            bindings: &self.bindings,
-            clock: &self.clock,
+            registry: &self.scenario.registry,
+            bindings: &self.scenario.bindings,
+            clock: &self.scenario.clock,
             status: &self.status,
         }
     }
@@ -433,14 +526,19 @@ impl Scenario {
         }
     }
 
-    /// Chain-aware decision.
     pub fn run(&self) -> Decision {
-        self.verifier().verify(&self.build())
+        self.verifier().verify(&self.bundle)
     }
+}
 
-    /// Signature-only baseline decision.
-    pub fn run_baseline(&self) -> Decision {
-        verify_signature_only(&self.build())
+/// The exact payload bytes a spec's issuer signs.
+fn encode_payload(s: &SlotSpec) -> Vec<u8> {
+    match &s.encoding {
+        Encoding::Canonical => {
+            canonical_json(&s.payload).expect("fixture payloads are canonicalizable")
+        }
+        Encoding::Pretty => serde_json::to_vec_pretty(&s.payload).expect("json"),
+        Encoding::Raw(b) => b.clone(),
     }
 }
 
@@ -448,13 +546,7 @@ fn build_slot(spec: Option<&SlotSpec>) -> Built {
     let Some(s) = spec else {
         return Built::Absent;
     };
-    let payload = match &s.encoding {
-        Encoding::Canonical => {
-            canonical_json(&s.payload).expect("fixture payloads are canonicalizable")
-        }
-        Encoding::Pretty => serde_json::to_vec_pretty(&s.payload).expect("json"),
-        Encoding::Raw(b) => b.clone(),
-    };
+    let payload = encode_payload(s);
     let sig = secret(&s.signer).sign(&s.sign_tag, &payload);
     Built::Parts(Parts {
         env_type: s.envelope_type.clone(),
@@ -507,9 +599,4 @@ fn into_bytes(b: Built) -> Option<Vec<u8>> {
             .to_bytes(),
         ),
     }
-}
-
-/// Status entries keyed by (id, version), for mutations.
-pub fn status_key(id: &str, version: u32) -> (String, u32) {
-    (id.to_owned(), version)
 }

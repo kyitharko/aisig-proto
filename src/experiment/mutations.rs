@@ -4,6 +4,7 @@
 
 use serde_json::json;
 
+use crate::codec::TypeTag;
 use crate::decision::Slot;
 use crate::evidence::{ObjStatus, RootStatus};
 use crate::model::MAX_RPS;
@@ -13,13 +14,13 @@ use super::fixture::*;
 /// All chain-case ids, in table order.
 pub const CHAIN_CASE_IDS: &[&str] = &[
     "V01", "V02", "V03", "V04", "V05", "V06", "V07", "V08", "V09", "V10", //
-    "R01", "R02", "R03", "R04", "R05", "R06", //
+    "R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", //
     "S01", "S02", "S03", "S04", "S05", "S06", "S07", //
     "D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08", "D09", "D10", "D11", //
     "M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08", "M09", "M10", "M11", "M12", "M13",
     "M14", "M15", "M16", "M17", "M18", "M19", "M20", "M21", //
     "T01", "T02", "T03", "T04", "T05", "T06", "T07", "T08", "T09", "T10", "T11", //
-    "X01", "X02", "X03", "X04", "X05", "X06", //
+    "X01", "X02", "X03", "X04", "X05", "X06", "X07", "X08", "X09", //
     "A01", "A02", "A03", //
     "F01", "F02", "F03", "F04", "F05", "F06", "F07", //
     "B01", "B02", "B03", //
@@ -47,6 +48,16 @@ fn add_everywhere(s: &mut Scenario, short: &str) {
     add_to_set(s.admin(), "bounds.included", asset(short));
     add_to_set(s.issuer(), "envelope.included", asset(short));
     add_to_set(s.grant(), "targets", asset(short));
+}
+
+/// Register only the original base G (Active), not the re-signed G that the caller
+/// will produce by mutating the grant payload.
+fn reissue_grant_keeping_original_status(s: &mut Scenario) {
+    let original = s.grant_spec().clone();
+    s.status
+        .extra
+        .push((TypeTag::EngagementGrant, original, ObjStatus::Active));
+    s.status.grant = None;
 }
 
 /// Apply the mutation for `id`. Returns false for an unknown id.
@@ -114,6 +125,8 @@ pub fn apply(id: &str, s: &mut Scenario) -> bool {
         "R04" => s.registry.unavailable = true,
         "R05" => s.acme_record().validity.end = ts("2026-10-15T09:30:00Z"),
         "R06" => s.acme_record().usage = "tls-server".into(),
+        "R07" => s.acme_record().org_id = GLOBEX.into(),
+        "R08" => s.acme_record().algorithm = "Ed448".into(),
 
         // ---- S: signature and encoding
         "S01" => s.post.push(PostOp::FlipSigBit(Slot::Grant, 0)),
@@ -230,29 +243,28 @@ pub fn apply(id: &str, s: &mut Scenario) -> bool {
         "T11" => put(s.grant(), "window.start", json!("2026-10-15T09:00:00.000Z")),
 
         // ---- X: status
-        "X01" => {
-            s.status
-                .entries
-                .insert(status_key(GRANT_ID, 1), ObjStatus::Revoked);
-        }
-        "X02" => {
-            s.status
-                .entries
-                .insert(status_key(ISSUER_ID, 1), ObjStatus::Revoked);
-        }
-        "X03" => {
-            s.status
-                .entries
-                .insert(status_key(ADMIN_ID, 1), ObjStatus::Revoked);
-        }
+        "X01" => s.status.grant = Some(ObjStatus::Revoked),
+        "X02" => s.status.issuer = Some(ObjStatus::Revoked),
+        "X03" => s.status.admin = Some(ObjStatus::Revoked),
         "X04" => s.status.unavailable = true,
-        "X05" => {
-            s.status.entries.remove(&status_key(GRANT_ID, 1));
+        "X05" => s.status.grant = None,
+        "X06" => s.status.admin = Some(ObjStatus::Superseded),
+        "X07" => {
+            // New G reusing C_A's id/version; no record for this G (C_A keeps its own).
+            put(s.grant(), "id", json!(ADMIN_ID));
+            s.status.grant = None;
         }
-        "X06" => {
-            s.status
-                .entries
-                .insert(status_key(ADMIN_ID, 1), ObjStatus::Superseded);
+        "X08" => {
+            reissue_grant_keeping_original_status(s);
+            put(s.grant(), "tester_key", json!(pub_b64("tester-2")));
+        }
+        "X09" => {
+            reissue_grant_keeping_original_status(s);
+            put(
+                s.grant(),
+                "test_scope.classes",
+                set(vec![json!("auth_testing"), json!("recon")]),
+            );
         }
 
         // ---- A: audience

@@ -1,15 +1,17 @@
 //! ValidChain_P decision procedure (spec §7).
 
-use crate::codec::{decode_signed, Signed};
+use crate::codec::{decode_signed, Signed, TypeTag};
 use crate::crypto;
 use crate::decision::{Decision, Finding, Obj, Reason, Slot, Stage};
 use crate::evidence::{
-    AssetBindings, ClockReading, ObjStatus, RootRegistry, RootStatus, StatusSource, TrustedClock,
+    AssetBindings, ClockReading, ObjStatus, RootRegistry, RootStatus, StatusKey, StatusSource,
+    TrustedClock,
 };
 use crate::model::{AdminDelegation, EngagementGrant, IssuerDelegation, Window};
 use crate::policy::{check_linkage, check_policy, ChainView};
 
 pub const ROOT_USAGE: &str = "org-delegation-root";
+pub const ROOT_ALGORITHM: &str = "Ed25519";
 
 /// Raw envelope bytes per slot (spec §2.7).
 #[derive(Clone, Debug, Default)]
@@ -35,6 +37,46 @@ impl DecodedChain {
             issuer: &self.issuer.body,
             grant: &self.grant.body,
         }
+    }
+
+    /// Exact-object status keys of C_A, D_U, G (spec §6), in status-stage order.
+    pub fn status_keys(&self) -> [(Obj, StatusKey); 3] {
+        let (a, d, g) = (&self.admin, &self.issuer, &self.grant);
+        let key = |org: &str, t: TypeTag, id: &str, v: u32, payload: &[u8]| {
+            StatusKey::for_object(org, t, id, v, payload)
+        };
+        [
+            (
+                Obj::Admin,
+                key(
+                    &a.body.org_id,
+                    TypeTag::AdminDelegation,
+                    &a.body.id,
+                    a.body.version,
+                    &a.payload,
+                ),
+            ),
+            (
+                Obj::Issuer,
+                key(
+                    &d.body.org_id,
+                    TypeTag::IssuerDelegation,
+                    &d.body.id,
+                    d.body.version,
+                    &d.payload,
+                ),
+            ),
+            (
+                Obj::Grant,
+                key(
+                    &g.body.org_id,
+                    TypeTag::EngagementGrant,
+                    &g.body.id,
+                    g.body.version,
+                    &g.payload,
+                ),
+            ),
+        ]
     }
 }
 
@@ -135,6 +177,13 @@ impl ChainVerifier<'_> {
             }
             Ok(None) => reject!(Stage::Anchor, Reason::UnpinnedOrganization),
             Ok(Some(rec)) => {
+                // The record itself must name O and Ed25519; the lookup key alone does not.
+                if rec.org_id != a.body.org_id {
+                    reject!(Stage::Anchor, Reason::RootOrgMismatch);
+                }
+                if rec.algorithm != ROOT_ALGORITHM {
+                    reject!(Stage::Anchor, Reason::RootAlgorithmMismatch);
+                }
                 if rec.key_id != a.body.issuer_key_id || rec.root_key.key_id() != rec.key_id {
                     reject!(Stage::Anchor, Reason::RootKeyNotPinned);
                 }
@@ -221,13 +270,9 @@ impl ChainVerifier<'_> {
             }
         }
 
-        // X — status of C_A, D_U, G at their versions.
-        for (obj, id, version) in [
-            (Obj::Admin, &a.body.id, a.body.version),
-            (Obj::Issuer, &d.body.id, d.body.version),
-            (Obj::Grant, &g.body.id, g.body.version),
-        ] {
-            match ev.status.status(id, version) {
+        // X — status of the exact signed C_A, D_U, G (spec §6 StatusKey).
+        for (obj, key) in chain.status_keys() {
+            match ev.status.status(&key) {
                 Err(_) => {
                     pending.note(Stage::Status, Reason::StatusUnavailable);
                     break;
