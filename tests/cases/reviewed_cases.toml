@@ -1,8 +1,9 @@
-# Expected labels for the RQ4 experiment, transcribed from docs/experiment.md (r2).
+# Expected labels for the RQ4 experiment, transcribed from docs/experiment.md (r2, r3).
 # This file is the oracle. Never edit a label to match verifier output; a mismatch is a
 # test failure to investigate. label_status: reviewed = agreed by owner as written
 # (2026-10-15); reviewed-by-instruction = set by explicit owner instruction (2026-10-15);
-# proposed = awaiting owner review.
+# proposed = awaiting owner review. Transcription updated for r3 (status identity,
+# registry record checks, exact-node vs subtree lookups).
 
 [[case]]
 id = "V01"
@@ -57,15 +58,15 @@ label_status = "reviewed"
 id = "V09"
 kind = "chain"
 expected = "Accept"
-label_status = "proposed"
-note = "new in r2: malformed root slot ignored by chain-aware verifier"
+label_status = "reviewed"
+note = "approved in owner Stage 0-4 review, 2026-10-15; was proposed: new in r2: malformed root slot ignored by chain-aware verifier"
 
 [[case]]
 id = "V10"
 kind = "chain"
 expected = "Accept"
-label_status = "proposed"
-note = "new in r2: absent root slot"
+label_status = "reviewed"
+note = "approved in owner Stage 0-4 review, 2026-10-15; was proposed: new in r2: absent root slot"
 
 [[case]]
 id = "R01"
@@ -114,6 +115,24 @@ expected = "Reject"
 stage = "N"
 reason = "RootUsageMismatch"
 label_status = "reviewed"
+
+[[case]]
+id = "R07"
+kind = "chain"
+expected = "Reject"
+stage = "N"
+reason = "RootOrgMismatch"
+label_status = "proposed"
+note = "new in r3: registry record names a different org"
+
+[[case]]
+id = "R08"
+kind = "chain"
+expected = "Reject"
+stage = "N"
+reason = "RootAlgorithmMismatch"
+label_status = "proposed"
+note = "new in r3: registry record algorithm is not Ed25519"
 
 [[case]]
 id = "S01"
@@ -289,8 +308,8 @@ kind = "chain"
 expected = "Reject"
 stage = "P"
 reason = "TargetInMandatoryExclusion"
-label_status = "proposed"
-note = "label agreed 2026-10-15; mutation clarified in r2 (G.exclusions = empty) - needs re-confirmation"
+label_status = "reviewed"
+note = "approved in owner Stage 0-4 review, 2026-10-15; was proposed: label agreed 2026-10-15; mutation clarified in r2 (G.exclusions = empty) - needs re-confirmation"
 
 [[case]]
 id = "M05"
@@ -419,8 +438,8 @@ kind = "chain"
 expected = "Reject"
 stage = "P"
 reason = "InadmissibleScope{G}"
-label_status = "proposed"
-note = "new in r2: admissibility rule"
+label_status = "reviewed"
+note = "approved in owner Stage 0-4 review, 2026-10-15; was proposed: new in r2: admissibility rule"
 
 [[case]]
 id = "M21"
@@ -428,8 +447,8 @@ kind = "chain"
 expected = "Reject"
 stage = "P"
 reason = "TestScopeAmplifies"
-label_status = "proposed"
-note = "new in r2: explicit unrestricted under a ceiling"
+label_status = "reviewed"
+note = "approved in owner Stage 0-4 review, 2026-10-15; was proposed: new in r2: explicit unrestricted under a ceiling"
 
 [[case]]
 id = "T01"
@@ -566,6 +585,33 @@ reason = "Superseded{C_A}"
 label_status = "reviewed"
 
 [[case]]
+id = "X07"
+kind = "chain"
+expected = "Indeterminate"
+stage = "X"
+reason = "StatusUnknown{G}"
+label_status = "proposed"
+note = "new in r3: G reuses C_A id/version; no status record for this G"
+
+[[case]]
+id = "X08"
+kind = "chain"
+expected = "Indeterminate"
+stage = "X"
+reason = "StatusUnknown{G}"
+label_status = "proposed"
+note = "new in r3: G reuses original id/version with changed tester_key; only original G registered"
+
+[[case]]
+id = "X09"
+kind = "chain"
+expected = "Indeterminate"
+stage = "X"
+reason = "StatusUnknown{G}"
+label_status = "proposed"
+note = "new in r3: G reuses original id/version with changed test classes; only original G registered"
+
+[[case]]
 id = "A01"
 kind = "chain"
 expected = "Reject"
@@ -694,75 +740,115 @@ kind = "chain"
 expected = "Reject"
 stage = "P"
 reason = "TargetOutsideEnvelope"
-label_status = "proposed"
-note = "depends on spec r2 section 7.2 conditional-evaluation rule; not reviewed until that rule is accepted"
+label_status = "reviewed"
+note = "approved in owner Stage 0-4 review, 2026-10-15; was proposed: depends on spec r2 section 7.2 conditional-evaluation rule; not reviewed until that rule is accepted"
 
 [[case]]
 id = "Q01"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:https://app.acme.test:443/app/reports/q3"
 expected = "InScope"
 label_status = "reviewed"
 
 [[case]]
 id = "Q02"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:https://app.acme.test:443/app/private/report"
 expected = "Excluded"
 label_status = "reviewed"
 
 [[case]]
 id = "Q03"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:https://app.acme.test:443/app/private"
 expected = "Excluded"
 label_status = "reviewed"
 
 [[case]]
 id = "Q04"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:https://app.acme.test:443/app/privateer/x"
 expected = "InScope"
 label_status = "reviewed"
 
 [[case]]
 id = "Q05"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:https://app.acme.test:443/app/admin"
 expected = "Excluded"
 label_status = "reviewed"
 
 [[case]]
 id = "Q06"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:https://app.acme.test:443/app/admin/users/7"
 expected = "Excluded"
 label_status = "reviewed"
 
 [[case]]
 id = "Q07"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "db:cluster1/main/hr"
 expected = "OutOfScope"
 label_status = "reviewed"
 
 [[case]]
 id = "Q08"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "db:cluster1/main/billing"
 expected = "InScope"
 label_status = "reviewed"
 
 [[case]]
 id = "Q09"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:https://app.acme.test:443/"
 expected = "OutOfScope"
 label_status = "reviewed"
 
 [[case]]
 id = "Q10"
-kind = "scope_query"
+kind = "exact_node_query"
 probe = "web:http://app.acme.test:80/app/x"
 expected = "OutOfScope"
 label_status = "reviewed"
+
+[[case]]
+id = "Q11"
+kind = "exact_node_query"
+probe = "web:https://app.acme.test:443/app"
+expected = "InScope"
+label_status = "proposed"
+note = "new in r3: exact node only; descendant /app/admin is excluded"
+
+[[case]]
+id = "U01"
+kind = "subtree_query"
+probe = "web:https://app.acme.test:443/app"
+expected = "PartiallyAllowed"
+label_status = "proposed"
+note = "new in r3"
+
+[[case]]
+id = "U02"
+kind = "subtree_query"
+probe = "web:https://app.acme.test:443/app/admin"
+expected = "NoneAllowed"
+label_status = "proposed"
+note = "new in r3"
+
+[[case]]
+id = "U03"
+kind = "subtree_query"
+probe = "web:https://app.acme.test:443/app/reports"
+expected = "WhollyAllowed"
+label_status = "proposed"
+note = "new in r3"
+
+[[case]]
+id = "U04"
+kind = "subtree_query"
+probe = "db:cluster1/main"
+expected = "PartiallyAllowed"
+label_status = "proposed"
+note = "new in r3"

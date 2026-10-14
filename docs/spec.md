@@ -1,6 +1,7 @@
-# Provider-verified authorization chains — specification (DRAFT r2)
+# Provider-verified authorization chains — specification (DRAFT r3)
 
-**Status:** DRAFT r2, 2026-10-15. Owner decisions on r1 open questions are applied (§10).
+**Status:** DRAFT r3, 2026-10-15. Owner decisions on r1 open questions are applied, and r3
+adds exact-object status identity, registry-record checks and named scope lookups (§10).
 This is a research working hypothesis, not a final protocol or a proven contribution.
 Case labels carry an explicit review status in [experiment.md](experiment.md).
 
@@ -34,7 +35,9 @@ O → admin → authorizer → tester never amplifies authority. RQ1 and RQ2 are
 | V_K(X) | The Ed25519 signature on object X verifies with public key K over X's exact signed bytes (§3). Says nothing about authority or scope. |
 | CanDelegate(C_A,D_U) | C_A lets K_admin issue issuer delegations, and D_U stays within C_A (§5.2). |
 | MayIssue(D_U,G) | D_U lets K_authorizer issue G as written (§5.3). |
-| Active(C_A,D_U,G,t) | Every object is inside its validity window at t and the status source reports it Active at its version (§6). |
+| StatusKey(X) | (org_id, object type, id, version, digest(X)) — the identity under which the status source records exactly one signed object (§6). |
+| digest(X) | SHA-256 over X's type-separated signed bytes `"aisig-v0" ‖ 0x00 ‖ TypeTag ‖ 0x00 ‖ payload` (§3, §6). |
+| Active(C_A,D_U,G,t) | Every object is inside its validity window at t and the status source reports Active for its exact StatusKey (§6). |
 | H | The hypothesis "the presented C_A is authentic under O's pinned key", used only when the registry is unavailable (§7.2). |
 | ValidChain_P(G,t) | The decision rule (§7). Accept means "chain-valid for P"; it is **not** a ProviderExec decision, not a session proof, not tool enforcement. |
 
@@ -280,12 +283,32 @@ included `/app/private`. Under v0 the child is inadmissible, so it is rejected a
 `InadmissibleScope` before ScopeWithin runs. Stage 3 tests this counterexample and the
 claim against an independent brute-force set oracle.
 
-### 4.4 Scope query
+### 4.4 Scope lookups (not enforcement)
 
-`scope_query(G, probe) → InScope | Excluded | OutOfScope` reports where a probe asset lies
-relative to an accepted grant: OutOfScope if no target contains it, Excluded if some
-exclusion contains it, otherwise InScope. It is a lookup, **not enforcement** of agent
-actions (RQ6).
+An `AssetRef` denotes a subtree, so a question about a probe asset has two different
+readings. v0 exposes both under distinct names. Neither authorizes or enforces anything;
+both are lookups on an already-accepted grant (RQ6 remains unresolved).
+
+**Exact-node lookup.** `exact_node_lookup(G, probe) → InScope | Excluded | OutOfScope`
+classifies only the single concrete node at the top of the probe: OutOfScope if no target
+contains it, Excluded if some exclusion contains it, otherwise InScope. **It says nothing
+about the probe's descendants.** Example: in the base grant the node `/app` is InScope
+while its descendant `/app/admin` is Excluded. An InScope answer must not be read as
+"the subtree `/app` is permitted".
+
+**Subtree lookup.** `subtree_lookup(G, probe) → WhollyAllowed | PartiallyAllowed |
+NoneAllowed` classifies the probe's whole subtree N(probe) against the effective set:
+WhollyAllowed iff N(probe) ⊆ Allowed(G); NoneAllowed iff N(probe) ∩ Allowed(G) = ∅;
+otherwise PartiallyAllowed.
+
+- WhollyAllowed is computed as `ScopeWithin(({probe}, ∅), G)`. The child scope has no
+  exclusions, so it is admissible and §4.3 makes this exact.
+- NoneAllowed holds iff, for every target i that overlaps the probe (one is within the
+  other), the deeper of i and probe lies within some exclusion of G. *Sketch:* by laminarity
+  N(i) ∩ N(probe) is the subtree of the deeper node d, and a subtree minus a union of
+  subtrees is empty iff root(d) is removed, i.e. d lies within some exclusion.
+
+Both lookups are cross-checked against the enumeration oracle (experiment.md §6, SO3).
 
 ---
 
@@ -333,12 +356,17 @@ the owner's test classes or targets.
 
 ## 6. Evidence, time and status (injected fixtures)
 
-- **Anchor (stage N):** registry lookup by C_A.org_id.
+- **Anchor (stage N):** registry lookup by C_A.org_id, then checks on the returned record
+  itself, in order. The lookup key alone never establishes that a record names O.
   - Registry unavailable → `Indeterminate(RegistryUnavailable)` and §7.2 applies.
   - Registry available, no record for org_id → `Reject(UnpinnedOrganization)`.
-  - `C_A.issuer_key_id ≠ record.key_id` → `Reject(RootKeyNotPinned)`;
+  - `record.org_id ≠ C_A.org_id` → `Reject(RootOrgMismatch)` (r3).
+  - `record.algorithm ≠ "Ed25519"` → `Reject(RootAlgorithmMismatch)` (r3).
+  - `C_A.issuer_key_id ≠ record.key_id`, or `record.key_id ≠ keyid(record.root_key)` →
+    `Reject(RootKeyNotPinned)`;
     usage ≠ `org-delegation-root` → `Reject(RootUsageMismatch)`;
     status suspended or revoked → `Reject(RootNotActive)`.
+  All of these fail closed: no mismatch falls through to a later stage.
 - **Binding (stage B):** for each G target in canonical order, find bindings whose asset
   contains it. Bound to O → ok. Bound only to other orgs → `Reject(AssetBoundToOtherOrg)`.
   No binding → `Indeterminate(NoBindingEvidence)`. Fixture unavailable →
@@ -350,11 +378,30 @@ the owner's test classes or targets.
   - `now+ε < s` → `Reject(NotYetValid{obj})`; `now−ε ≥ e` → `Reject(Expired{obj})`;
   - otherwise → `Indeterminate(ClockUncertainty{obj})`.
   The root record's validity is checked against t only; it need not contain C_A's window.
-- **Status (stage X):** status source answers for (id, version) of C_A, D_U, G in order.
-  Active → ok. Revoked → `Reject(Revoked{obj})`. Superseded → `Reject(Superseded{obj})`
-  (in v0 a superseded parent invalidates all its descendants). Unknown →
-  `Indeterminate(StatusUnknown{obj})`. Unavailable → `Indeterminate(StatusUnavailable)`.
-  The fixture is a simulation; real freshness and revocation delay are RQ7.
+- **Status (stage X):** the status source is queried for C_A, D_U, G in order, each by its
+  exact **StatusKey** (r3):
+
+  ```
+  StatusKey(X) = ( org_id(X), type(X), id(X), version(X), digest(X) )
+  digest(X)    = SHA-256( "aisig-v0" ‖ 0x00 ‖ type(X) ‖ 0x00 ‖ payload_bytes(X) )
+  ```
+
+  `type(X)` is the TypeTag of X's bundle slot (`AdminDelegation`, `IssuerDelegation`,
+  `EngagementGrant`); `org_id`, `id` and `version` come from X's decoded payload;
+  `payload_bytes` are the exact canonical bytes that were signed. The digest is the SHA-256
+  of the same type-separated byte string the signature covers, so it binds the type and
+  every signed field. The signature bytes are not included: the status identifies the
+  signed content, and the signer is already fixed by the chain and by `issuer_key_id`
+  inside the payload. The explicit org/type/id/version fields are redundant with the digest
+  but let a status service index and audit records.
+
+  The status source answers a record's status **only for an exact key match**. A record for
+  another object never answers, even with the same id and version, or the same id in
+  another type. Active → ok. Revoked → `Reject(Revoked{obj})`. Superseded →
+  `Reject(Superseded{obj})` (in v0 a superseded parent invalidates all its descendants).
+  No matching record → `Indeterminate(StatusUnknown{obj})`, never Accept. Unavailable →
+  `Indeterminate(StatusUnavailable)`. The fixture is a simulation; real freshness and
+  revocation delay are RQ7.
 
 ---
 
@@ -443,7 +490,7 @@ It exists only as a comparison point; its outcomes are measured, never used as l
 ## 9. Unresolved (not implemented in v0)
 
 - **RQ5:** binding G to a presenting tester/session (proof of possession of K_T). `tester_key` is signed but not challenged.
-- **RQ6:** enforcing actual agent/tool effects, including how a TestClass maps to actions. `scope_query` is a lookup, not mediation.
+- **RQ6:** enforcing actual agent/tool effects, including how a TestClass maps to actions. `exact_node_lookup` and `subtree_lookup` are lookups, not mediation.
 - **RQ7:** status freshness and bounded revocation delay. Status is an in-memory fixture.
 - RQ3 is partially exercised (fixed depth-3 chain, non-amplification); arbitrary depth and multi-admin policy are not.
 - RQ8 (privacy, onboarding cost) is out of scope; CPU latency is measured only for this prototype.
@@ -467,5 +514,22 @@ made required with an explicit `unrestricted` choice (§2.6); optional root slot
 and the baseline's use of it specified (§2.7, §7.4); dependency rule for unavailable evidence
 (§7.2).
 
-**Open for owner review in r2:** the §7.2 rule (P03 depends on it); M04's clarified
-mutation; new cases V09, V10, M20, M21.
+**r2 review outcome (owner, 2026-10-15):** the §7.2 rule, P03, M04's clarified mutation
+and V09, V10, M20, M21 were approved.
+
+**r3 changes (owner review of Stages 0–4):**
+
+- Status identity binds the exact signed object (§6, StatusKey). Under the r2 key
+  (id, version) a newly signed object could inherit another object's Active status.
+- The anchor stage checks the returned registry record's org_id and algorithm (§6) and
+  fails closed (`RootOrgMismatch`, `RootAlgorithmMismatch`).
+- `scope_query` is replaced by `exact_node_lookup` and `subtree_lookup` (§4.4).
+
+**Open questions after r3:**
+
+| # | Question | Current behaviour |
+| --- | --- | --- |
+| Q9 | A status record exists for the same (org, type, id, version) but a different digest — equivocation by the issuer, or a stale cache? Should that be Reject rather than Indeterminate? | Treated as no matching record → `Indeterminate(StatusUnknown)`. |
+| Q10 | Should the status digest also cover the signature bytes, or the issuer key id explicitly? | Covers type-separated signed bytes only (issuer_key_id is inside them). |
+| Q11 | Multiple root records per org (key rotation) | Not modelled: one record per org_id. |
+| Q12 | Labels for R07, R08, X07–X09, Q11, U01–U04 | Proposed. |

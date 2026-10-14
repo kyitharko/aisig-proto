@@ -4,6 +4,9 @@
 # Research handoff / private notes stay out of git
 AI_Agent_*.md
 
+# Review/export archives
+*.zip
+
 # Never commit real credentials, keys, or client material
 *.pem
 *.key

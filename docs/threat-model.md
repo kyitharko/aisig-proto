@@ -1,6 +1,6 @@
-# Threat model — RQ4 chain verifier (DRAFT r2)
+# Threat model — RQ4 chain verifier (DRAFT r3)
 
-**Status:** DRAFT r2, 2026-10-15. See [spec.md](spec.md) for symbols.
+**Status:** DRAFT r3, 2026-10-15. See [spec.md](spec.md) for symbols.
 
 ## 1. System and trust boundary
 
@@ -18,7 +18,9 @@
 ```
 
 Trusted for this slice: P's own root registry, asset-binding fixture, clock and status
-fixture; the Ed25519 implementation; the secrecy of K_O, K_admin, K_authorizer unless a
+fixture (trusted to answer honestly for the key it is asked, but the verifier still checks
+that a returned registry record names O and Ed25519, and asks the status source only about
+the exact signed object); the Ed25519 implementation; the secrecy of K_O, K_admin, K_authorizer unless a
 case says otherwise.
 
 Untrusted: every byte in the presented bundle, including the optional self-signed root
@@ -49,7 +51,7 @@ before their signature verifies.
 | TH6 | Type confusion: D_U presented as G, or signature reused across types | Bundle slot type + domain-separated signed bytes (F, S) | S07, D10 |
 | TH7 | Parser differentials: duplicate keys, reordering, whitespace, unknown fields, non-canonical times/assets | Strict decode + canonical re-encode (F) | S, F, M, T |
 | TH8 | Path/name confusion: `/application` vs `/app`, `..`, case, wildcards, ports, scheme | Canonical assets + segment-prefix `within` (F, P) | M |
-| TH9 | Include/exclude overlap misread | Allowed = Included \ Excluded, mandatory exclusions (P) | M, Q |
+| TH9 | Include/exclude overlap misread | Allowed = Included \ Excluded, mandatory exclusions (P) | M, Q, U |
 | TH10 | Cross-tenant use: sibling org assets or org_id swap | Linkage org_id + binding fixture (L, B) | M02, B02 |
 | TH11 | Cross-provider replay | Audience = P (L) | A |
 | TH12 | Expired / not-yet-valid / revoked / superseded authority | Time and status stages (T, X) | T, X |
@@ -57,6 +59,9 @@ before their signature verifies.
 | TH14 | Missing evidence treated as approval | Indeterminate; Reject-dominates order; conditional evaluation never yields Accept (spec §7.2) | B, R04, X04, X05, T10, P |
 | TH15 | Scope-shape differentials: redundant or self-cancelling targets read differently by different verifiers | Admissibility rule (P) | M20, SO1, SO2 |
 | TH16 | Omitted test scope read as "unrestricted" | `test_scope` required; `unrestricted` must be explicit and signed (F, P) | M08, M21, V06 |
+| TH17 | Status substitution: a newly signed object reuses another object's id/version (same or different type) to inherit its Active status | Status keyed by exact StatusKey incl. SHA-256 of type-separated signed bytes; no match → Indeterminate, never Accept (X) | X07, X08, X09, property |
+| TH18 | Misfiled or mismatched registry record: the record returned for O names another org, or a different algorithm | Anchor checks record.org_id and record.algorithm, not just the lookup key; fails closed (N) | R07, R08 |
+| TH19 | Exact-node lookup misread as a subtree permission (`/app` InScope although `/app/admin` is excluded) | Separate `exact_node_lookup` and `subtree_lookup` APIs with effective-set semantics for the latter; still not enforcement | Q11, U01–U04, SO3 |
 
 ## 4. Out of scope (non-goals for v0)
 
