@@ -1,0 +1,247 @@
+//! ValidChain_P decision procedure (spec §7).
+
+use crate::codec::{decode_signed, Signed};
+use crate::crypto;
+use crate::decision::{Decision, Finding, Obj, Reason, Slot, Stage};
+use crate::evidence::{
+    AssetBindings, ClockReading, ObjStatus, RootRegistry, RootStatus, StatusSource, TrustedClock,
+};
+use crate::model::{AdminDelegation, EngagementGrant, IssuerDelegation, Window};
+use crate::policy::{check_linkage, check_policy, ChainView};
+
+pub const ROOT_USAGE: &str = "org-delegation-root";
+
+/// Raw envelope bytes per slot (spec §2.7).
+#[derive(Clone, Debug, Default)]
+pub struct Bundle {
+    /// Optional self-signed root. Never read by [`ChainVerifier`].
+    pub root: Option<Vec<u8>>,
+    pub admin: Option<Vec<u8>>,
+    pub issuer: Option<Vec<u8>>,
+    pub grant: Option<Vec<u8>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct DecodedChain {
+    pub admin: Signed<AdminDelegation>,
+    pub issuer: Signed<IssuerDelegation>,
+    pub grant: Signed<EngagementGrant>,
+}
+
+impl DecodedChain {
+    pub fn view(&self) -> ChainView<'_> {
+        ChainView {
+            admin: &self.admin.body,
+            issuer: &self.issuer.body,
+            grant: &self.grant.body,
+        }
+    }
+}
+
+/// Stage F. Ignores `bundle.root` entirely.
+pub fn decode_chain(bundle: &Bundle) -> Result<DecodedChain, Reason> {
+    let admin = bundle
+        .admin
+        .as_deref()
+        .ok_or(Reason::MissingRequiredObject(Slot::Admin))?;
+    let issuer = bundle
+        .issuer
+        .as_deref()
+        .ok_or(Reason::MissingRequiredObject(Slot::Issuer))?;
+    let grant = bundle
+        .grant
+        .as_deref()
+        .ok_or(Reason::MissingRequiredObject(Slot::Grant))?;
+    Ok(DecodedChain {
+        admin: decode_signed(admin, Slot::Admin)?,
+        issuer: decode_signed(issuer, Slot::Issuer)?,
+        grant: decode_signed(grant, Slot::Grant)?,
+    })
+}
+
+/// The evidence sources P consults. All are injected; all may be unavailable.
+#[derive(Clone, Copy)]
+pub struct Evidence<'a> {
+    pub registry: &'a dyn RootRegistry,
+    pub bindings: &'a dyn AssetBindings,
+    pub clock: &'a dyn TrustedClock,
+    pub status: &'a dyn StatusSource,
+}
+
+pub struct ChainVerifier<'a> {
+    /// P's own audience identifier.
+    pub audience: &'a str,
+    pub evidence: Evidence<'a>,
+}
+
+enum TimeVerdict {
+    Ok,
+    NotYet,
+    Expired,
+    Uncertain,
+}
+
+fn time_check(w: &Window, r: &ClockReading) -> TimeVerdict {
+    let lo = r.now.0 - r.epsilon;
+    let hi = r.now.0 + r.epsilon;
+    if w.start.0 <= lo && hi < w.end.0 {
+        TimeVerdict::Ok
+    } else if hi < w.start.0 {
+        TimeVerdict::NotYet
+    } else if lo >= w.end.0 {
+        TimeVerdict::Expired
+    } else {
+        TimeVerdict::Uncertain
+    }
+}
+
+/// Collects the first Indeterminate while evaluation continues (spec §7.1).
+#[derive(Default)]
+struct Pending(Option<Finding>);
+
+impl Pending {
+    fn note(&mut self, stage: Stage, reason: Reason) {
+        if self.0.is_none() {
+            self.0 = Some(Finding { stage, reason });
+        }
+    }
+}
+
+macro_rules! reject {
+    ($stage:expr, $reason:expr) => {
+        return Decision::reject($stage, $reason)
+    };
+}
+
+impl ChainVerifier<'_> {
+    pub fn verify(&self, bundle: &Bundle) -> Decision {
+        match decode_chain(bundle) {
+            Ok(chain) => self.verify_decoded(&chain),
+            Err(reason) => Decision::reject(Stage::Format, reason),
+        }
+    }
+
+    /// Stages N through X on an already-decoded chain.
+    pub fn verify_decoded(&self, chain: &DecodedChain) -> Decision {
+        let ev = &self.evidence;
+        let (a, d, g) = (&chain.admin, &chain.issuer, &chain.grant);
+        let mut pending = Pending::default();
+
+        // N — anchor. Unavailable ⇒ continue under hypothesis H (spec §7.2).
+        let anchor = match ev.registry.lookup(&a.body.org_id) {
+            Err(_) => {
+                pending.note(Stage::Anchor, Reason::RegistryUnavailable);
+                None
+            }
+            Ok(None) => reject!(Stage::Anchor, Reason::UnpinnedOrganization),
+            Ok(Some(rec)) => {
+                if rec.key_id != a.body.issuer_key_id || rec.root_key.key_id() != rec.key_id {
+                    reject!(Stage::Anchor, Reason::RootKeyNotPinned);
+                }
+                if rec.usage != ROOT_USAGE {
+                    reject!(Stage::Anchor, Reason::RootUsageMismatch);
+                }
+                if rec.status != RootStatus::Active {
+                    reject!(Stage::Anchor, Reason::RootNotActive);
+                }
+                Some(rec)
+            }
+        };
+
+        // S — signatures. C_A only with the pinned key; D_U and G with chain keys
+        // (asserted, not authenticated, when the anchor is unavailable).
+        if let Some(rec) = anchor {
+            if !crypto::verify(rec.root_key.bytes(), "AdminDelegation", &a.payload, &a.sig) {
+                reject!(Stage::Signature, Reason::InvalidSignature(Obj::Admin));
+            }
+        }
+        if !crypto::verify(
+            a.body.subject_key.bytes(),
+            "IssuerDelegation",
+            &d.payload,
+            &d.sig,
+        ) {
+            reject!(Stage::Signature, Reason::InvalidSignature(Obj::Issuer));
+        }
+        if !crypto::verify(
+            d.body.subject_key.bytes(),
+            "EngagementGrant",
+            &g.payload,
+            &g.sig,
+        ) {
+            reject!(Stage::Signature, Reason::InvalidSignature(Obj::Grant));
+        }
+
+        // L, P — pure predicates.
+        let view = chain.view();
+        if let Err(r) = check_linkage(&view, self.audience) {
+            reject!(Stage::Linkage, r);
+        }
+        if let Err(r) = check_policy(&view) {
+            reject!(Stage::Policy, r);
+        }
+
+        // B — binding of every grant target to O.
+        for target in &g.body.targets {
+            match ev.bindings.owners_of(target) {
+                Err(_) => {
+                    pending.note(Stage::Binding, Reason::BindingUnavailable);
+                    break;
+                }
+                Ok(owners) if owners.contains(&a.body.org_id.as_str()) => {}
+                Ok(owners) if !owners.is_empty() => {
+                    reject!(Stage::Binding, Reason::AssetBoundToOtherOrg)
+                }
+                Ok(_) => pending.note(Stage::Binding, Reason::NoBindingEvidence),
+            }
+        }
+
+        // T — root record (only if the registry answered), then C_A, D_U, G.
+        match ev.clock.now() {
+            None => pending.note(Stage::Time, Reason::ClockUnavailable),
+            Some(reading) => {
+                let windows = anchor
+                    .map(|rec| (Obj::Root, rec.validity))
+                    .into_iter()
+                    .chain([
+                        (Obj::Admin, a.body.validity),
+                        (Obj::Issuer, d.body.validity),
+                        (Obj::Grant, g.body.window),
+                    ]);
+                for (obj, w) in windows {
+                    match time_check(&w, &reading) {
+                        TimeVerdict::Ok => {}
+                        TimeVerdict::NotYet => reject!(Stage::Time, Reason::NotYetValid(obj)),
+                        TimeVerdict::Expired => reject!(Stage::Time, Reason::Expired(obj)),
+                        TimeVerdict::Uncertain => {
+                            pending.note(Stage::Time, Reason::ClockUncertainty(obj))
+                        }
+                    }
+                }
+            }
+        }
+
+        // X — status of C_A, D_U, G at their versions.
+        for (obj, id, version) in [
+            (Obj::Admin, &a.body.id, a.body.version),
+            (Obj::Issuer, &d.body.id, d.body.version),
+            (Obj::Grant, &g.body.id, g.body.version),
+        ] {
+            match ev.status.status(id, version) {
+                Err(_) => {
+                    pending.note(Stage::Status, Reason::StatusUnavailable);
+                    break;
+                }
+                Ok(ObjStatus::Active) => {}
+                Ok(ObjStatus::Revoked) => reject!(Stage::Status, Reason::Revoked(obj)),
+                Ok(ObjStatus::Superseded) => reject!(Stage::Status, Reason::Superseded(obj)),
+                Ok(ObjStatus::Unknown) => pending.note(Stage::Status, Reason::StatusUnknown(obj)),
+            }
+        }
+
+        match pending.0 {
+            Some(f) => Decision::Indeterminate(f),
+            None => Decision::Accept,
+        }
+    }
+}

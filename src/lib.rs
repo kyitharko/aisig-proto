@@ -13,7 +13,12 @@
 //! - [`baseline`]: the deliberately weak signature-only verifier (spec §7.4).
 //! - [`experiment`]: synthetic fixture, case mutations, label loading and reporting.
 
+pub mod asset;
+pub mod baseline;
 pub mod codec;
 pub mod crypto;
 pub mod decision;
+pub mod evidence;
 pub mod model;
+pub mod policy;
+pub mod verifier;
