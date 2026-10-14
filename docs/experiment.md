@@ -252,7 +252,9 @@ All Rv.
   the oracle reports Allowed(child) ⊆ Allowed(parent) = true; the oracle reports the child
   inadmissible; the implementation reports the child inadmissible; the implementation's
   raw ScopeWithin is false. This documents why the equivalence is claimed only for
-  admissible scopes.
+  admissible scopes. In tests/scope_oracle.rs the paths are relabelled to the oracle
+  universe (`/a` for `/app`, `/a/b` for `/app/private`, `/a/c` for `/app/reports`); the
+  literal `/app` version is a unit test in src/asset.rs.
 - **SO2 (property).** Random scopes over a finite synthetic universe (one web origin, path
   segments from {a, b, c}, depth ≤ 3; db clusters {c1, c2} × databases {d1, d2} × schemas
   {s1, s2}). The oracle enumerates every node and computes membership with its own

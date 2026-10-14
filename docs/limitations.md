@@ -64,6 +64,10 @@ after they are measured.
 - Cases are synthetic and single-factor (plus three precedence cases); real deployments
   will produce combinations not covered here.
 - Benchmarks measure a single machine and an in-memory status fixture; they say nothing
-  about network status lookups or production load.
+  about network status lookups or production load. The recorded run used the `powersave`
+  CPU governor without core pinning, and the policy and status series are within a few
+  hundred ns, close to `Instant` timer overhead (see docs/report.md).
+- Property tests use a fixed seed plus two extra seeds that were run by hand. Passing
+  them is not a coverage guarantee.
 - The literature comparison behind this design is selective; absence of a public feature
   in provider documentation does not show that no private implementation exists.
