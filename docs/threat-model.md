@@ -1,6 +1,6 @@
-# Threat model — RQ4 chain verifier (DRAFT v0)
+# Threat model — RQ4 chain verifier (DRAFT r2)
 
-**Status:** DRAFT for owner review, 2026-10-15. See [spec.md](spec.md) for symbols.
+**Status:** DRAFT r2, 2026-10-15. See [spec.md](spec.md) for symbols.
 
 ## 1. System and trust boundary
 
@@ -21,8 +21,9 @@ Trusted for this slice: P's own root registry, asset-binding fixture, clock and 
 fixture; the Ed25519 implementation; the secrecy of K_O, K_admin, K_authorizer unless a
 case says otherwise.
 
-Untrusted: every byte in the presented bundle, including any self-signed root, envelope
-key hints, and payload contents before their signature verifies.
+Untrusted: every byte in the presented bundle, including the optional self-signed root
+(which the chain-aware verifier never reads), envelope key hints, and payload contents
+before their signature verifies.
 
 ## 2. Actors
 
@@ -40,7 +41,7 @@ key hints, and payload contents before their signature verifies.
 
 | ID | Threat | Expected defence (stage) | Case groups |
 | --- | --- | --- | --- |
-| TH1 | Self-signed or copied root claiming O | Registry pin; bundle root ignored (N) | R |
+| TH1 | Self-signed or copied root claiming O | Registry pin; `root` slot never read (N) | R01, R02, V09, V10 |
 | TH2 | Admin without explicit delegation right issues D_U | `may_delegate_grant_issuer` required (P) | D01 |
 | TH3 | Admin or authorizer widens assets, test classes, duration, validity or constraints | ScopeWithin / ceilings (P) | D, M |
 | TH4 | Tester edits a signed grant (adds targets) | Signature over exact bytes (S) | S |
@@ -52,23 +53,38 @@ key hints, and payload contents before their signature verifies.
 | TH10 | Cross-tenant use: sibling org assets or org_id swap | Linkage org_id + binding fixture (L, B) | M02, B02 |
 | TH11 | Cross-provider replay | Audience = P (L) | A |
 | TH12 | Expired / not-yet-valid / revoked / superseded authority | Time and status stages (T, X) | T, X |
-| TH13 | Unknown critical constraint silently ignored (permission widened) | Indeterminate, never Accept (P) | F01, F02 |
-| TH14 | Missing evidence treated as approval | Indeterminate, Reject-dominates order (§7) | B, R04, X04, T10, P |
+| TH13 | Unknown critical constraint silently ignored (permission widened) | **Reject** at policy stage (`UnsupportedCriticalConstraint`), never Accept (P) | F01, F02 |
+| TH14 | Missing evidence treated as approval | Indeterminate; Reject-dominates order; conditional evaluation never yields Accept (spec §7.2) | B, R04, X04, X05, T10, P |
+| TH15 | Scope-shape differentials: redundant or self-cancelling targets read differently by different verifiers | Admissibility rule (P) | M20, SO1, SO2 |
+| TH16 | Omitted test scope read as "unrestricted" | `test_scope` required; `unrestricted` must be explicit and signed (F, P) | M08, M21, V06 |
 
 ## 4. Out of scope (non-goals for v0)
 
 - **Stolen-grant presentation** by someone other than T, and agent session/subagent binding (RQ5).
-- **Agent actions outside scope** at runtime; tool mediation and bypass (RQ6).
+- **Agent actions outside scope** at runtime; tool mediation and bypass; how a TestClass maps to actions (RQ6).
 - **Revocation latency** and cache staleness in a real distributed status service (RQ7).
 - **Real organization identity proof** and first-admin authority (RQ1).
 - **Real asset ownership**, shared/third-party hosting, and legal testing rights (RQ2; legal).
 - Compromise of K_O or of P itself; side channels; denial of service against the verifier.
 - Privacy of chain metadata disclosed to P (RQ8).
 
-## 5. Security goals stated as test obligations
+## 5. What the evaluation can and cannot show
 
-- **Soundness:** no case labelled Reject or Indeterminate is Accepted by the chain-aware verifier.
-- **Conditional completeness:** every case labelled Accept is Accepted.
-- **No silent widening:** unknown critical constraints and missing evidence never yield Accept.
-- **Baseline gap:** the signature-only baseline is expected to Accept TH1, TH2, TH3, TH5,
-  TH9–TH14 style cases whose signatures are valid. That gap is measured, not assumed.
+**Empirical: agreement with reviewed labels.** The test suite checks that the
+implementation's decision, stage and reason equal the owner-reviewed label for each
+case, and that property-based mutations behave as their mutation kind predicts. Passing
+shows that this implementation agrees with these labels on these inputs. It does not
+show that the spec is correct, that the labels are complete, or that untested inputs
+behave well.
+
+**Formal: not claimed.** No machine-checked proof of soundness or completeness exists.
+The only formal argument is the proof sketch for the ScopeWithin/admissibility lemma
+(spec §4.3), which a brute-force oracle cross-checks on a finite synthetic universe.
+Soundness in the formal sense — every Accept is a valid chain under the spec, for every
+input — remains a proof obligation.
+
+**Baseline hypotheses (to be measured, not assumed).** The signature-only baseline is
+*expected* to Accept TH1–TH3, TH5 and TH8–TH16 cases whose signatures are valid, and to
+Reject V09/V10 because it needs the root slot. These are hypotheses about the baseline.
+The measured counts in `results/` are authoritative, including any place where the
+hypothesis turns out wrong.
