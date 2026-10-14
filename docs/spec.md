@@ -228,7 +228,7 @@ verification only to find key references. No authorization or scope decision use
 object's fields until its signature verifies (or, under H in §7.2, until it verifies under
 the asserted key, and then only to derive a Reject).
 
-The implementation uses a maintained Ed25519 library (`ed25519-dalek` 2.x, `verify_strict`)
+The implementation uses a maintained Ed25519 library (`ed25519-dalek` 3.x, `verify_strict`)
 and SHA-256 from `sha2`. It does not implement primitives.
 
 ---
