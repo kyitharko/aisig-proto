@@ -1,0 +1,768 @@
+# Expected labels for the RQ4 experiment, transcribed from docs/experiment.md (r2).
+# This file is the oracle. Never edit a label to match verifier output; a mismatch is a
+# test failure to investigate. label_status: reviewed = agreed by owner as written
+# (2026-10-15); reviewed-by-instruction = set by explicit owner instruction (2026-10-15);
+# proposed = awaiting owner review.
+
+[[case]]
+id = "V01"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "V02"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "V03"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "V04"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "V05"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "V06"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed-by-instruction"
+note = "explicit unrestricted test_scope (owner instruction 2026-10-15)"
+
+[[case]]
+id = "V07"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "V08"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "V09"
+kind = "chain"
+expected = "Accept"
+label_status = "proposed"
+note = "new in r2: malformed root slot ignored by chain-aware verifier"
+
+[[case]]
+id = "V10"
+kind = "chain"
+expected = "Accept"
+label_status = "proposed"
+note = "new in r2: absent root slot"
+
+[[case]]
+id = "R01"
+kind = "chain"
+expected = "Reject"
+stage = "N"
+reason = "RootKeyNotPinned"
+label_status = "reviewed"
+
+[[case]]
+id = "R02"
+kind = "chain"
+expected = "Reject"
+stage = "N"
+reason = "UnpinnedOrganization"
+label_status = "reviewed"
+
+[[case]]
+id = "R03"
+kind = "chain"
+expected = "Reject"
+stage = "N"
+reason = "RootNotActive"
+label_status = "reviewed"
+
+[[case]]
+id = "R04"
+kind = "chain"
+expected = "Indeterminate"
+stage = "N"
+reason = "RegistryUnavailable"
+label_status = "reviewed"
+
+[[case]]
+id = "R05"
+kind = "chain"
+expected = "Reject"
+stage = "T"
+reason = "Expired{root}"
+label_status = "reviewed"
+
+[[case]]
+id = "R06"
+kind = "chain"
+expected = "Reject"
+stage = "N"
+reason = "RootUsageMismatch"
+label_status = "reviewed"
+
+[[case]]
+id = "S01"
+kind = "chain"
+expected = "Reject"
+stage = "S"
+reason = "InvalidSignature{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "S02"
+kind = "chain"
+expected = "Reject"
+stage = "S"
+reason = "InvalidSignature{D_U}"
+label_status = "reviewed"
+
+[[case]]
+id = "S03"
+kind = "chain"
+expected = "Reject"
+stage = "S"
+reason = "InvalidSignature{C_A}"
+label_status = "reviewed"
+
+[[case]]
+id = "S04"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "UnsupportedAlgorithm"
+label_status = "reviewed"
+
+[[case]]
+id = "S05"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "NonCanonicalEncoding"
+label_status = "reviewed"
+
+[[case]]
+id = "S06"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "DuplicateField"
+label_status = "reviewed"
+
+[[case]]
+id = "S07"
+kind = "chain"
+expected = "Reject"
+stage = "S"
+reason = "InvalidSignature{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "D01"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "MissingDelegationRight"
+label_status = "reviewed"
+
+[[case]]
+id = "D02"
+kind = "chain"
+expected = "Reject"
+stage = "L"
+reason = "IssuerKeyMismatch{D_U}"
+label_status = "reviewed"
+
+[[case]]
+id = "D03"
+kind = "chain"
+expected = "Reject"
+stage = "L"
+reason = "ParentMismatch{D_U}"
+label_status = "reviewed"
+
+[[case]]
+id = "D04"
+kind = "chain"
+expected = "Reject"
+stage = "L"
+reason = "ParentVersionMismatch{D_U}"
+label_status = "reviewed"
+
+[[case]]
+id = "D05"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "DelegationAmplifies{assets}"
+label_status = "reviewed"
+
+[[case]]
+id = "D06"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "DelegationAmplifies{test_ceiling}"
+label_status = "reviewed"
+
+[[case]]
+id = "D07"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "DelegationAmplifies{validity}"
+label_status = "reviewed"
+
+[[case]]
+id = "D08"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "DelegationAmplifies{max_duration}"
+label_status = "reviewed"
+
+[[case]]
+id = "D09"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "MissingRequiredObject{issuer}"
+label_status = "reviewed"
+
+[[case]]
+id = "D10"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "WrongObjectType{grant}"
+label_status = "reviewed"
+
+[[case]]
+id = "D11"
+kind = "chain"
+expected = "Reject"
+stage = "L"
+reason = "IssuerKeyMismatch{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "M01"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetOutsideEnvelope"
+label_status = "reviewed"
+
+[[case]]
+id = "M02"
+kind = "chain"
+expected = "Reject"
+stage = "L"
+reason = "TenantMismatch"
+label_status = "reviewed"
+
+[[case]]
+id = "M03"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetOutsideEnvelope"
+label_status = "reviewed"
+
+[[case]]
+id = "M04"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetInMandatoryExclusion"
+label_status = "proposed"
+note = "label agreed 2026-10-15; mutation clarified in r2 (G.exclusions = empty) - needs re-confirmation"
+
+[[case]]
+id = "M05"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "MissingMandatoryExclusion"
+label_status = "reviewed"
+
+[[case]]
+id = "M06"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "MissingMandatoryExclusion"
+label_status = "reviewed"
+
+[[case]]
+id = "M07"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TestScopeAmplifies"
+label_status = "reviewed"
+
+[[case]]
+id = "M08"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "MissingRequiredField"
+label_status = "reviewed-by-instruction"
+note = "test_scope required (owner instruction 2026-10-15)"
+
+[[case]]
+id = "M09"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "DurationExceedsMax"
+label_status = "reviewed"
+
+[[case]]
+id = "M10"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "NonCanonicalAsset"
+label_status = "reviewed"
+
+[[case]]
+id = "M11"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "NonCanonicalAsset"
+label_status = "reviewed"
+
+[[case]]
+id = "M12"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "UnsupportedAssetSyntax"
+label_status = "reviewed"
+
+[[case]]
+id = "M13"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetOutsideEnvelope"
+label_status = "reviewed"
+
+[[case]]
+id = "M14"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetOutsideEnvelope"
+label_status = "reviewed"
+
+[[case]]
+id = "M15"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetOutsideEnvelope"
+label_status = "reviewed"
+
+[[case]]
+id = "M16"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetOutsideEnvelope"
+label_status = "reviewed"
+
+[[case]]
+id = "M17"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "ConstraintAmplifies"
+label_status = "reviewed"
+
+[[case]]
+id = "M18"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "ConstraintAmplifies"
+label_status = "reviewed"
+
+[[case]]
+id = "M19"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "NonCanonicalAsset"
+label_status = "reviewed"
+
+[[case]]
+id = "M20"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "InadmissibleScope{G}"
+label_status = "proposed"
+note = "new in r2: admissibility rule"
+
+[[case]]
+id = "M21"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TestScopeAmplifies"
+label_status = "proposed"
+note = "new in r2: explicit unrestricted under a ceiling"
+
+[[case]]
+id = "T01"
+kind = "chain"
+expected = "Reject"
+stage = "T"
+reason = "NotYetValid{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "T02"
+kind = "chain"
+expected = "Reject"
+stage = "T"
+reason = "Expired{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "T03"
+kind = "chain"
+expected = "Accept"
+label_status = "reviewed"
+
+[[case]]
+id = "T04"
+kind = "chain"
+expected = "Indeterminate"
+stage = "T"
+reason = "ClockUncertainty{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "T05"
+kind = "chain"
+expected = "Indeterminate"
+stage = "T"
+reason = "ClockUncertainty{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "T06"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "MalformedWindow"
+label_status = "reviewed"
+
+[[case]]
+id = "T07"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "MalformedTime"
+label_status = "reviewed"
+
+[[case]]
+id = "T08"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "NonCanonicalTime"
+label_status = "reviewed"
+
+[[case]]
+id = "T09"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "WindowExceedsParent"
+label_status = "reviewed"
+
+[[case]]
+id = "T10"
+kind = "chain"
+expected = "Indeterminate"
+stage = "T"
+reason = "ClockUnavailable"
+label_status = "reviewed"
+
+[[case]]
+id = "T11"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "NonCanonicalTime"
+label_status = "reviewed"
+
+[[case]]
+id = "X01"
+kind = "chain"
+expected = "Reject"
+stage = "X"
+reason = "Revoked{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "X02"
+kind = "chain"
+expected = "Reject"
+stage = "X"
+reason = "Revoked{D_U}"
+label_status = "reviewed"
+
+[[case]]
+id = "X03"
+kind = "chain"
+expected = "Reject"
+stage = "X"
+reason = "Revoked{C_A}"
+label_status = "reviewed"
+
+[[case]]
+id = "X04"
+kind = "chain"
+expected = "Indeterminate"
+stage = "X"
+reason = "StatusUnavailable"
+label_status = "reviewed"
+
+[[case]]
+id = "X05"
+kind = "chain"
+expected = "Indeterminate"
+stage = "X"
+reason = "StatusUnknown{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "X06"
+kind = "chain"
+expected = "Reject"
+stage = "X"
+reason = "Superseded{C_A}"
+label_status = "reviewed"
+
+[[case]]
+id = "A01"
+kind = "chain"
+expected = "Reject"
+stage = "L"
+reason = "WrongAudience{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "A02"
+kind = "chain"
+expected = "Reject"
+stage = "L"
+reason = "WrongAudience{D_U}"
+label_status = "reviewed"
+
+[[case]]
+id = "A03"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "MissingRequiredField"
+label_status = "reviewed"
+
+[[case]]
+id = "F01"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "UnsupportedCriticalConstraint{G}"
+label_status = "reviewed-by-instruction"
+note = "Q1 decision: Reject (owner instruction 2026-10-15)"
+
+[[case]]
+id = "F02"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "UnsupportedCriticalConstraint{D_U}"
+label_status = "reviewed-by-instruction"
+note = "Q1 decision: Reject (owner instruction 2026-10-15)"
+
+[[case]]
+id = "F03"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "UnknownField"
+label_status = "reviewed"
+
+[[case]]
+id = "F04"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "UnsupportedVersion"
+label_status = "reviewed"
+
+[[case]]
+id = "F05"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "MissingRequiredField"
+label_status = "reviewed"
+
+[[case]]
+id = "F06"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "DuplicateConstraintName"
+label_status = "reviewed-by-instruction"
+note = "reason renamed (owner instruction 2026-10-15)"
+
+[[case]]
+id = "F07"
+kind = "chain"
+expected = "Reject"
+stage = "F"
+reason = "UnknownEnumValue"
+label_status = "reviewed"
+
+[[case]]
+id = "B01"
+kind = "chain"
+expected = "Indeterminate"
+stage = "B"
+reason = "NoBindingEvidence"
+label_status = "reviewed"
+
+[[case]]
+id = "B02"
+kind = "chain"
+expected = "Reject"
+stage = "B"
+reason = "AssetBoundToOtherOrg"
+label_status = "reviewed"
+
+[[case]]
+id = "B03"
+kind = "chain"
+expected = "Indeterminate"
+stage = "B"
+reason = "BindingUnavailable"
+label_status = "reviewed"
+
+[[case]]
+id = "P01"
+kind = "chain"
+expected = "Reject"
+stage = "S"
+reason = "InvalidSignature{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "P02"
+kind = "chain"
+expected = "Reject"
+stage = "T"
+reason = "Expired{G}"
+label_status = "reviewed"
+
+[[case]]
+id = "P03"
+kind = "chain"
+expected = "Reject"
+stage = "P"
+reason = "TargetOutsideEnvelope"
+label_status = "proposed"
+note = "depends on spec r2 section 7.2 conditional-evaluation rule; not reviewed until that rule is accepted"
+
+[[case]]
+id = "Q01"
+kind = "scope_query"
+probe = "web:https://app.acme.test:443/app/reports/q3"
+expected = "InScope"
+label_status = "reviewed"
+
+[[case]]
+id = "Q02"
+kind = "scope_query"
+probe = "web:https://app.acme.test:443/app/private/report"
+expected = "Excluded"
+label_status = "reviewed"
+
+[[case]]
+id = "Q03"
+kind = "scope_query"
+probe = "web:https://app.acme.test:443/app/private"
+expected = "Excluded"
+label_status = "reviewed"
+
+[[case]]
+id = "Q04"
+kind = "scope_query"
+probe = "web:https://app.acme.test:443/app/privateer/x"
+expected = "InScope"
+label_status = "reviewed"
+
+[[case]]
+id = "Q05"
+kind = "scope_query"
+probe = "web:https://app.acme.test:443/app/admin"
+expected = "Excluded"
+label_status = "reviewed"
+
+[[case]]
+id = "Q06"
+kind = "scope_query"
+probe = "web:https://app.acme.test:443/app/admin/users/7"
+expected = "Excluded"
+label_status = "reviewed"
+
+[[case]]
+id = "Q07"
+kind = "scope_query"
+probe = "db:cluster1/main/hr"
+expected = "OutOfScope"
+label_status = "reviewed"
+
+[[case]]
+id = "Q08"
+kind = "scope_query"
+probe = "db:cluster1/main/billing"
+expected = "InScope"
+label_status = "reviewed"
+
+[[case]]
+id = "Q09"
+kind = "scope_query"
+probe = "web:https://app.acme.test:443/"
+expected = "OutOfScope"
+label_status = "reviewed"
+
+[[case]]
+id = "Q10"
+kind = "scope_query"
+probe = "web:http://app.acme.test:80/app/x"
+expected = "OutOfScope"
+label_status = "reviewed"

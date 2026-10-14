@@ -1,0 +1,906 @@
+{
+  "chain_cases": [
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V04",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V06",
+      "label_status": "reviewed-by-instruction"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V07",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V08",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / F / MissingRequiredObject{root}",
+      "baseline_class_match": false,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V09",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Reject / F / MissingRequiredObject{root}",
+      "baseline_class_match": false,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "V10",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / N / RootKeyNotPinned",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / N / RootKeyNotPinned",
+      "id": "R01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / N / UnpinnedOrganization",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / N / UnpinnedOrganization",
+      "id": "R02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / N / RootNotActive",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / N / RootNotActive",
+      "id": "R03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / N / RegistryUnavailable",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / N / RegistryUnavailable",
+      "id": "R04",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / T / Expired{root}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / T / Expired{root}",
+      "id": "R05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / N / RootUsageMismatch",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / N / RootUsageMismatch",
+      "id": "R06",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / S / InvalidSignature{G}",
+      "baseline_class_match": true,
+      "chain_aware": "Reject / S / InvalidSignature{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / S / InvalidSignature{G}",
+      "id": "S01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / S / InvalidSignature{D_U}",
+      "baseline_class_match": true,
+      "chain_aware": "Reject / S / InvalidSignature{D_U}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / S / InvalidSignature{D_U}",
+      "id": "S02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / S / InvalidSignature{C_A}",
+      "baseline_class_match": true,
+      "chain_aware": "Reject / S / InvalidSignature{C_A}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / S / InvalidSignature{C_A}",
+      "id": "S03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / UnsupportedAlgorithm",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / UnsupportedAlgorithm",
+      "id": "S04",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / NonCanonicalEncoding",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / NonCanonicalEncoding",
+      "id": "S05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / DuplicateField",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / DuplicateField",
+      "id": "S06",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / S / InvalidSignature{G}",
+      "baseline_class_match": true,
+      "chain_aware": "Reject / S / InvalidSignature{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / S / InvalidSignature{G}",
+      "id": "S07",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / MissingDelegationRight",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / MissingDelegationRight",
+      "id": "D01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / L / IssuerKeyMismatch{D_U}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / L / IssuerKeyMismatch{D_U}",
+      "id": "D02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / L / ParentMismatch{D_U}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / L / ParentMismatch{D_U}",
+      "id": "D03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / L / ParentVersionMismatch{D_U}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / L / ParentVersionMismatch{D_U}",
+      "id": "D04",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / DelegationAmplifies{assets}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / DelegationAmplifies{assets}",
+      "id": "D05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / DelegationAmplifies{test_ceiling}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / DelegationAmplifies{test_ceiling}",
+      "id": "D06",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / DelegationAmplifies{validity}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / DelegationAmplifies{validity}",
+      "id": "D07",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / DelegationAmplifies{max_duration}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / DelegationAmplifies{max_duration}",
+      "id": "D08",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / F / MissingRequiredObject{issuer}",
+      "baseline_class_match": true,
+      "chain_aware": "Reject / F / MissingRequiredObject{issuer}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / MissingRequiredObject{issuer}",
+      "id": "D09",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / S / InvalidSignature{G}",
+      "baseline_class_match": true,
+      "chain_aware": "Reject / F / WrongObjectType{grant}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / WrongObjectType{grant}",
+      "id": "D10",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / L / IssuerKeyMismatch{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / L / IssuerKeyMismatch{G}",
+      "id": "D11",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetOutsideEnvelope",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetOutsideEnvelope",
+      "id": "M01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / L / TenantMismatch",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / L / TenantMismatch",
+      "id": "M02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetOutsideEnvelope",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetOutsideEnvelope",
+      "id": "M03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetInMandatoryExclusion",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetInMandatoryExclusion",
+      "id": "M04",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / MissingMandatoryExclusion",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / MissingMandatoryExclusion",
+      "id": "M05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / MissingMandatoryExclusion",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / MissingMandatoryExclusion",
+      "id": "M06",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TestScopeAmplifies",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TestScopeAmplifies",
+      "id": "M07",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / MissingRequiredField",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / MissingRequiredField",
+      "id": "M08",
+      "label_status": "reviewed-by-instruction"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / DurationExceedsMax",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / DurationExceedsMax",
+      "id": "M09",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / NonCanonicalAsset",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / NonCanonicalAsset",
+      "id": "M10",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / NonCanonicalAsset",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / NonCanonicalAsset",
+      "id": "M11",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / UnsupportedAssetSyntax",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / UnsupportedAssetSyntax",
+      "id": "M12",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetOutsideEnvelope",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetOutsideEnvelope",
+      "id": "M13",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetOutsideEnvelope",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetOutsideEnvelope",
+      "id": "M14",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetOutsideEnvelope",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetOutsideEnvelope",
+      "id": "M15",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetOutsideEnvelope",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetOutsideEnvelope",
+      "id": "M16",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / ConstraintAmplifies",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / ConstraintAmplifies",
+      "id": "M17",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / ConstraintAmplifies",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / ConstraintAmplifies",
+      "id": "M18",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / NonCanonicalAsset",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / NonCanonicalAsset",
+      "id": "M19",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / InadmissibleScope{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / InadmissibleScope{G}",
+      "id": "M20",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TestScopeAmplifies",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TestScopeAmplifies",
+      "id": "M21",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / T / NotYetValid{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / T / NotYetValid{G}",
+      "id": "T01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / T / Expired{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / T / Expired{G}",
+      "id": "T02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": true,
+      "chain_aware": "Accept",
+      "chain_aware_exact_match": true,
+      "expected": "Accept",
+      "id": "T03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / T / ClockUncertainty{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / T / ClockUncertainty{G}",
+      "id": "T04",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / T / ClockUncertainty{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / T / ClockUncertainty{G}",
+      "id": "T05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / MalformedWindow",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / MalformedWindow",
+      "id": "T06",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / MalformedTime",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / MalformedTime",
+      "id": "T07",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / NonCanonicalTime",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / NonCanonicalTime",
+      "id": "T08",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / WindowExceedsParent",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / WindowExceedsParent",
+      "id": "T09",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / T / ClockUnavailable",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / T / ClockUnavailable",
+      "id": "T10",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / NonCanonicalTime",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / NonCanonicalTime",
+      "id": "T11",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / X / Revoked{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / X / Revoked{G}",
+      "id": "X01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / X / Revoked{D_U}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / X / Revoked{D_U}",
+      "id": "X02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / X / Revoked{C_A}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / X / Revoked{C_A}",
+      "id": "X03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / X / StatusUnavailable",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / X / StatusUnavailable",
+      "id": "X04",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / X / StatusUnknown{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / X / StatusUnknown{G}",
+      "id": "X05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / X / Superseded{C_A}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / X / Superseded{C_A}",
+      "id": "X06",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / L / WrongAudience{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / L / WrongAudience{G}",
+      "id": "A01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / L / WrongAudience{D_U}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / L / WrongAudience{D_U}",
+      "id": "A02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / MissingRequiredField",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / MissingRequiredField",
+      "id": "A03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / UnsupportedCriticalConstraint{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / UnsupportedCriticalConstraint{G}",
+      "id": "F01",
+      "label_status": "reviewed-by-instruction"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / UnsupportedCriticalConstraint{D_U}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / UnsupportedCriticalConstraint{D_U}",
+      "id": "F02",
+      "label_status": "reviewed-by-instruction"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / UnknownField",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / UnknownField",
+      "id": "F03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / UnsupportedVersion",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / UnsupportedVersion",
+      "id": "F04",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / MissingRequiredField",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / MissingRequiredField",
+      "id": "F05",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / DuplicateConstraintName",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / DuplicateConstraintName",
+      "id": "F06",
+      "label_status": "reviewed-by-instruction"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / F / UnknownEnumValue",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / F / UnknownEnumValue",
+      "id": "F07",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / B / NoBindingEvidence",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / B / NoBindingEvidence",
+      "id": "B01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / B / AssetBoundToOtherOrg",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / B / AssetBoundToOtherOrg",
+      "id": "B02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Indeterminate / B / BindingUnavailable",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / B / BindingUnavailable",
+      "id": "B03",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Reject / S / InvalidSignature{G}",
+      "baseline_class_match": true,
+      "chain_aware": "Reject / S / InvalidSignature{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / S / InvalidSignature{G}",
+      "id": "P01",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / T / Expired{G}",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / T / Expired{G}",
+      "id": "P02",
+      "label_status": "reviewed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
+      "chain_aware": "Reject / P / TargetOutsideEnvelope",
+      "chain_aware_exact_match": true,
+      "expected": "Reject / P / TargetOutsideEnvelope",
+      "id": "P03",
+      "label_status": "proposed"
+    }
+  ],
+  "scope_queries": [
+    {
+      "actual": "InScope",
+      "expected": "InScope",
+      "id": "Q01",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/reports/q3"
+    },
+    {
+      "actual": "Excluded",
+      "expected": "Excluded",
+      "id": "Q02",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/private/report"
+    },
+    {
+      "actual": "Excluded",
+      "expected": "Excluded",
+      "id": "Q03",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/private"
+    },
+    {
+      "actual": "InScope",
+      "expected": "InScope",
+      "id": "Q04",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/privateer/x"
+    },
+    {
+      "actual": "Excluded",
+      "expected": "Excluded",
+      "id": "Q05",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/admin"
+    },
+    {
+      "actual": "Excluded",
+      "expected": "Excluded",
+      "id": "Q06",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/app/admin/users/7"
+    },
+    {
+      "actual": "OutOfScope",
+      "expected": "OutOfScope",
+      "id": "Q07",
+      "match": true,
+      "probe": "db:cluster1/main/hr"
+    },
+    {
+      "actual": "InScope",
+      "expected": "InScope",
+      "id": "Q08",
+      "match": true,
+      "probe": "db:cluster1/main/billing"
+    },
+    {
+      "actual": "OutOfScope",
+      "expected": "OutOfScope",
+      "id": "Q09",
+      "match": true,
+      "probe": "web:https://app.acme.test:443/"
+    },
+    {
+      "actual": "OutOfScope",
+      "expected": "OutOfScope",
+      "id": "Q10",
+      "match": true,
+      "probe": "web:http://app.acme.test:80/app/x"
+    }
+  ],
+  "totals": {
+    "baseline_all": {
+      "cases": 88,
+      "class_mismatch_reject_vs_indeterminate": 0,
+      "exact_stage_reason_match": 15,
+      "false_accept": 70,
+      "false_reject": 2,
+      "indeterminate": 0,
+      "indeterminate_on_accept_label": 0
+    },
+    "baseline_reviewed_only": {
+      "cases": 82,
+      "class_mismatch_reject_vs_indeterminate": 0,
+      "exact_stage_reason_match": 15,
+      "false_accept": 66,
+      "false_reject": 0,
+      "indeterminate": 0,
+      "indeterminate_on_accept_label": 0
+    },
+    "chain_aware_all": {
+      "cases": 88,
+      "class_mismatch_reject_vs_indeterminate": 0,
+      "exact_stage_reason_match": 88,
+      "false_accept": 0,
+      "false_reject": 0,
+      "indeterminate": 8,
+      "indeterminate_on_accept_label": 0
+    },
+    "chain_aware_reviewed_only": {
+      "cases": 82,
+      "class_mismatch_reject_vs_indeterminate": 0,
+      "exact_stage_reason_match": 82,
+      "false_accept": 0,
+      "false_reject": 0,
+      "indeterminate": 8,
+      "indeterminate_on_accept_label": 0
+    }
+  }
+}

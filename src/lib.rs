@@ -19,6 +19,7 @@ pub mod codec;
 pub mod crypto;
 pub mod decision;
 pub mod evidence;
+pub mod experiment;
 pub mod model;
 pub mod policy;
 pub mod verifier;
