@@ -1,6 +1,6 @@
-# Limitations (DRAFT r2)
+# Limitations (DRAFT r3)
 
-**Status:** DRAFT r2, 2026-10-15. Updated as stages land; measured limits are added only
+**Status:** DRAFT r3, 2026-10-15. Updated as stages land; measured limits are added only
 after they are measured.
 
 ## What an Accept does not mean
@@ -11,13 +11,20 @@ after they are measured.
   correct; nothing in this prototype checks them against real evidence.
 - It is not proof that the party presenting G holds K_T, nor that a given agent session
   or subagent is bound to G (RQ5). A copied grant verifies exactly like the original.
-- It is not enforcement of what an agent or tool actually does. `scope_query` is a lookup
-  on a grant, not mediation of traffic or effects (RQ6). Effects of unmanaged or opaque
+- It is not enforcement of what an agent or tool actually does. `exact_node_lookup` and
+  `subtree_lookup` are lookups on a grant, not mediation of traffic or effects (RQ6). An
+  exact-node InScope answer covers one node only, never its subtree. Effects of unmanaged or opaque
   tools are not observed. What a TestClass such as `injection_testing` permits in terms of
   concrete actions is not defined anywhere in v0; only sets of class names are compared.
 - It is not a fresh revocation decision. Status comes from an in-memory fixture that
   answers instantly and is always current; real freshness, caching, propagation and
-  bounded revocation delay are RQ7 and are not measured.
+  bounded revocation delay are RQ7 and are not measured. Since r3 the fixture is keyed by
+  the exact signed object (spec §6). That prevents status inheritance between objects,
+  but says nothing about how a real status service learns of objects or keeps up to date.
+- An object with no exact status record is Indeterminate, not Reject, even when a record
+  exists for the same id/version with different content (possible equivocation; spec Q9).
+- The anchor stage now checks that the returned registry record names O and Ed25519. The
+  registry itself is still a trusted fixture (RQ1), and key rotation is not modelled.
 - It is not P's service decision (ProviderExec). P may still refuse to run something under
   its own policy; that refusal is not a statement about O's authorization.
 - "Indeterminate" and "Reject" are not accusations of malicious activity.

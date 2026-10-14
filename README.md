@@ -4,9 +4,10 @@ Private research prototype. It asks whether an AI-agent provider P can check tha
 engagement grant for security testing is backed by a non-amplifying chain of authority:
 pinned organization root → admin delegation → issuer delegation → tester grant.
 
-**Status:** spec draft r2 with owner decisions applied; Rust prototype, reviewed-case
-harness, property tests and CPU benchmark implemented. Six case labels are still
-*proposed* (see [docs/experiment.md](docs/experiment.md)). Results: [docs/report.md](docs/report.md).
+**Status:** spec draft r3 with owner decisions applied; Rust prototype, reviewed-case
+harness, property tests and CPU benchmark implemented; r3 adds exact-object status
+identity, registry-record checks and named scope lookups. Five chain labels and five
+lookup labels are still *proposed* (see [docs/experiment.md](docs/experiment.md)). Results: [docs/report.md](docs/report.md).
 
 Everything here is synthetic: organizations, keys, `.test` hosts and databases. Nothing
 scans, connects to, or tests any real target. No real credentials, client data or live
@@ -16,7 +17,7 @@ assets are in this repository.
 
 - [docs/spec.md](docs/spec.md) — glossary, data model, signed bytes, scope semantics, decision rule, owner decisions
 - [docs/threat-model.md](docs/threat-model.md) — actors, threats in scope, non-goals, what tests can and cannot show
-- [docs/experiment.md](docs/experiment.md) — base fixture, 88 chain cases with review status, oracle, metrics, benchmark protocol
+- [docs/experiment.md](docs/experiment.md) — base fixture, 93 chain cases and 15 scope lookups with review status, oracle, metrics, benchmark protocol
 - [docs/limitations.md](docs/limitations.md) — what an Accept does and does not mean
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
@@ -33,9 +34,9 @@ assets are in this repository.
 src/codec.rs        envelopes, strict parse, canonical JSON, signed bytes (stage F)
 src/crypto.rs       Ed25519 verify over exact bytes (ed25519-dalek), key ids (stage S)
 src/model.rs        typed payloads and assets, decode-time validation
-src/asset.rs        within, admissibility, ScopeWithin, scope_query
+src/asset.rs        within, admissibility, ScopeWithin, exact_node_lookup, subtree_lookup
 src/policy.rs       linkage (L) and policy (P) predicates — pure, no crypto
-src/evidence.rs     registry / binding / clock / status traits + in-memory fixtures
+src/evidence.rs     registry / binding / clock / status traits, exact-object StatusKey, fixtures
 src/verifier.rs     ValidChain_P decision procedure
 src/baseline.rs     deliberately weak signature-only verifier
 src/experiment/     synthetic fixture, case mutations, label loading, reporting
@@ -43,10 +44,10 @@ src/bin/eval.rs     runs all labelled cases through both verifiers
 src/bin/bench.rs    CPU micro-benchmark
 tests/cases/reviewed_cases.toml   the label oracle (never edited to match output)
 tests/reviewed_cases.rs           exact label agreement
-tests/scope_oracle.rs             independent brute-force set oracle (SO1, SO2)
+tests/scope_oracle.rs             independent brute-force set oracle (SO1–SO3)
 tests/properties.rs               property-based valid chains and mutations
 scripts/bench.sh                  benchmark with environment capture
-results/                          generated outputs
+results/                          generated outputs (see results/README.md)
 ```
 
 ## Commands
