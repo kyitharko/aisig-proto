@@ -1,0 +1,16 @@
+# Build output
+/target
+
+# Research handoff / private notes stay out of git
+AI_Agent_*.md
+
+# Never commit real credentials, keys, or client material
+*.pem
+*.key
+*.p8
+*.p12
+secrets/
+.env
+.env.*
+real-data/
+client-data/
