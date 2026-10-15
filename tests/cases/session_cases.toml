@@ -175,3 +175,15 @@ id = "SI05"
 kind = "issue"
 expected = "IssueUnavailable / InvalidClockReading"
 label_status = "reviewed"
+
+[[case]]
+id = "SI06"
+kind = "issue"
+expected = "IssueUnavailable / InvalidClockReading"
+label_status = "proposed"
+
+[[case]]
+id = "SI07"
+kind = "issue"
+expected = "IssueUnavailable / InvalidClockReading"
+label_status = "proposed"

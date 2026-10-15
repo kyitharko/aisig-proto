@@ -418,10 +418,20 @@ impl<'a> SessionService<'a> {
             Some(end) => end.min(grant.window.end.0),
             None => grant.window.end.0,
         });
-        // The chain check and this issuance read are two clock calls; a clock that advanced
-        // between them (or a hand-built Ts) must not mint a challenge with no positive
-        // validity. Fail closed on an out-of-window issued_at or a non-positive lifetime.
-        if reading.now.0 >= grant.window.end.0 || expires_at.0 <= reading.now.0 {
+        // The chain check and this issuance read are two clock calls, and
+        // Ts/ClockReading are publicly constructible, so an invalid reading is rejected
+        // (never clamped). Fail closed on: negative uncertainty; a non-canonical issued_at
+        // or expires_at; an issued_at outside [G.window.start, G.window.end); or a
+        // non-positive lifetime. (session.md §4)
+        let issued_at = reading.now;
+        let canonical = |t: Ts| Ts::parse(&t.to_string()).map(|p| p == t).unwrap_or(false);
+        if reading.epsilon < 0
+            || !canonical(issued_at)
+            || !canonical(expires_at)
+            || issued_at.0 < grant.window.start.0
+            || issued_at.0 >= grant.window.end.0
+            || expires_at.0 <= issued_at.0
+        {
             return IssueOutcome::Unavailable(IssueFailure::InvalidClockReading);
         }
         let mut nonce = [0u8; 32];
