@@ -1,4 +1,4 @@
-# Threat model — RQ4 chain verifier (DRAFT r3.1)
+# Threat model — RQ4 chain verifier and RQ5 session slice (DRAFT r3.1 + s1)
 
 **Status:** DRAFT r3.1, 2026-10-15. See [spec.md](spec.md) for symbols.
 
@@ -63,6 +63,28 @@ before their signature verifies.
 | TH18 | Misfiled or mismatched registry record: the record returned for O names another org, or a different algorithm | Anchor checks record.org_id and record.algorithm, not just the lookup key; fails closed (N) | R07, R08 |
 | TH19 | Exact-node lookup misread as a subtree permission (`/app` InScope although `/app/admin` is excluded) | Separate `exact_node_lookup` and `subtree_lookup` APIs with effective-set semantics for the latter; still not enforcement | Q11, U01–U04, SO3 |
 | TH20 | API caller (integrating code) runs policy on a decoded body that differs from the verified payload | Single public entry point `verify(&Bundle)`; decoded objects read-only; pre-decoded evaluation private (spec §7.5) | tests/predecoded_api.rs, verifier doctests |
+
+## 3a. RQ5 session-slice threats (s1, proposed; see [session.md](session.md))
+
+| ID | Threat | Expected defence (session stage) | Cases |
+| --- | --- | --- | --- |
+| TH21 | A copied bundle is used by someone without K_T's private key | Proof of possession over a P-issued challenge with K_T from the accepted G (proof, pop) | SS02, SS04 |
+| TH22 | Replay of a valid proof, including concurrent replay | One-time atomic Pending→Consumed (challenge, consume) | SS05, SS22 |
+| TH23 | A proof minted for one P session is used in another | session_id stored in the challenge and compared with P's own session (binding) | SS06 |
+| TH24 | A proof for one grant is used with another grant | Challenge bound to the exact StatusKey of G, including the digest (binding) | SS07 |
+| TH25 | A challenge from another provider or audience | Audience in the stored challenge (binding) | SS08 |
+| TH26 | Stale proofs; a challenge outliving its grant | Expiry with clock uncertainty; expiry clamped to G.window.end (time, issuance) | SS09–SS11, SI04 |
+| TH27 | Rebinding by editing the challenge copy or the proof; cross-protocol signature reuse | Signed bytes rebuilt from P's stored record; distinct domain tag; strict proof parsing (pop, proof) | SS17, SS18, SS19 |
+| TH28 | Grant altered, revoked or expired between issuance and redemption | Chain re-verified at redemption (chain) | SS14, SS23 |
+| TH29 | An evidence outage yields SessionAccept, or burns the challenge | Indeterminate never accepts and never consumes; failed attempts do not consume (chain, challenge, time) | SS12, SS15, SS20, SS21, SS24 |
+
+Out of scope for s1, stated so that no one reads them as defended:
+- relay or phishing of a challenge into an attacker's own P session;
+- TLS or channel binding;
+- the session becoming a bearer state after redemption (no per-request proof of possession);
+- compromise of K_T;
+- RQ6 tool enforcement;
+- RQ7 status freshness during a session.
 
 ## 4. Out of scope (non-goals for v0)
 

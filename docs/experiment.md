@@ -376,3 +376,60 @@ After the fix:
 - decoded bodies equal the strict decoding of their signed payloads;
 - the same alteration made in a raw bundle's grant payload, keeping the original
   signature, is `Reject / S / InvalidSignature{G}`.
+
+## 11. RQ5 session cases (slice s1; all **Pr**)
+
+Spec: [session.md](session.md). Labels live in `tests/cases/session_cases.toml`, a separate
+file; the r3.1 chain and lookup labels file is not touched. They are written before the
+implementation and stay **proposed** until owner review. A multi-step case lists the
+outcome of each step in order, separated by ` ; `.
+
+**Session fixture.**
+- The chain is the base chain (§2), all objects registered Active.
+- P's session id is `sess-p-0001`.
+- The challenge is issued at now = 2026-10-15T10:00:00Z (ε = 2 s) with TTL 120 s, so it
+  expires at 10:02:00Z.
+- Redemption runs at now = 10:01:00Z, ε = 2 s, in session `sess-p-0001`.
+- The proof is signed by K(tester-1) over the response bytes of the issued challenge.
+- Any of these may be changed by the case.
+
+### Redemption (kind `session`)
+
+| ID | Mutation | Expected |
+| --- | --- | --- |
+| SS01 | none | `SessionAccept` |
+| SS02 | copied bundle presented with no proof | `SessionReject / proof / MissingProof` |
+| SS03 | proof signed by K(tester-2) (wrong key) | `SessionReject / pop / InvalidProofSignature` |
+| SS04 | copied bundle; proof signed by K(attacker) | `SessionReject / pop / InvalidProofSignature` |
+| SS05 | redeem the valid proof twice (replay) | `SessionAccept ; SessionReject / challenge / ChallengeAlreadyConsumed` |
+| SS06 | redeem in session `sess-p-0002` (cross-session) | `SessionReject / binding / SessionMismatch` |
+| SS07 | challenge issued for base G; redeemed with a bundle carrying G2 (engagement_id changed, re-signed, registered Active) (cross-grant) | `SessionReject / binding / GrantMismatch` |
+| SS08 | stored challenge has audience Q (as if written by Q's issuer into a shared store), validly signed by K(tester-1) | `SessionReject / binding / ChallengeAudienceMismatch` |
+| SS09 | redeem at 10:02:00Z, ε = 0 (expiry) | `SessionReject / time / ChallengeExpired` |
+| SS10 | redeem at 10:01:59Z, ε = 2 (straddles expiry) | `SessionIndeterminate / time / ClockUncertainty` |
+| SS11 | redeem at 10:01:57Z, ε = 2 (now + ε < expiry) | `SessionAccept` |
+| SS12 | challenge store unavailable at redemption | `SessionIndeterminate / challenge / ChallengeStateUnavailable` |
+| SS13 | proof names a challenge_id that P never issued | `SessionReject / challenge / UnknownChallenge` |
+| SS14 | grant payload in the bundle replaced with test_scope [auth_testing], original signature kept (altered grant) | `SessionReject / chain / ChainRejected(Reject / S / InvalidSignature{G})` |
+| SS15 | status source unavailable at redemption; valid proof | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable)` |
+| SS16 | status source unavailable; proof signed by K(tester-2) | `SessionReject / pop / InvalidProofSignature` |
+| SS17 | tester signs a copy of the challenge with session_id `sess-attacker`, sends the real challenge_id | `SessionReject / pop / InvalidProofSignature` |
+| SS18 | tester signs the right challenge bytes with type tag `EngagementGrant` | `SessionReject / pop / InvalidProofSignature` |
+| SS19 | proof JSON has an extra field `session_id` | `SessionReject / proof / MalformedProof` |
+| SS20 | first a K(tester-2) proof, then the valid proof (failed attempt must not consume) | `SessionReject / pop / InvalidProofSignature ; SessionAccept` |
+| SS21 | first with status unavailable, then with status available (Indeterminate must not consume) | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) ; SessionAccept` |
+| SS22 | 8 concurrent redemptions of the same valid proof (each on its own thread, released together by a barrier) | `accepts=1 already_consumed=7 other=0` |
+| SS23 | G marked revoked after issuance, before redemption | `SessionReject / chain / ChainRejected(Reject / X / Revoked{G})` |
+| SS24 | clock unavailable at redemption | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / ClockUnavailable)` |
+
+### Issuance (kind `issue`)
+
+| ID | Mutation | Expected |
+| --- | --- | --- |
+| SI01 | none | `Issued expires_at=2026-10-15T10:02:00Z` |
+| SI02 | G status revoked | `IssueRefused / Reject / X / Revoked{G}` |
+| SI03 | challenge store unavailable | `IssueUnavailable / ChallengeStateUnavailable` |
+| SI04 | G re-signed with window end 10:01:00Z (expiry clamped to the grant) | `Issued expires_at=2026-10-15T10:01:00Z` |
+
+**Count:** 28 proposed session-slice cases (24 redemption, 4 issuance). Reported
+separately from the 93 chain and 15 lookup labels, which are unchanged.

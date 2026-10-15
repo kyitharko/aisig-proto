@@ -1,0 +1,171 @@
+# Expected outcomes for the RQ5 session slice (docs/session.md), transcribed from
+# docs/experiment.md section 11. Separate from reviewed_cases.toml. All proposed until
+# owner review. Never edit an expected value to match implementation output.
+
+[[case]]
+id = "SS01"
+kind = "session"
+expected = "SessionAccept"
+label_status = "proposed"
+
+[[case]]
+id = "SS02"
+kind = "session"
+expected = "SessionReject / proof / MissingProof"
+label_status = "proposed"
+
+[[case]]
+id = "SS03"
+kind = "session"
+expected = "SessionReject / pop / InvalidProofSignature"
+label_status = "proposed"
+
+[[case]]
+id = "SS04"
+kind = "session"
+expected = "SessionReject / pop / InvalidProofSignature"
+label_status = "proposed"
+
+[[case]]
+id = "SS05"
+kind = "session"
+expected = "SessionAccept ; SessionReject / challenge / ChallengeAlreadyConsumed"
+label_status = "proposed"
+
+[[case]]
+id = "SS06"
+kind = "session"
+expected = "SessionReject / binding / SessionMismatch"
+label_status = "proposed"
+
+[[case]]
+id = "SS07"
+kind = "session"
+expected = "SessionReject / binding / GrantMismatch"
+label_status = "proposed"
+
+[[case]]
+id = "SS08"
+kind = "session"
+expected = "SessionReject / binding / ChallengeAudienceMismatch"
+label_status = "proposed"
+
+[[case]]
+id = "SS09"
+kind = "session"
+expected = "SessionReject / time / ChallengeExpired"
+label_status = "proposed"
+
+[[case]]
+id = "SS10"
+kind = "session"
+expected = "SessionIndeterminate / time / ClockUncertainty"
+label_status = "proposed"
+
+[[case]]
+id = "SS11"
+kind = "session"
+expected = "SessionAccept"
+label_status = "proposed"
+
+[[case]]
+id = "SS12"
+kind = "session"
+expected = "SessionIndeterminate / challenge / ChallengeStateUnavailable"
+label_status = "proposed"
+
+[[case]]
+id = "SS13"
+kind = "session"
+expected = "SessionReject / challenge / UnknownChallenge"
+label_status = "proposed"
+
+[[case]]
+id = "SS14"
+kind = "session"
+expected = "SessionReject / chain / ChainRejected(Reject / S / InvalidSignature{G})"
+label_status = "proposed"
+
+[[case]]
+id = "SS15"
+kind = "session"
+expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable)"
+label_status = "proposed"
+
+[[case]]
+id = "SS16"
+kind = "session"
+expected = "SessionReject / pop / InvalidProofSignature"
+label_status = "proposed"
+
+[[case]]
+id = "SS17"
+kind = "session"
+expected = "SessionReject / pop / InvalidProofSignature"
+label_status = "proposed"
+
+[[case]]
+id = "SS18"
+kind = "session"
+expected = "SessionReject / pop / InvalidProofSignature"
+label_status = "proposed"
+
+[[case]]
+id = "SS19"
+kind = "session"
+expected = "SessionReject / proof / MalformedProof"
+label_status = "proposed"
+
+[[case]]
+id = "SS20"
+kind = "session"
+expected = "SessionReject / pop / InvalidProofSignature ; SessionAccept"
+label_status = "proposed"
+
+[[case]]
+id = "SS21"
+kind = "session"
+expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) ; SessionAccept"
+label_status = "proposed"
+
+[[case]]
+id = "SS22"
+kind = "session"
+expected = "accepts=1 already_consumed=7 other=0"
+label_status = "proposed"
+
+[[case]]
+id = "SS23"
+kind = "session"
+expected = "SessionReject / chain / ChainRejected(Reject / X / Revoked{G})"
+label_status = "proposed"
+
+[[case]]
+id = "SS24"
+kind = "session"
+expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / ClockUnavailable)"
+label_status = "proposed"
+
+[[case]]
+id = "SI01"
+kind = "issue"
+expected = "Issued expires_at=2026-10-15T10:02:00Z"
+label_status = "proposed"
+
+[[case]]
+id = "SI02"
+kind = "issue"
+expected = "IssueRefused / Reject / X / Revoked{G}"
+label_status = "proposed"
+
+[[case]]
+id = "SI03"
+kind = "issue"
+expected = "IssueUnavailable / ChallengeStateUnavailable"
+label_status = "proposed"
+
+[[case]]
+id = "SI04"
+kind = "issue"
+expected = "Issued expires_at=2026-10-15T10:01:00Z"
+label_status = "proposed"
