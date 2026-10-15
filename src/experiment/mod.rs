@@ -2,6 +2,7 @@
 //! (docs/experiment.md). Test material only; all keys and assets are synthetic.
 
 pub mod cases;
+pub mod enforcement_cases;
 pub mod fixture;
 pub mod mutations;
 pub mod report;

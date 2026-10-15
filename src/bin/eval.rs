@@ -3,7 +3,7 @@
 
 use std::fs;
 
-use aisig_proto::experiment::{cases, report, session_cases};
+use aisig_proto::experiment::{cases, enforcement_cases, report, session_cases};
 
 fn main() {
     let labels = cases::load_default().unwrap_or_else(|e| panic!("{e}"));
@@ -79,4 +79,32 @@ fn main() {
         );
     }
     println!("wrote results/session_cases.md and results/session_cases.json");
+
+    // RQ6 enforcement slice: separate labels (EE01-EE26 reviewed, EE27 proposed).
+    let enf_labels =
+        cases::load(enforcement_cases::ENFORCEMENT_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
+    let enf_rows = enforcement_cases::run_all(&enf_labels);
+    fs::write(
+        "results/enforcement_cases.md",
+        enforcement_cases::render_markdown(&enf_rows),
+    )
+    .expect("write enforcement md");
+    let json =
+        serde_json::to_string_pretty(&enforcement_cases::render_json(&enf_rows)).expect("json");
+    fs::write("results/enforcement_cases.json", json + "\n").expect("write enforcement json");
+    let ok = enf_rows
+        .iter()
+        .filter(|r| r.actual == r.label.expected)
+        .count();
+    println!(
+        "enforcement slice: {ok}/{} match (EE01-EE26 reviewed, EE27 proposed)",
+        enf_rows.len()
+    );
+    for r in enf_rows.iter().filter(|r| r.actual != r.label.expected) {
+        println!(
+            "ENFORCEMENT MISMATCH {}: expected `{}`, got `{}`",
+            r.label.id, r.label.expected, r.actual
+        );
+    }
+    println!("wrote results/enforcement_cases.md and results/enforcement_cases.json");
 }
