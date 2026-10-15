@@ -15,6 +15,16 @@
 //! let _ = MediationRequest { bundle: Bundle::default(), operation: String::new(),
 //!     target: aisig_proto::model::AssetRef::Db(todo!()), claimed_class: None };
 //! ```
+//!
+//! The effect sink's append is module-private: external code cannot grow it, even holding a
+//! cloned receipt. Only `Mediator::mediate` (at perform) appends.
+//!
+//! ```compile_fail,E0624
+//! use aisig_proto::enforcement::EffectSink;
+//! let sink = EffectSink::new();
+//! // `record` is private to the enforcement module; this does not compile.
+//! sink.record(todo!());
+//! ```
 
 use std::fmt;
 use std::sync::Mutex;
@@ -24,11 +34,11 @@ use serde_json::Value;
 use crate::asset::{exact_node_lookup, subtree_lookup, ExactNodeAnswer, SubtreeAnswer};
 use crate::codec::{canonical_bytes, strict_parse};
 use crate::decision::{Decision, DecisionClass};
-use crate::evidence::{StatusKey, Unavailable};
+use crate::evidence::{ClockReading, FixedClock, StatusKey, Unavailable};
 use crate::model::{AssetRef, TestClass, TestScope, Ts};
 use crate::policy::grant_scope;
 use crate::session::{GrantRef, SessionAuthorization};
-use crate::verifier::{Bundle, ChainVerifier};
+use crate::verifier::{Bundle, ChainVerifier, Evidence};
 
 // ---------------------------------------------------------------------------
 // Versioned operation table `aisig-tooltable/v0` (docs/enforcement.md §3)
@@ -188,26 +198,33 @@ impl EffectReceipt {
     }
 }
 
-/// The only place a modeled effect is recorded. Append-only.
-pub trait EffectSink {
-    fn record(&self, receipt: EffectReceipt);
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-}
-
+/// The only place a modeled effect is recorded. A concrete in-memory type, not a public
+/// trait: its append (`record`) is module-private, so only [`Mediator::mediate`] (at
+/// `perform`) can grow it. External callers get read-only inspection (`len`, `receipts`),
+/// so a cloned [`EffectReceipt`] cannot drive a second effect. "Synthetic in-memory effects
+/// only" — there is no public sink interface to implement.
 #[derive(Debug, Default)]
-pub struct InMemorySink {
+pub struct EffectSink {
     records: Mutex<Vec<EffectReceipt>>,
 }
 
-impl EffectSink for InMemorySink {
+impl EffectSink {
+    pub fn new() -> Self {
+        EffectSink::default()
+    }
+    /// Module-private append. Reachable only from within this module (i.e. `perform`).
     fn record(&self, receipt: EffectReceipt) {
         self.records.lock().expect("lock").push(receipt);
     }
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.records.lock().expect("lock").len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    /// Read-only snapshot of the recorded receipts.
+    pub fn receipts(&self) -> Vec<EffectReceipt> {
+        self.records.lock().expect("lock").clone()
     }
 }
 
@@ -321,7 +338,7 @@ impl fmt::Display for Mediate {
 pub struct Mediator<'a> {
     pub chain: ChainVerifier<'a>,
     pub sessions: &'a dyn SessionAuthStore,
-    pub sink: &'a dyn EffectSink,
+    pub sink: &'a EffectSink,
 }
 
 /// Decode `target_wire` through the validated path: strict JSON, typed `AssetRef`
@@ -361,8 +378,10 @@ impl Mediator<'_> {
             Ok(Some(a)) => a,
         };
 
-        // 3. expiry (session window; clock in hand, before chain re-verification)
-        match self.chain.evidence.clock.now() {
+        // 3. expiry. Read the clock ONCE into a snapshot reused by expiry, the chain-time
+        // check (stage 4) and the receipt (stage 9); never re-read.
+        let snapshot: Option<ClockReading> = self.chain.evidence.clock.now();
+        match snapshot {
             None => note(S::Expiry, R::ClockUnavailable),
             Some(r) => {
                 let eps = r.epsilon.max(0);
@@ -377,8 +396,20 @@ impl Mediator<'_> {
             }
         }
 
-        // 4. chain (status stage included) + grant-ref match
-        let (decision, chain) = self.chain.verify_with_chain(&req.bundle);
+        // 4. chain (status stage included) + grant-ref match. Run the chain verification
+        // against a clock frozen to the stage-3 snapshot, so the chain-time check uses the
+        // same instant as expiry (one decision-time reading for the whole mediation).
+        let frozen = FixedClock { reading: snapshot };
+        let frozen_verifier = ChainVerifier {
+            audience: self.chain.audience,
+            evidence: Evidence {
+                registry: self.chain.evidence.registry,
+                bindings: self.chain.evidence.bindings,
+                clock: &frozen,
+                status: self.chain.evidence.status,
+            },
+        };
+        let (decision, chain) = frozen_verifier.verify_with_chain(&req.bundle);
         match decision.class() {
             DecisionClass::Reject => return Mediate::deny(S::Chain, R::ChainRejected(decision)),
             DecisionClass::Indeterminate => note(S::Chain, R::ChainIndeterminate(decision.clone())),
@@ -437,21 +468,22 @@ impl Mediator<'_> {
             return Mediate::deny(S::Class, R::DenyTestClassNotPermitted);
         }
 
-        // 9. perform — only if nothing was recorded Indeterminate.
+        // 9. perform — only if nothing was recorded Indeterminate. No clock re-read:
+        // performed_at is the stage-3 snapshot instant. Reaching here implies the snapshot
+        // was present (an absent snapshot is recorded Indeterminate at expiry above).
         if let Some(f) = pending {
             return Mediate::Indeterminate(f);
         }
-        let now =
-            self.chain.evidence.clock.now().expect(
-                "clock was available: a missing reading is recorded Indeterminate at expiry",
-            );
+        let performed_at = snapshot
+            .expect("snapshot present: an absent reading is recorded Indeterminate at expiry")
+            .now;
         let receipt = EffectReceipt {
             session_ref: authenticated_session_ref.to_owned(),
             operation: req.operation.clone(),
             target,
             test_class: spec.primary_class,
             effects: spec.effects.clone(),
-            performed_at: now.now,
+            performed_at,
         };
         self.sink.record(receipt.clone());
         Mediate::Allow(Box::new(receipt))

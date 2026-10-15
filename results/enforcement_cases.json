@@ -186,7 +186,7 @@
       "actual": "Deny / scope / DenySubtreePartiallyAllowed effects=0",
       "expected": "Deny / scope / DenySubtreePartiallyAllowed effects=0",
       "id": "EE27",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     }
   ],

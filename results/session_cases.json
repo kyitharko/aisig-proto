@@ -229,7 +229,7 @@
       "expected": "IssueUnavailable / InvalidClockReading",
       "id": "SI05",
       "kind": "issue",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     }
   ],
