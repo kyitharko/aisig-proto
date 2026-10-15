@@ -377,11 +377,11 @@ After the fix:
 - the same alteration made in a raw bundle's grant payload, keeping the original
   signature, is `Reject / S / InvalidSignature{G}`.
 
-## 11. RQ5 session cases (slice s1; all **Pr**)
+## 11. RQ5 session cases (slice s1; all **Rv**, approved 2026-10-16)
 
 Spec: [session.md](session.md). Labels live in `tests/cases/session_cases.toml`, a separate
-file; the r3.1 chain and lookup labels file is not touched. They are written before the
-implementation and stay **proposed** until owner review. A multi-step case lists the
+file; the r3.1 chain and lookup labels file is not touched. They were written before the
+implementation and approved by the owner on 2026-10-16 as written. A multi-step case lists the
 outcome of each step in order, separated by ` ; `.
 
 **Session fixture.**
@@ -418,7 +418,7 @@ outcome of each step in order, separated by ` ; `.
 | SS19 | proof JSON has an extra field `session_id` | `SessionReject / proof / MalformedProof` |
 | SS20 | first a K(tester-2) proof, then the valid proof (failed attempt must not consume) | `SessionReject / pop / InvalidProofSignature ; SessionAccept` |
 | SS21 | first with status unavailable, then with status available (Indeterminate must not consume) | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) ; SessionAccept` |
-| SS22 | 8 concurrent redemptions of the same valid proof (each on its own thread, released together by a barrier) | `accepts=1 already_consumed=7 other=0` |
+| SS22 | 8 concurrent redemptions of the same valid proof (each on its own thread, released together by a barrier); the tally counts a loser only when it is specifically `SessionReject` with `ChallengeAlreadyConsumed` | `accepts=1 already_consumed=7 other=0` |
 | SS23 | G marked revoked after issuance, before redemption | `SessionReject / chain / ChainRejected(Reject / X / Revoked{G})` |
 | SS24 | clock unavailable at redemption | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / ClockUnavailable)` |
 
@@ -431,5 +431,11 @@ outcome of each step in order, separated by ` ; `.
 | SI03 | challenge store unavailable | `IssueUnavailable / ChallengeStateUnavailable` |
 | SI04 | G re-signed with window end 10:01:00Z (expiry clamped to the grant) | `Issued expires_at=2026-10-15T10:01:00Z` |
 
-**Count:** 28 proposed session-slice cases (24 redemption, 4 issuance). Reported
-separately from the 93 chain and 15 lookup labels, which are unchanged.
+**Count:** 28 session-slice cases (24 redemption, 4 issuance), all owner-reviewed on
+2026-10-16. Reported separately from the 93 chain and 15 lookup labels, which are unchanged.
+
+**TTL is fixed at 120 s** (no public override). Issuance uses checked time arithmetic:
+`expires_at = min(issued_at + 120 s, G.window.end)`. If `issued_at + 120 s` overflowed
+(unreachable with any RFC 3339 clock, whose maximum year 9999 is far below `i64::MAX`),
+it falls back to `G.window.end`, which never grants more than the grant allows. This adds
+no new outcome and no new case.

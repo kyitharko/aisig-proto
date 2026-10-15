@@ -33,7 +33,7 @@ value is a successful redemption (§5).
 | --- | --- | --- |
 | `session_id` | P's own session layer, when the tester's agent session is opened (for example P's authenticated account session or agent-run identifier). P passes it to `issue` and `redeem` from **server-side state**. | It is P's own state. It is never read from the bundle, the challenge response, or any tester-supplied field. |
 | audience | P's configuration (`urn:aisig:provider:p-synthetic`) | P's own identity. |
-| challenge record | P, at issuance; stored in P's challenge store | P's own state; the tester receives a copy but redemption uses only the stored record. |
+| challenge record | P, at issuance; stored in **P's own authoritative store** (a P-private namespace that only P writes) | P's own state. In s1 no other provider can insert a record into P's store; the tester receives a copy but redemption uses only the stored record. |
 | nonce, challenge_id | P, from the OS CSPRNG (`getrandom`) | Unpredictable to the tester and others. |
 | clock reading (now, ε) | P's trusted clock (the same injected clock as the chain verifier) | As in spec §6. |
 | G identity | Derived by P from the G that P's chain verifier accepted: its exact `StatusKey` (spec §6) | Bound to the exact signed G bytes, including the digest. |
@@ -79,8 +79,12 @@ Challenge = {
 1. Run the chain verifier on the raw bundle. Anything other than chain Accept →
    `IssueRefused(decision)`; no challenge is created.
 2. Read the clock. `issued_at = now`.
-   `expires_at = min(now + TTL, G.window.end)`, so a challenge never outlives its grant.
-   v0 uses TTL = 120 s.
+   TTL is **fixed at 120 s** (no override). Using checked addition,
+   `expires_at = min(issued_at + 120 s, G.window.end)`, so a challenge never outlives its
+   grant. If `issued_at + 120 s` overflowed `i64` (unreachable with any RFC 3339 clock,
+   whose maximum year 9999 is far below `i64::MAX`), `expires_at` falls back to
+   `G.window.end`. This fails closed: the challenge is then born no later than the grant's
+   end, so it adds no new issuance outcome.
 3. Draw the nonce (32 bytes) and challenge_id (16 bytes) from the OS CSPRNG. On failure →
    `IssueUnavailable(NonceUnavailable)`.
 4. Insert the record into the store in state `Pending`. If the store is unavailable →
@@ -175,6 +179,13 @@ decision used.
   per-request proof (DPoP-like) is modelled.
 - **Key compromise.** Anyone holding K_T's private key passes. There is no revocation of
   K_T other than revoking G (status, RQ7).
+- **Store provenance vs audience.** The audience field says which provider a challenge is
+  *for*, not who *wrote* it. Comparing audience (binding stage) does not authenticate the
+  inserter. s1 assumes a P-private store that only P can write, so provenance is not in
+  question. SS08 fault-injects a foreign (audience-Q) record directly into the store to
+  show that even if a writable shared store were used, such a record is rejected at the
+  binding stage — but authenticating *who inserted* a record into a shared store is future
+  work, not something the audience check provides.
 - **Synthetic store.** The store is in memory, has one lock, and does no garbage
   collection. A distributed store needs the same atomic compare-and-set guarantee; that is
   assumed, not shown.

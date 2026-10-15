@@ -72,7 +72,7 @@ before their signature verifies.
 | TH22 | Replay of a valid proof, including concurrent replay | One-time atomic Pending→Consumed (challenge, consume) | SS05, SS22 |
 | TH23 | A proof minted for one P session is used in another | session_id stored in the challenge and compared with P's own session (binding) | SS06 |
 | TH24 | A proof for one grant is used with another grant | Challenge bound to the exact StatusKey of G, including the digest (binding) | SS07 |
-| TH25 | A challenge from another provider or audience | Audience in the stored challenge (binding) | SS08 |
+| TH25 | A foreign-audience record present in the store (fault-injected; s1 assumes a P-private store) | Audience in the stored challenge rejected at binding; audience says which provider a challenge is *for*, not who wrote it — shared-store provenance is future work | SS08 |
 | TH26 | Stale proofs; a challenge outliving its grant | Expiry with clock uncertainty; expiry clamped to G.window.end (time, issuance) | SS09–SS11, SI04 |
 | TH27 | Rebinding by editing the challenge copy or the proof; cross-protocol signature reuse | Signed bytes rebuilt from P's stored record; distinct domain tag; strict proof parsing (pop, proof) | SS17, SS18, SS19 |
 | TH28 | Grant altered, revoked or expired between issuance and redemption | Chain re-verified at redemption (chain) | SS14, SS23 |
@@ -88,8 +88,8 @@ Out of scope for s1, stated so that no one reads them as defended:
 
 ## 4. Out of scope (non-goals for v0)
 
-- **Stolen-grant presentation** by someone other than T, and agent session/subagent binding (RQ5).
-- **Agent actions outside scope** at runtime; tool mediation and bypass; how a TestClass maps to actions (RQ6).
+- **Stolen-grant presentation** by someone other than T is addressed by RQ5 slice s1 (proof of possession, docs/session.md §8 limits): the chain-only v0 decision does **not** bind a presenter, while s1 adds a separate session proof of possession under its stated limits (no channel binding, no relay resistance).
+- **Agent actions outside scope** at runtime; tool mediation and bypass; how a TestClass maps to actions (RQ6; not implemented).
 - **Revocation latency** and cache staleness in a real distributed status service (RQ7).
 - **Real organization identity proof** and first-admin authority (RQ1).
 - **Real asset ownership**, shared/third-party hosting, and legal testing rights (RQ2; legal).
