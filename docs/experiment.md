@@ -440,12 +440,21 @@ G.window.end)` exactly and the fixed-120 guarantee always holds. The implementat
 checked arithmetic; the overflow branch (fall back to `G.window.end`) is an unreachable
 fail-closed guard, not a second behaviour, and adds no new outcome or case.
 
-## 12. RQ6 enforcement cases (slice e1/e2; design only; all **Pr**)
+**Issuance clock consistency (SI05, proposed; defined before the clock-fix code).** The
+trusted clock may return different readings on the chain check and the later issuance read
+(and `Ts` is publicly constructible). `issue` must not mint a challenge with an invalid
+`issued_at` or an `expires_at ≤ issued_at`. If the issuance reading is out of the grant
+window (`issued_at ≥ G.window.end`) or yields `expires_at ≤ issued_at`, issuance fails
+closed with the new outcome `IssueUnavailable / InvalidClockReading` (no challenge stored).
+SI05's expected outcome is `IssueUnavailable / InvalidClockReading`; its runner (a changing
+injected clock) and the reason are added with the clock-fix commit.
+
+## 12. RQ6 enforcement cases (slice e2; design only; EE01–EE26 **Rv** 2026-10-16, EE27 **Pr**)
 
 Spec: [enforcement.md](enforcement.md) (DRAFT e2). Labels live in
 `tests/cases/enforcement_cases.toml`, a separate file. **Not implemented** — these are
-written for owner review of the action-to-TestClass mapping before any RQ6 code. All
-**proposed**.
+written for owner review of the action-to-TestClass mapping before any RQ6 code. EE01–EE26 are owner-reviewed (the tooltable/v0 mapping is approved); EE27 is a
+**proposed** case added for the PartiallyAllowed-without-exclusion boundary.
 
 **Enforcement fixture.**
 - Base chain (§2), all objects Active; a session is authorized for the base G.
@@ -485,13 +494,15 @@ Display: `Allow effects=1`, or `<Deny|Indeterminate> / <stage> / <Reason> effect
 | EE21 | `web.get` `/app/reports`, clock unavailable | `Indeterminate / expiry / ClockUnavailable effects=0` |
 | EE22 | `web.get` `/app/reports`, grant payload altered with the original signature kept | `Deny / chain / ChainRejected(Reject / S / InvalidSignature{G}) effects=0` |
 | EE23 | `web.get` `/app/reports`, session authorized for a recon-only grant (G.test_scope = {recon}, re-signed within the D_U ceiling) | `Deny / class / DenyTestClassNotPermitted effects=0` |
-| EE24 | `web.injection_probe` `/app` (subtree contains the excluded `/app/admin` and `/app/private`) | `Deny / scope / DenySubtreePartiallyExcluded effects=0` |
+| EE24 | `web.injection_probe` `/app` (subtree contains the excluded `/app/admin`, `/app/private`; partially allowed via exclusion) | `Deny / scope / DenySubtreePartiallyAllowed effects=0` |
 | EE25 | `web.get` with target host `APP.acme.test` (non-canonical) | `Deny / validate / DenyNoncanonicalTarget effects=0` |
 | EE26 | `web.get` `/app/reports`, G status set revoked before mediation | `Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0` |
+| EE27 | `db.write` `db:cluster1/main`, grant targets only `db:cluster1/main/billing` (no exclusion); `cluster1/main` subtree is partly in scope (`billing`) and partly out (`hr`); scope precedes class | `Deny / scope / DenySubtreePartiallyAllowed effects=0` |
 
 Zero-effect property: every non-Allow label carries `effects=0`; a future runner must
 assert the effect sink length is unchanged for EE05–EE26.
 
-**Count:** 26 proposed enforcement cases (4 allow, 19 deny, 3 indeterminate). Reported
-separately from the 93 chain, 15 lookup and 28 session labels, which are unchanged. These
-are design artifacts; no RQ6 code exists yet.
+**Count:** 27 enforcement cases (4 allow, 20 deny, 3 indeterminate): EE01–EE26 reviewed,
+EE27 proposed. EE27 demonstrates a `PartiallyAllowed` subtree arising with no explicit
+exclusion and that the scope stage precedes the class stage. Reported separately from the
+93 chain, 15 lookup and 28 session labels, which are unchanged.

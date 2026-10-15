@@ -1,5 +1,5 @@
 //! RQ5 session-slice cases must match tests/cases/session_cases.toml exactly.
-//! Labels are literal data written before the implementation (all proposed).
+//! Labels are literal data written before the implementation; all owner-reviewed.
 
 use std::collections::BTreeSet;
 

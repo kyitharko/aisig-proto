@@ -88,7 +88,11 @@ Challenge = {
    no issuance outcome.
 3. Draw the nonce (32 bytes) and challenge_id (16 bytes) from the OS CSPRNG. On failure →
    `IssueUnavailable(NonceUnavailable)`.
-4. Insert the record into the store in state `Pending`. If the store is unavailable →
+4. Validate the issuance reading against the grant window: if `issued_at ≥ G.window.end`
+   or `expires_at ≤ issued_at` (possible when the clock returns a different, later reading
+   at issuance than at the chain check, since `Ts` is publicly constructible), fail closed
+   with `IssueUnavailable(InvalidClockReading)` — no record is stored.
+5. Insert the record into the store in state `Pending`. If the store is unavailable →
    `IssueUnavailable(ChallengeStateUnavailable)`.
 
 ## 5. Redemption

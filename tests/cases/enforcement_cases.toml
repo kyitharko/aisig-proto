@@ -1,161 +1,167 @@
-# Proposed outcomes for the RQ6 enforcement slice (docs/enforcement.md, DRAFT e2),
-# transcribed from docs/experiment.md section 12. DESIGN ONLY: no RQ6 implementation
-# exists; these labels are proposed and await owner review of the action-to-TestClass
-# mapping. Separate from reviewed_cases.toml and session_cases.toml. Never edit to match
-# implementation output.
+# Expected outcomes for the RQ6 enforcement slice (docs/enforcement.md DRAFT e2),
+# transcribed from docs/experiment.md section 12. EE01-EE26 are owner-reviewed (the
+# aisig-tooltable/v0 mapping is approved, 2026-10-16); EE27 is proposed (a boundary case
+# added for PartiallyAllowed-without-exclusion). DESIGN label data; the RQ6 runner is
+# added with the implementation. Never edit to match implementation output.
 
 [[case]]
 id = "EE01"
 kind = "enforcement"
 expected = "Allow effects=1"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE02"
 kind = "enforcement"
 expected = "Allow effects=1"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE03"
 kind = "enforcement"
 expected = "Allow effects=1"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE04"
 kind = "enforcement"
 expected = "Allow effects=1"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE05"
 kind = "enforcement"
 expected = "Deny / scope / DenyTargetExcluded effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE06"
 kind = "enforcement"
 expected = "Deny / scope / DenyTargetExcluded effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE07"
 kind = "enforcement"
 expected = "Deny / scope / DenyTargetExcluded effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE08"
 kind = "enforcement"
 expected = "Deny / scope / DenyTargetOutOfScope effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE09"
 kind = "enforcement"
 expected = "Deny / scope / DenyTargetOutOfScope effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE10"
 kind = "enforcement"
 expected = "Deny / class / DenyTestClassNotPermitted effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE11"
 kind = "enforcement"
 expected = "Deny / class / DenyTestClassNotPermitted effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE12"
 kind = "enforcement"
 expected = "Deny / class / DenyTestClassNotPermitted effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE13"
 kind = "enforcement"
 expected = "Deny / classify / DenyUnknownOperation effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE14"
 kind = "enforcement"
 expected = "Deny / effects / DenyTargetTypeMismatch effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE15"
 kind = "enforcement"
 expected = "Deny / effects / DenyUnboundedSecondaryEffect effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE16"
 kind = "enforcement"
 expected = "Deny / expiry / DenySessionExpired effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE17"
 kind = "enforcement"
 expected = "Deny / session / DenyNoSession effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE18"
 kind = "enforcement"
 expected = "Deny / chain / DenyGrantMismatch effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE19"
 kind = "enforcement"
 expected = "Indeterminate / session / SessionStateUnavailable effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE20"
 kind = "enforcement"
 expected = "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE21"
 kind = "enforcement"
 expected = "Indeterminate / expiry / ClockUnavailable effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE22"
 kind = "enforcement"
 expected = "Deny / chain / ChainRejected(Reject / S / InvalidSignature{G}) effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE23"
 kind = "enforcement"
 expected = "Deny / class / DenyTestClassNotPermitted effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE24"
 kind = "enforcement"
-expected = "Deny / scope / DenySubtreePartiallyExcluded effects=0"
-label_status = "proposed"
+expected = "Deny / scope / DenySubtreePartiallyAllowed effects=0"
+label_status = "reviewed"
 
 [[case]]
 id = "EE25"
 kind = "enforcement"
 expected = "Deny / validate / DenyNoncanonicalTarget effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "EE26"
 kind = "enforcement"
 expected = "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0"
+label_status = "reviewed"
+
+[[case]]
+id = "EE27"
+kind = "enforcement"
+expected = "Deny / scope / DenySubtreePartiallyAllowed effects=0"
 label_status = "proposed"

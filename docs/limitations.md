@@ -13,7 +13,7 @@ after they are measured.
   or subagent is bound to G. A copied grant verifies exactly like the original. The RQ5
   slice (docs/session.md) adds a *separate* `SessionAccept` decision for that. A chain
   Accept is never a session authorization.
-- A `SessionAccept` (s1, proposed labels) shows only that a holder of K_T's key signed a
+- A `SessionAccept` (s1, reviewed labels) shows only that a holder of K_T's key signed a
   fresh, one-time, P-issued challenge naming P's session and the exact G, and that the
   chain re-verified at that moment. It does not provide:
   - channel or TLS binding;

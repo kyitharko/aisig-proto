@@ -136,12 +136,16 @@ exactly once, and never on `Deny`/`Indeterminate` (so a non-Allow performs zero 
    - *node*-footprint ops: `exact_node_lookup(G, target)` — `Excluded` →
      `Deny(DenyTargetExcluded)`, `OutOfScope` → `Deny(DenyTargetOutOfScope)`;
    - *subtree*-footprint ops: `subtree_lookup(G, target)` — `PartiallyAllowed` →
-     `Deny(DenySubtreePartiallyExcluded)`, `NoneAllowed` → `Deny(DenySubtreeNoneAllowed)`.
+     `Deny(DenySubtreePartiallyAllowed)`, `NoneAllowed` → `Deny(DenySubtreeNoneAllowed)`.
      These two reasons are exactly the two non-`WhollyAllowed` results the lookup returns, so
-     the reason is always derivable from the lookup alone. `subtree_lookup` does **not**
-     separate "excluded" from "out of scope" for a whole subtree; distinguishing them would
-     need a per-node breakdown the lookup does not provide, so the subtree reasons stay at
-     the granularity the lookup supports.
+     the reason is always derivable from the lookup alone. The name says only what the lookup
+     found — *part of the subtree is allowed* — not *why* the rest is not. A subtree can be
+     `PartiallyAllowed` **with no explicit exclusion at all**: e.g. a grant that targets only
+     `db:cluster1/main/billing` makes `db:cluster1/main` partially allowed (its `billing`
+     child is in scope; its `hr` child is merely out of scope, not excluded).
+     `subtree_lookup` does **not** separate "excluded" from "out of scope" for a whole
+     subtree, so the reason stays at the granularity the lookup supports —
+     `DenySubtreePartiallyAllowed` is the honest label.
 8. **class** — the row's primary TestClass must be permitted by G's `test_scope`
    (`Unrestricted`, or a `Classes` set containing it) → else
    `Deny(DenyTestClassNotPermitted)`.
@@ -181,7 +185,7 @@ exactly once, and never on `Deny`/`Indeterminate` (so a non-Allow performs zero 
 | target kind ≠ operation's target type | `Deny / effects / DenyTargetTypeMismatch` |
 | operation is unbounded | `Deny / effects / DenyUnboundedSecondaryEffect` |
 | node target excluded / out of scope | `Deny / scope / DenyTargetExcluded` / `DenyTargetOutOfScope` |
-| subtree partly in scope / wholly out | `Deny / scope / DenySubtreePartiallyExcluded` / `DenySubtreeNoneAllowed` |
+| subtree partly in scope / wholly out | `Deny / scope / DenySubtreePartiallyAllowed` / `DenySubtreeNoneAllowed` |
 | primary class not in the grant's test scope | `Deny / class / DenyTestClassNotPermitted` |
 | no session / grant mismatch / expired | `Deny / session / DenyNoSession`, `Deny / chain / DenyGrantMismatch`, `Deny / expiry / DenySessionExpired` |
 | grant revoked / tampered (chain) | `Deny / chain / ChainRejected(...)` |
