@@ -49,7 +49,7 @@ distinct from the owner's authorization.
 | session authorization | P's server-held session store (RQ5 `SessionAuthorization`) | Yes — P's own state, keyed by the server-held `session_ref`. |
 | grant scope and test classes | the accepted G, re-verified from the raw bundle at mediation | Bound to the verified payload (spec §7.5); matched to the session's grant ref. |
 | clock, chain evidence | P's injected fixtures (spec §6) | Yes. |
-| effect sink | P-internal | Yes — the only place a simulated effect is recorded. |
+| effect sink | P-internal (`EffectSink`, a concrete in-memory type; its append is module-private, callable only by `perform`; external callers get read-only `len`/`receipts`) | Yes — the only place a simulated effect is recorded. There is no public sink trait to implement and no public append, so a cloned `EffectReceipt` cannot drive a second append. |
 
 ## 3. Versioned operation table `aisig-tooltable/v0`
 
@@ -112,14 +112,19 @@ exactly once, and never on `Deny`/`Indeterminate` (so a non-Allow performs zero 
 2. **session** — load `SessionAuthorization` by the authenticated `session_ref` (§4a).
    - store unavailable → `Indeterminate(SessionStateUnavailable)`;
    - no authorization for `session_ref` → `Deny(DenyNoSession)`.
-3. **expiry** — clock `(now, ε)` vs the session's `grant_window_end` (half-open, spec §6),
-   before the chain re-verification so it is reachable with the clock in hand. In s1
-   `grant_window_end = G.window.end`; the stage is kept explicit so a future session-scoped
-   TTL (tighter than the grant) has a home.
-   - clock unavailable → `Indeterminate(ClockUnavailable)`;
+3. **expiry** — the mediator reads the clock **once** here, at the start of the
+   decision, into a single snapshot `(now, ε)` used by this stage, by the chain-time check
+   (stage 4), and by the receipt (stage 9). It is never re-read. ε is clamped to ≥ 0 and the
+   `now ± ε` bounds saturate (no overflow). Check vs the session's `grant_window_end`
+   (half-open, spec §6); in s1 `grant_window_end = G.window.end`, and the stage is kept
+   explicit so a future session-scoped TTL (tighter than the grant) has a home.
+   - clock unavailable → `Indeterminate(ClockUnavailable)` (recorded; the snapshot is then
+     empty and stages 4 and 9 see the same absence);
    - `now − ε ≥ grant_window_end` → `Deny(DenySessionExpired)`;
    - straddling the edge → record `Indeterminate(ClockUncertainty)`.
-4. **chain** — re-verify `bundle` with `ChainVerifier` (spec §7, status stage included), as
+4. **chain** — re-verify `bundle` with `ChainVerifier` (spec §7, status stage included)
+   **against the stage-3 snapshot** (the mediator runs the chain verification with a clock
+   frozen to that snapshot, so the chain-time check uses the same instant as expiry), as
    RQ5 redemption does.
    - chain `Reject` → `Deny(ChainRejected(<chain decision>))` (this is how a grant revoked
      before the action is denied: `ChainRejected(Reject / X / Revoked{G})`);
@@ -151,8 +156,13 @@ exactly once, and never on `Deny`/`Indeterminate` (so a non-Allow performs zero 
    `Deny(DenyTestClassNotPermitted)`.
 9. **perform** — reached only if nothing was recorded as Indeterminate. Append exactly one
    `EffectReceipt { session_ref, operation, target, test_class, effects, performed_at }`,
-   using the **validated** target from stage 1, to the sink and return `Allow(receipt)`. If
-   an Indeterminate was recorded, return it instead (no effect).
+   using the **validated** target from stage 1, to the sink and return `Allow(receipt)`. The
+   mediator does **not** read the clock here: `performed_at` is the stage-3 snapshot instant
+   (the same `now` used for the expiry and chain-time checks), i.e. the single decision-time
+   instant at which this action was authorized, not a separate post-decision read. (Reaching
+   perform implies the snapshot was present, since an absent snapshot is recorded
+   Indeterminate at expiry.) If an Indeterminate was recorded, return it instead (no
+   effect).
 
 `EffectReceipt` fields are private; the only constructor is a successful `perform`, so an
 `Allow`/receipt cannot be fabricated (mirrors `SessionAuthorization`, spec §7.5).
@@ -216,6 +226,9 @@ Bypass paths and their disposition:
   denials, not a runtime guarantee.
 - **A non-canonical target smuggled in to dodge scope.** Caught at validate (stage 1); the
   scope stage and `perform` only ever see the validated target.
+- **A cloned receipt driving a second effect.** Impossible: the sink's append is
+  module-private (only `perform` calls it); external code can read `len`/`receipts` but
+  cannot append, so holding a cloned `EffectReceipt` grants no second effect.
 - **Naming another session.** Impossible via the request: `session_ref` comes from P's
   authenticated context (stage session, §4a), not a request field.
 - **Replaying a session after the grant expired.** Caught at expiry (stage 3).

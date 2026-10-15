@@ -22,11 +22,11 @@ fn every_label_has_a_runner_and_vice_versa() {
     assert_eq!(ls.len(), 27);
     assert_eq!(
         ls.iter().filter(|l| l.label_status == "reviewed").count(),
-        26
+        27
     );
     assert_eq!(
         ls.iter().filter(|l| l.label_status == "proposed").count(),
-        1
+        0
     );
 }
 

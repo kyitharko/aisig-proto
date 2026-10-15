@@ -13,20 +13,20 @@ fn every_session_label_has_a_runner_and_vice_versa() {
     let runnable: BTreeSet<String> = SESSION_CASE_IDS.iter().map(|s| s.to_string()).collect();
     assert_eq!(labelled, runnable);
     assert_eq!(labels.len(), 29);
-    // 28 reviewed (SS01-SS24, SI01-SI04) + SI05 proposed (added with the clock fix).
+    // SS01-SS24 and SI01-SI05 all reviewed.
     assert_eq!(
         labels
             .iter()
             .filter(|l| l.label_status == "reviewed")
             .count(),
-        28
+        29
     );
     assert_eq!(
         labels
             .iter()
             .filter(|l| l.label_status == "proposed")
             .count(),
-        1
+        0
     );
 }
 

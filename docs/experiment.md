@@ -440,21 +440,30 @@ G.window.end)` exactly and the fixed-120 guarantee always holds. The implementat
 checked arithmetic; the overflow branch (fall back to `G.window.end`) is an unreachable
 fail-closed guard, not a second behaviour, and adds no new outcome or case.
 
-**Issuance clock consistency (SI05, proposed; defined before the clock-fix code).** The
-trusted clock may return different readings on the chain check and the later issuance read
-(and `Ts` is publicly constructible). `issue` must not mint a challenge with an invalid
-`issued_at` or an `expires_at ≤ issued_at`. If the issuance reading is out of the grant
-window (`issued_at ≥ G.window.end`) or yields `expires_at ≤ issued_at`, issuance fails
-closed with the new outcome `IssueUnavailable / InvalidClockReading` (no challenge stored).
-SI05's expected outcome is `IssueUnavailable / InvalidClockReading`; its runner (a changing
-injected clock) and the reason are added with the clock-fix commit.
+**Issuance clock consistency (SI05 reviewed; SI06, SI07 proposed — defined before the
+fix code).** The clock may return different readings on the chain check and the later
+issuance read, and `Ts`/`ClockReading` are publicly constructible, so an invalid issuance
+reading must be rejected (never silently clamped) with `IssueUnavailable / InvalidClockReading`
+and no stored challenge. The validated conditions (session.md §4) are: `epsilon ≥ 0`;
+`issued_at` and `expires_at` canonically representable; `G.window.start ≤ issued_at <
+G.window.end`; and `expires_at > issued_at`. Cases, each with expected
+`IssueUnavailable / InvalidClockReading`:
 
-## 12. RQ6 enforcement cases (slice e2; design only; EE01–EE26 **Rv** 2026-10-16, EE27 **Pr**)
+- **SI05** (reviewed): issuance reading at/after `G.window.end` (clock advanced past the
+  grant between the chain check and issuance).
+- **SI06** (proposed): issuance reading **before** `G.window.start` (the challenge would
+  predate the grant).
+- **SI07** (proposed): issuance reading with a **negative** uncertainty `epsilon`.
+
+Their runners use a changing injected clock and are added with the clock-fix commit.
+
+## 12. RQ6 enforcement cases (slice e2; implemented; EE01–EE27 **Rv**)
 
 Spec: [enforcement.md](enforcement.md) (DRAFT e2). Labels live in
 `tests/cases/enforcement_cases.toml`, a separate file. **Not implemented** — these are
-written for owner review of the action-to-TestClass mapping before any RQ6 code. EE01–EE26 are owner-reviewed (the tooltable/v0 mapping is approved); EE27 is a
-**proposed** case added for the PartiallyAllowed-without-exclusion boundary.
+implemented in `src/enforcement.rs`. EE01–EE27 are owner-reviewed (the tooltable/v0
+mapping is approved, and EE27 — the PartiallyAllowed-without-exclusion boundary — is now
+reviewed too).
 
 **Enforcement fixture.**
 - Base chain (§2), all objects Active; a session is authorized for the base G.
@@ -502,7 +511,6 @@ Display: `Allow effects=1`, or `<Deny|Indeterminate> / <stage> / <Reason> effect
 Zero-effect property: every non-Allow label carries `effects=0`; a future runner must
 assert the effect sink length is unchanged for EE05–EE26.
 
-**Count:** 27 enforcement cases (4 allow, 20 deny, 3 indeterminate): EE01–EE26 reviewed,
-EE27 proposed. EE27 demonstrates a `PartiallyAllowed` subtree arising with no explicit
+**Count:** 27 enforcement cases (4 allow, 20 deny, 3 indeterminate), all owner-reviewed. EE27 demonstrates a `PartiallyAllowed` subtree arising with no explicit
 exclusion and that the scope stage precedes the class stage. Reported separately from the
 93 chain, 15 lookup and 28 session labels, which are unchanged.

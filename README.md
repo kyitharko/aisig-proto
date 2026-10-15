@@ -9,8 +9,10 @@ harness, property tests and CPU benchmark implemented; r3 added exact-object sta
 identity, registry-record checks and named scope lookups; r3.1 removed the public
 pre-decoded decision API. All 93 chain and 15 lookup labels are owner-reviewed
 (see [docs/experiment.md](docs/experiment.md)). RQ5 slice s1 adds a separate session
-proof-of-possession decision ([docs/session.md](docs/session.md)); its 28 labels are
-owner-reviewed. Results: [docs/report.md](docs/report.md).
+proof-of-possession decision ([docs/session.md](docs/session.md); 28 reviewed labels, plus
+SI05 reviewed and SI06/SI07 proposed clock-edge cases). RQ6 slice e2 adds a
+provider-mediated synthetic tool adapter ([docs/enforcement.md](docs/enforcement.md); 27
+reviewed labels, synthetic effects only). Results: [docs/report.md](docs/report.md).
 
 Everything here is synthetic: organizations, keys, `.test` hosts and databases. Nothing
 scans, connects to, or tests any real target. No real credentials, client data or live
@@ -23,7 +25,7 @@ assets are in this repository.
 - [docs/experiment.md](docs/experiment.md) — base fixture, 93 chain cases and 15 scope lookups with review status, oracle, metrics, benchmark protocol
 - [docs/limitations.md](docs/limitations.md) — what an Accept does and does not mean
 - [docs/session.md](docs/session.md) — RQ5 slice s1: challenge/response proof of possession bound to a provider session
-- [docs/enforcement.md](docs/enforcement.md) — RQ6 slice e2 (design only): provider-mediated synthetic tool adapter
+- [docs/enforcement.md](docs/enforcement.md) — RQ6 slice e2 (implemented, synthetic): provider-mediated synthetic tool adapter
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
 ## Research questions
@@ -31,7 +33,7 @@ assets are in this repository.
 - RQ1 (organization identity) and RQ2 (asset binding): **assumed**, as trusted in-memory fixtures.
 - RQ4 (grant scope semantics, non-amplification): **this prototype**.
 - RQ5 (tester/session binding): **slice s1, reviewed** — session proof of possession, separate decision; channel binding and relay resistance not addressed.
-- RQ6 (tool effect enforcement): **design-only slice e2** — a provider-side mediator for synthetic tool operations ([docs/enforcement.md](docs/enforcement.md)); 27 labels (26 reviewed, EE27 proposed), no code yet.
+- RQ6 (tool effect enforcement): **slice e2, implemented (synthetic)** — a provider-side mediator for synthetic tool operations ([docs/enforcement.md](docs/enforcement.md)); 27 reviewed labels; only modeled in-memory effects, no live tool enforcement.
 - RQ7 (revocation freshness): **unresolved, not implemented**.
 
 ## Layout
