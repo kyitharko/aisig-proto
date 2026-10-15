@@ -187,7 +187,7 @@ At r3 they covered 88 cases: chain-aware 0/0/8, signature-only 70 FA / 2 FR.)
   - Unit tests: exact-key status (other type, other content, other org → Unknown) and the
     `/app` vs `/app/admin` lookup pair.
 
-## E3 — CPU benchmark (current: `results/bench_20261014T192333Z.md`)
+## E3 — CPU benchmark (current: `results/bench_20261015T201455Z.md`; earlier runs historical)
 
 Intel Core i7-6700 @ 3.40 GHz, 8 logical cores, Linux 7.0.0-31-generic, governor
 `powersave`, rustc 1.98.0, release profile, single-threaded, git `526a3c6`.
@@ -287,6 +287,38 @@ flips to reviewed: SI05, EE27. No expected value of any previously-reviewed case
 original 28 session and 26 RQ6 outcomes are unchanged. Post-fix eval: 93/93, 15/15,
 session 31/31 (29 reviewed + SI06/SI07 proposed), RQ6 27/27.
 
+## Review round 3 (2026-10-16): reject negative clock uncertainty
+
+A follow-up review found that `issue()` rejected a negative `ClockReading.epsilon`, but
+`ChainVerifier::verify`, `SessionService::redeem` and `Mediator::mediate` still clamped it
+with `epsilon.max(0)`. Since spec §6 requires ε ≥ 0 and `ClockReading` has public fields, an
+invalid reading could still reach Accept / SessionAccept / Allow. Reproduced before the fix
+(commit `94185e2`), reported reproduction-then-fixed.
+
+| Case | Reproduction at `94185e2` (pre-fix) | Fixed result |
+| --- | --- | --- |
+| T12 (chain, ε=−5) | **Accept** | `Indeterminate / T / InvalidClockReading` |
+| SI08 (issuance, ε=−5 on the chain-check read, valid issuance read) | **Issued …T10:02:00Z** | `IssueRefused / Indeterminate / T / InvalidClockReading` |
+| SS25 (redeem ε=−5, then valid retry) | **SessionAccept ; SessionReject/…/ChallengeAlreadyConsumed** (invalid attempt accepted *and* consumed) | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / InvalidClockReading) ; SessionAccept` |
+| EE28 (mediate ε=−5) | **Allow effects=1** | `Indeterminate / expiry / InvalidClockReading effects=0` |
+
+Fix: all three time paths reject a negative ε (new `InvalidClockReading` outcome) instead
+of clamping; `time_check` now assumes ε ≥ 0 and saturates for overflow. The mediator's
+single snapshot and private sink are unchanged. New proposed labels T12, SS25, SI08, EE28
+(and SI06/SI07 from round 2). No previously-reviewed expected value changed (verified by
+diffing the label files against `b40ef85`).
+
+**Post-fix counts (reported separately):** chain 94/94 (93 reviewed + T12 proposed), lookup
+15/15, session 33/33 (29 reviewed + SS25/SI06/SI07/SI08 proposed), enforcement 28/28 (27
+reviewed + EE28 proposed). fmt/clippy clean; all tests incl. 6 doctests pass; both extra
+proptest seeds pass.
+
+**Benchmark rerun** (`results/bench_20261015T201455Z.md`, git `21487fc`, same machine,
+`powersave` governor): medians p50 — full chain verify ≈243 µs, signature ×3 ≈132 µs, typed
+policy ≈172 ns, status-key ×3 ≈11.1 µs, status lookup ≈209 ns — within run-to-run variance
+of the round-2 run; the added negative-ε comparison is not separately measurable. Earlier
+runs are marked historical in results/README.md.
+
 ## Remaining open items
 
 - Q9–Q12 are decided (spec §10). Their follow-ups are future work:
@@ -298,3 +330,5 @@ session 31/31 (29 reviewed + SI06/SI07 proposed), RQ6 27/27.
 - RQ6 e2 is implemented for synthetic operations; all 27 labels reviewed. Live tool
   enforcement is not claimed. RQ7 (status-source freshness) remains unresolved.
 - RQ5 issuance now rejects inconsistent clock readings (SI05 reviewed; SI06/SI07 proposed).
+- Round 3: all time paths reject a negative ε (never clamp). New proposed labels T12,
+  SS25, SI08, EE28 await owner review.
