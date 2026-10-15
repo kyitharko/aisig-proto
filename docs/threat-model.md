@@ -86,10 +86,30 @@ Out of scope for s1, stated so that no one reads them as defended:
 - RQ6 tool enforcement;
 - RQ7 status freshness during a session.
 
+## 3b. RQ6 enforcement-slice threats (e1, design only; see [enforcement.md](enforcement.md))
+
+These are proposed with the design; **no RQ6 code exists yet**.
+
+| ID | Threat | Expected defence (mediation stage) | Cases |
+| --- | --- | --- | --- |
+| TH30 | An agent acts outside the granted scope through a tool | Mediator checks the target against the live grant's effective scope/exclusions before any effect (scope) | EE05-EE09 |
+| TH31 | An agent mislabels its action to dodge the class check | Operation classified from the versioned table `aisig-tooltable/v0`, never from the agent's claim (classify, class) | EE10-EE12 |
+| TH32 | An unmodeled or unclassifiable operation slips through | Unknown op and target-type mismatch fail closed (classify, effects) | EE13, EE14 |
+| TH33 | An operation with effects beyond the target (whole origin, other tenants) | Unbounded secondary effects denied (effects) | EE15 |
+| TH34 | Acting after the session/grant window, or with no/!wrong session | Session load, session-window expiry, and grant-ref match (session, expiry, chain) | EE16, EE17, EE18 |
+| TH35 | A tampered or revoked grant used at action time | Chain re-verified at mediation (chain) | EE18, EE22 |
+| TH36 | An evidence outage produces an effect | Indeterminate never performs an effect; every non-Allow is effects=0 (session, expiry, chain) | EE19-EE21 |
+
+Out of scope for e1, stated so none is read as defended:
+- interception of real tools, processes, syscalls or network traffic (only modeled effects);
+- confinement of unmanaged/opaque tools P cannot observe;
+- completeness of the modeled effect taxonomy;
+- RQ7 status freshness during a session (the mediator trusts the session window).
+
 ## 4. Out of scope (non-goals for v0)
 
 - **Stolen-grant presentation** by someone other than T is addressed by RQ5 slice s1 (proof of possession, docs/session.md §8 limits): the chain-only v0 decision does **not** bind a presenter, while s1 adds a separate session proof of possession under its stated limits (no channel binding, no relay resistance).
-- **Agent actions outside scope** at runtime; tool mediation and bypass; how a TestClass maps to actions (RQ6; not implemented).
+- **Agent actions outside scope** at runtime against *real* tools; confinement of unmanaged/opaque tools; completeness of the effect taxonomy (RQ6). A design-only synthetic mediator is drafted in [enforcement.md](enforcement.md) (§3b), not implemented.
 - **Revocation latency** and cache staleness in a real distributed status service (RQ7).
 - **Real organization identity proof** and first-admin authority (RQ1).
 - **Real asset ownership**, shared/third-party hosting, and legal testing rights (RQ2; legal).

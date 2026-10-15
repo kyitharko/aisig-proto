@@ -23,6 +23,7 @@ assets are in this repository.
 - [docs/experiment.md](docs/experiment.md) — base fixture, 93 chain cases and 15 scope lookups with review status, oracle, metrics, benchmark protocol
 - [docs/limitations.md](docs/limitations.md) — what an Accept does and does not mean
 - [docs/session.md](docs/session.md) — RQ5 slice s1: challenge/response proof of possession bound to a provider session
+- [docs/enforcement.md](docs/enforcement.md) — RQ6 slice e1 (design only): provider-mediated synthetic tool adapter
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
 ## Research questions
@@ -30,7 +31,8 @@ assets are in this repository.
 - RQ1 (organization identity) and RQ2 (asset binding): **assumed**, as trusted in-memory fixtures.
 - RQ4 (grant scope semantics, non-amplification): **this prototype**.
 - RQ5 (tester/session binding): **first slice s1** — session proof of possession, separate decision; channel binding and relay resistance not addressed.
-- RQ6 (tool effect enforcement), RQ7 (revocation freshness): **unresolved, not implemented**.
+- RQ6 (tool effect enforcement): **design-only slice e1** — a provider-side mediator for synthetic tool operations ([docs/enforcement.md](docs/enforcement.md)); 22 proposed labels, no code yet.
+- RQ7 (revocation freshness): **unresolved, not implemented**.
 
 ## Layout
 
