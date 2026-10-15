@@ -373,8 +373,11 @@ the owner's test classes or targets.
   No binding → `Indeterminate(NoBindingEvidence)`. Fixture unavailable →
   `Indeterminate(BindingUnavailable)`.
 - **Time (stage T):** clock gives `(now, ε)` or Unavailable (`Indeterminate(ClockUnavailable)`).
-  For the root record's validity (only if the registry answered), then C_A.validity,
-  D_U.validity, G.window, each `[s,e)`:
+  A reading with `ε < 0` is invalid evidence (spec §6 requires ε ≥ 0; `ClockReading` has
+  public fields, so an invalid ε can be supplied): it is **rejected, not clamped** →
+  `Indeterminate(InvalidClockReading)`, and the window checks are skipped. For a valid
+  reading (`ε ≥ 0`), for the root record's validity (only if the registry answered), then
+  C_A.validity, D_U.validity, G.window, each `[s,e)` (bounds saturate, no overflow):
   - `s ≤ now−ε` and `now+ε < e` → ok;
   - `now+ε < s` → `Reject(NotYetValid{obj})`; `now−ε ≥ e` → `Reject(Expired{obj})`;
   - otherwise → `Indeterminate(ClockUncertainty{obj})`.

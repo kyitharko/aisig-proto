@@ -135,6 +135,7 @@ requires every stage positive.
    - `record.grant ≠ StatusKey(G)` (any field, including the digest) → `GrantMismatch`.
 5. **time** — clock `(now, ε)`.
    - Clock unavailable → record `ClockUnavailable`.
+   - `ε < 0` (invalid uncertainty) → record `InvalidClockReading` (rejected, not clamped).
    - `now − ε ≥ expires_at` → `ChallengeExpired`.
    - `now + ε < expires_at` → ok.
    - Otherwise → record `ClockUncertainty` (half-open expiry; same rule as spec §6).

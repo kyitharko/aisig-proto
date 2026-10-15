@@ -120,6 +120,8 @@ exactly once, and never on `Deny`/`Indeterminate` (so a non-Allow performs zero 
    explicit so a future session-scoped TTL (tighter than the grant) has a home.
    - clock unavailable → `Indeterminate(ClockUnavailable)` (recorded; the snapshot is then
      empty and stages 4 and 9 see the same absence);
+   - snapshot `ε < 0` (invalid uncertainty, spec §6 requires ε ≥ 0) → record
+     `Indeterminate(InvalidClockReading)`, rejected not clamped; the window check is skipped;
    - `now − ε ≥ grant_window_end` → `Deny(DenySessionExpired)`;
    - straddling the edge → record `Indeterminate(ClockUncertainty)`.
 4. **chain** — re-verify `bundle` with `ChainVerifier` (spec §7, status stage included)
