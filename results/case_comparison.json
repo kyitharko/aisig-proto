@@ -615,6 +615,15 @@
     {
       "baseline": "Accept",
       "baseline_class_match": false,
+      "chain_aware": "Indeterminate / T / InvalidClockReading",
+      "chain_aware_exact_match": true,
+      "expected": "Indeterminate / T / InvalidClockReading",
+      "id": "T12",
+      "label_status": "proposed"
+    },
+    {
+      "baseline": "Accept",
+      "baseline_class_match": false,
       "chain_aware": "Reject / X / Revoked{G}",
       "chain_aware_exact_match": true,
       "expected": "Reject / X / Revoked{G}",
@@ -977,10 +986,10 @@
   ],
   "totals": {
     "baseline_all": {
-      "cases": 93,
+      "cases": 94,
       "class_mismatch_reject_vs_indeterminate": 0,
       "exact_stage_reason_match": 15,
-      "false_accept": 75,
+      "false_accept": 76,
       "false_reject": 2,
       "indeterminate": 0,
       "indeterminate_on_accept_label": 0
@@ -995,12 +1004,12 @@
       "indeterminate_on_accept_label": 0
     },
     "chain_aware_all": {
-      "cases": 93,
+      "cases": 94,
       "class_mismatch_reject_vs_indeterminate": 0,
-      "exact_stage_reason_match": 93,
+      "exact_stage_reason_match": 94,
       "false_accept": 0,
       "false_reject": 0,
-      "indeterminate": 11,
+      "indeterminate": 12,
       "indeterminate_on_accept_label": 0
     },
     "chain_aware_reviewed_only": {

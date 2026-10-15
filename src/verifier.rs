@@ -173,10 +173,10 @@ enum TimeVerdict {
 }
 
 fn time_check(w: &Window, r: &ClockReading) -> TimeVerdict {
-    // Clamp a hand-built negative epsilon to 0 and saturate so an extreme reading cannot
-    // overflow (debug panic / release wrap). Behaviour is unchanged for epsilon >= 0 and
-    // any realistic time.
-    let eps = r.epsilon.max(0);
+    // Callers pass only ε ≥ 0 (a negative reading is rejected at the time stage, not
+    // clamped). Saturate so an extreme reading cannot overflow (debug panic / release wrap).
+    debug_assert!(r.epsilon >= 0);
+    let eps = r.epsilon;
     let lo = r.now.0.saturating_sub(eps);
     let hi = r.now.0.saturating_add(eps);
     if w.start.0 <= lo && hi < w.end.0 {
@@ -317,6 +317,11 @@ impl ChainVerifier<'_> {
         // T — root record (only if the registry answered), then C_A, D_U, G.
         match ev.clock.now() {
             None => pending.note(Stage::Time, Reason::ClockUnavailable),
+            Some(reading) if reading.epsilon < 0 => {
+                // Invalid uncertainty (spec §6 requires ε ≥ 0; ClockReading has public
+                // fields). Reject the evidence, do not clamp; skip the window checks.
+                pending.note(Stage::Time, Reason::InvalidClockReading);
+            }
             Some(reading) => {
                 let windows = anchor
                     .map(|rec| (Obj::Root, rec.validity))
@@ -367,21 +372,22 @@ mod time_check_tests {
     use crate::model::{Ts, Window};
 
     #[test]
-    fn extreme_epsilon_does_not_overflow() {
+    fn extreme_nonnegative_epsilon_does_not_overflow() {
         let w = Window {
             start: Ts(0),
             end: Ts(100),
         };
-        // Extreme and negative epsilons must not panic; epsilon is clamped to >= 0 and
-        // bounds saturate. A huge epsilon straddles every edge -> Uncertain.
-        for eps in [i64::MAX, i64::MIN, -5] {
+        // Callers pass only ε ≥ 0 (a negative reading is rejected at the time stage, not
+        // clamped). An extreme non-negative ε must saturate, not overflow: it straddles
+        // every edge -> Uncertain.
+        // Small ε keeps [now−ε, now+ε] inside [0,100) → Ok; a huge ε straddles → Uncertain.
+        for (eps, want_ok) in [(0i64, true), (1, true), (i64::MAX, false)] {
             let r = ClockReading {
                 now: Ts(50),
                 epsilon: eps,
             };
             let v = time_check(&w, &r);
-            if eps < 0 {
-                // clamped to 0: now=50 strictly inside [0,100) -> Ok
+            if want_ok {
                 assert!(matches!(v, TimeVerdict::Ok), "eps={eps}");
             } else {
                 assert!(matches!(v, TimeVerdict::Uncertain), "eps={eps}");

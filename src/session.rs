@@ -256,6 +256,7 @@ pub enum SessionReason {
     SessionMismatch,
     GrantMismatch,
     ClockUnavailable,
+    InvalidClockReading,
     ClockUncertainty,
     ChallengeExpired,
     InvalidProofSignature,
@@ -524,9 +525,15 @@ impl<'a> SessionService<'a> {
         let reading = self.chain.evidence.clock.now();
         match reading {
             None => note(&mut pending, S::Time, R::ClockUnavailable),
+            Some(r) if r.epsilon < 0 => {
+                // Invalid uncertainty (spec §6); reject, do not clamp.
+                note(&mut pending, S::Time, R::InvalidClockReading);
+            }
             Some(r) => {
-                let eps = r.epsilon.max(0);
-                let (lo, hi) = (r.now.0.saturating_sub(eps), r.now.0.saturating_add(eps));
+                let (lo, hi) = (
+                    r.now.0.saturating_sub(r.epsilon),
+                    r.now.0.saturating_add(r.epsilon),
+                );
                 if lo >= record.expires_at.0 {
                     return SessionDecision::reject(S::Time, R::ChallengeExpired);
                 }

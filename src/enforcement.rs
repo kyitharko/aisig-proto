@@ -265,6 +265,7 @@ pub enum MediationReason {
     SessionStateUnavailable,
     DenyNoSession,
     ClockUnavailable,
+    InvalidClockReading,
     DenySessionExpired,
     ClockUncertainty,
     ChainRejected(Decision),
@@ -383,10 +384,14 @@ impl Mediator<'_> {
         let snapshot: Option<ClockReading> = self.chain.evidence.clock.now();
         match snapshot {
             None => note(S::Expiry, R::ClockUnavailable),
+            Some(r) if r.epsilon < 0 => {
+                // Invalid uncertainty (spec §6 requires ε ≥ 0); reject, do not clamp. The
+                // window check is skipped; perform is unreachable (pending is set).
+                note(S::Expiry, R::InvalidClockReading);
+            }
             Some(r) => {
-                let eps = r.epsilon.max(0);
-                let lo = r.now.0.saturating_sub(eps);
-                let hi = r.now.0.saturating_add(eps);
+                let lo = r.now.0.saturating_sub(r.epsilon);
+                let hi = r.now.0.saturating_add(r.epsilon);
                 if lo >= auth.grant_window_end().0 {
                     return Mediate::deny(S::Expiry, R::DenySessionExpired);
                 }

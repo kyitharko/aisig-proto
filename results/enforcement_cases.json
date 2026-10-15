@@ -188,8 +188,15 @@
       "id": "EE27",
       "label_status": "reviewed",
       "match": true
+    },
+    {
+      "actual": "Indeterminate / expiry / InvalidClockReading effects=0",
+      "expected": "Indeterminate / expiry / InvalidClockReading effects=0",
+      "id": "EE28",
+      "label_status": "proposed",
+      "match": true
     }
   ],
-  "matched": 27,
-  "total": 27
+  "matched": 28,
+  "total": 28
 }

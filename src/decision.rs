@@ -149,6 +149,7 @@ pub enum Reason {
     BindingUnavailable,
     // T — time
     ClockUnavailable,
+    InvalidClockReading,
     NotYetValid(Obj),
     Expired(Obj),
     ClockUncertainty(Obj),

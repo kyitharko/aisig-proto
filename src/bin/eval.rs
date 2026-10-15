@@ -69,7 +69,7 @@ fn main() {
         .filter(|r| r.actual == r.label.expected)
         .count();
     println!(
-        "session slice: {ok}/{} match (29 reviewed, SI06/SI07 proposed)",
+        "session slice: {ok}/{} match (29 reviewed, 4 proposed)",
         session_rows.len()
     );
     for r in session_rows.iter().filter(|r| r.actual != r.label.expected) {
@@ -80,7 +80,7 @@ fn main() {
     }
     println!("wrote results/session_cases.md and results/session_cases.json");
 
-    // RQ6 enforcement slice: separate labels (all reviewed).
+    // RQ6 enforcement slice: separate labels (27 reviewed, EE28 proposed).
     let enf_labels =
         cases::load(enforcement_cases::ENFORCEMENT_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
     let enf_rows = enforcement_cases::run_all(&enf_labels);
@@ -97,7 +97,7 @@ fn main() {
         .filter(|r| r.actual == r.label.expected)
         .count();
     println!(
-        "enforcement slice: {ok}/{} match (all reviewed)",
+        "enforcement slice: {ok}/{} match (27 reviewed, EE28 proposed)",
         enf_rows.len()
     );
     for r in enf_rows.iter().filter(|r| r.actual != r.label.expected) {
