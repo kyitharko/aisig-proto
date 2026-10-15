@@ -1,4 +1,4 @@
-# Prototype report — RQ4 chain verifier (r3.1) and RQ5 session slice (s1)
+# Prototype report — RQ4 chain verifier (r3.1), RQ5 session (s1), RQ6 enforcement (e2)
 
 **Date:** 2026-10-15. **Branch:** `feature/chain-verifier-prototype` (local only, no remote).
 All numbers below were produced by the commands listed; files in `results/` are the raw
@@ -14,7 +14,7 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ3 delegation non-amplification | **Partly exercised.** Fixed depth-3 chain only. |
 | RQ4 grant scope semantics | **Implemented and tested** against owner-reviewed labels (spec r3). |
 | RQ5 tester/session binding | **First slice (s1), reviewed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
-| RQ6 enforcement of agent actions | **Unresolved.** `exact_node_lookup` and `subtree_lookup` are lookups; TestClass→action mapping undefined. |
+| RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 27 cases match (EE01–EE26 reviewed, EE27 proposed). Only modeled synthetic effects; no live tool enforcement. |
 | RQ7 revocation freshness | **Unresolved.** Status is an instant, always-current in-memory fixture, now keyed by exact object (r3). |
 | RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
 
@@ -227,10 +227,48 @@ keyed by (id, version) only, so these timings do not reflect the current status 
 | status lookup ×3 (id, version keys) | 133 | 150 | 212 |
 | full chain verify | 230 649 | 355 817 | 438 477 |
 
+## RQ6 enforcement slice e2 (separate from the chain/lookup/session results)
+
+Spec [enforcement.md](enforcement.md); labels `tests/cases/enforcement_cases.toml`
+(EE01–EE26 reviewed, EE27 proposed), written before the implementation. Implemented in
+`src/enforcement.rs`; results in `results/enforcement_cases.md`.
+
+**Result: 27/27 enforcement labels match** (4 Allow, 20 Deny, 3 Indeterminate). Reported
+separately; the chain (93/93), lookup (15/15) and session (29/29) results are unchanged and
+`results/case_comparison.*` and `results/session_cases.*` were not altered by this slice.
+
+- The agent's `claimed_class` never changes the outcome (EE12: a `recon` claim on a
+  `db.write` is still denied as `data_modification`).
+- Scope precedes class: an excluded or out-of-scope target is denied before any class check
+  (EE05–EE09); EE23 shows a recon-only grant denied at class for `web.get`.
+- EE27 shows a `PartiallyAllowed` subtree with **no explicit exclusion** (grant targets only
+  `.../billing`, so `cluster1/main` is part-in/part-out) denied as
+  `DenySubtreePartiallyAllowed`.
+- Target validation (EE25) rejects a non-canonical target at the validate stage; combined
+  with the `compile_fail` doctest (a `MediationRequest` has no `AssetRef` field, E0560), a
+  pre-built non-canonical `AssetRef` cannot enter mediation.
+- Chain is re-verified each action: EE22 (altered grant) and EE26 (revoked before mediation)
+  deny at the chain stage; EE18 denies a grant-ref mismatch.
+- Evidence outages are Indeterminate, never Allow, and never append an effect: EE19 (session
+  store), EE20 (status source), EE21 (clock).
+- The effect sink grows by exactly 1 on each Allow and by 0 on every Deny/Indeterminate
+  (checked by measuring sink growth; `only_allow_performs_an_effect`).
+
+Checks at this slice: `cargo fmt --check` clean; `clippy -D warnings` clean; `cargo test`
+all pass (incl. 5 doctests, 3 of them `compile_fail`); both extra proptest seeds pass; eval
+reports 93/93, 15/15, 29/29, 27/27. Passing the earlier chain/session tests is **not**
+offered as evidence for RQ6 — the RQ6 result is the 27/27 enforcement match above.
+
+Not claimed: live tool enforcement, interception of real processes/network, confinement of
+unmanaged tools, a complete effect taxonomy, or RQ7 status-source freshness.
+
 ## Remaining open items
 
 - Q9–Q12 are decided (spec §10). Their follow-ups are future work:
   - an evidenced *conflict* result from an authoritative, complete status service (Q9);
   - root rotation with explicit record versions, validity and retirement (Q11).
 - No proposed labels remain.
-- RQ5 s1 labels (28) await owner review; RQ5 channel binding, relay resistance and per-request PoP remain open. RQ6 and RQ7 remain unresolved.
+- RQ5 s1 (28 labels) is owner-reviewed; SI05 (clock-edge) is proposed. RQ5 channel
+  binding, relay resistance and per-request PoP remain open.
+- RQ6 e2 is implemented for synthetic operations; EE27 is a proposed boundary label.
+  Live tool enforcement is not claimed. RQ7 (status-source freshness) remains unresolved.

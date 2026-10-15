@@ -1,0 +1,195 @@
+{
+  "cases": [
+    {
+      "actual": "Allow effects=1",
+      "expected": "Allow effects=1",
+      "id": "EE01",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Allow effects=1",
+      "expected": "Allow effects=1",
+      "id": "EE02",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Allow effects=1",
+      "expected": "Allow effects=1",
+      "id": "EE03",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Allow effects=1",
+      "expected": "Allow effects=1",
+      "id": "EE04",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / scope / DenyTargetExcluded effects=0",
+      "expected": "Deny / scope / DenyTargetExcluded effects=0",
+      "id": "EE05",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / scope / DenyTargetExcluded effects=0",
+      "expected": "Deny / scope / DenyTargetExcluded effects=0",
+      "id": "EE06",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / scope / DenyTargetExcluded effects=0",
+      "expected": "Deny / scope / DenyTargetExcluded effects=0",
+      "id": "EE07",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / scope / DenyTargetOutOfScope effects=0",
+      "expected": "Deny / scope / DenyTargetOutOfScope effects=0",
+      "id": "EE08",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / scope / DenyTargetOutOfScope effects=0",
+      "expected": "Deny / scope / DenyTargetOutOfScope effects=0",
+      "id": "EE09",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "expected": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "id": "EE10",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "expected": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "id": "EE11",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "expected": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "id": "EE12",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / classify / DenyUnknownOperation effects=0",
+      "expected": "Deny / classify / DenyUnknownOperation effects=0",
+      "id": "EE13",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / effects / DenyTargetTypeMismatch effects=0",
+      "expected": "Deny / effects / DenyTargetTypeMismatch effects=0",
+      "id": "EE14",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / effects / DenyUnboundedSecondaryEffect effects=0",
+      "expected": "Deny / effects / DenyUnboundedSecondaryEffect effects=0",
+      "id": "EE15",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / expiry / DenySessionExpired effects=0",
+      "expected": "Deny / expiry / DenySessionExpired effects=0",
+      "id": "EE16",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / session / DenyNoSession effects=0",
+      "expected": "Deny / session / DenyNoSession effects=0",
+      "id": "EE17",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / chain / DenyGrantMismatch effects=0",
+      "expected": "Deny / chain / DenyGrantMismatch effects=0",
+      "id": "EE18",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / session / SessionStateUnavailable effects=0",
+      "expected": "Indeterminate / session / SessionStateUnavailable effects=0",
+      "id": "EE19",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) effects=0",
+      "expected": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) effects=0",
+      "id": "EE20",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / expiry / ClockUnavailable effects=0",
+      "expected": "Indeterminate / expiry / ClockUnavailable effects=0",
+      "id": "EE21",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / chain / ChainRejected(Reject / S / InvalidSignature{G}) effects=0",
+      "expected": "Deny / chain / ChainRejected(Reject / S / InvalidSignature{G}) effects=0",
+      "id": "EE22",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "expected": "Deny / class / DenyTestClassNotPermitted effects=0",
+      "id": "EE23",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / scope / DenySubtreePartiallyAllowed effects=0",
+      "expected": "Deny / scope / DenySubtreePartiallyAllowed effects=0",
+      "id": "EE24",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / validate / DenyNoncanonicalTarget effects=0",
+      "expected": "Deny / validate / DenyNoncanonicalTarget effects=0",
+      "id": "EE25",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0",
+      "expected": "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0",
+      "id": "EE26",
+      "label_status": "reviewed",
+      "match": true
+    },
+    {
+      "actual": "Deny / scope / DenySubtreePartiallyAllowed effects=0",
+      "expected": "Deny / scope / DenySubtreePartiallyAllowed effects=0",
+      "id": "EE27",
+      "label_status": "proposed",
+      "match": true
+    }
+  ],
+  "matched": 27,
+  "total": 27
+}
