@@ -14,7 +14,7 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ3 delegation non-amplification | **Partly exercised.** Fixed depth-3 chain only. |
 | RQ4 grant scope semantics | **Implemented and tested** against owner-reviewed labels (spec r3). |
 | RQ5 tester/session binding | **First slice (s1), reviewed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
-| RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 27 cases match (EE01–EE26 reviewed, EE27 proposed). Only modeled synthetic effects; no live tool enforcement. |
+| RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 27/27 reviewed cases match. One clock snapshot per mediation; the effect-sink append is private. Only modeled synthetic effects; no live tool enforcement. |
 | RQ7 revocation freshness | **Unresolved.** Status is an instant, always-current in-memory fixture, now keyed by exact object (r3). |
 | RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
 
@@ -262,6 +262,31 @@ offered as evidence for RQ6 — the RQ6 result is the 27/27 enforcement match ab
 Not claimed: live tool enforcement, interception of real processes/network, confinement of
 unmanaged tools, a complete effect taxonomy, or RQ7 status-source freshness.
 
+## Review round 2 (2026-10-16): clock and sink boundary fixes
+
+Three defects found by review of commit `36e2875`, each reproduced before the fix
+(commit `8cbd104`) and reported here reproduction-then-fixed.
+
+| # | Defect (reproduction result at `8cbd104`) | Fixed result |
+| --- | --- | --- |
+| 1a | RQ6 read the clock a 3rd time at perform; a `None` there **panicked** | One snapshot per mediation; no perform read → no panic (`perform_does_not_reread_clock_no_panic`) |
+| 1b | With a later reading at perform, the receipt was stamped stale: `performed_at=2026-10-15T23:00:00Z` | `performed_at` is the decision snapshot `10:30:00Z` (`performed_at_is_the_decision_snapshot_not_a_later_read`) |
+| 2 | `EffectSink::record` was public: an external caller grew the sink with a cloned receipt (1 → 2) | Append is module-private; external code has read-only `len`/`receipts`; `compile_fail` doctest (E0624) and `external_caller_cannot_append_a_cloned_receipt` |
+| 3a | RQ5 issuance before `window.start` **issued** a challenge dated before the grant (`expires_at=…T08:02:00Z`) | `IssueUnavailable / InvalidClockReading` (SI06) |
+| 3b | RQ5 issuance with a **negative** uncertainty was silently accepted (`Issued`) | `IssueUnavailable / InvalidClockReading` (SI07) |
+
+Fixes: the RQ6 mediator reads the clock once (stage 3) and reuses that snapshot for the
+expiry check, the chain-time verification (run against a frozen clock), and `performed_at`;
+`EffectSink` is a concrete type whose append only `perform` can call. RQ5 `issue` validates
+the issuance reading against `[G.window.start, G.window.end)`, canonical representability,
+and non-negative uncertainty, rejecting (never clamping) an invalid reading.
+
+New labels: SI06, SI07 (proposed), each `IssueUnavailable / InvalidClockReading`. Status
+flips to reviewed: SI05, EE27. No expected value of any previously-reviewed case changed
+(verified by diffing the label files against `36e2875`): the 93 chain, 15 lookup, the
+original 28 session and 26 RQ6 outcomes are unchanged. Post-fix eval: 93/93, 15/15,
+session 31/31 (29 reviewed + SI06/SI07 proposed), RQ6 27/27.
+
 ## Remaining open items
 
 - Q9–Q12 are decided (spec §10). Their follow-ups are future work:
@@ -270,5 +295,6 @@ unmanaged tools, a complete effect taxonomy, or RQ7 status-source freshness.
 - No proposed labels remain.
 - RQ5 s1 (28 labels) is owner-reviewed; SI05 (clock-edge) is proposed. RQ5 channel
   binding, relay resistance and per-request PoP remain open.
-- RQ6 e2 is implemented for synthetic operations; EE27 is a proposed boundary label.
-  Live tool enforcement is not claimed. RQ7 (status-source freshness) remains unresolved.
+- RQ6 e2 is implemented for synthetic operations; all 27 labels reviewed. Live tool
+  enforcement is not claimed. RQ7 (status-source freshness) remains unresolved.
+- RQ5 issuance now rejects inconsistent clock readings (SI05 reviewed; SI06/SI07 proposed).
