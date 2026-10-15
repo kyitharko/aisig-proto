@@ -11,6 +11,8 @@
 //! - [`evidence`]: registry, binding, clock and status interfaces plus in-memory fixtures.
 //! - [`verifier`]: the ValidChain_P decision procedure (spec §7).
 //! - [`baseline`]: the deliberately weak signature-only verifier (spec §7.4).
+//! - [`session`]: RQ5 slice — tester proof of possession bound to a provider session
+//!   (docs/session.md). Separate from the chain decision.
 //! - [`experiment`]: synthetic fixture, case mutations, label loading and reporting.
 
 pub mod asset;
@@ -22,4 +24,5 @@ pub mod evidence;
 pub mod experiment;
 pub mod model;
 pub mod policy;
+pub mod session;
 pub mod verifier;

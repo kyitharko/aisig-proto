@@ -208,9 +208,16 @@ impl ChainVerifier<'_> {
     /// ValidChain_P over raw envelope bytes. This is the only public decision entry point
     /// (spec §7.5): callers cannot supply pre-decoded or modified bodies.
     pub fn verify(&self, bundle: &Bundle) -> Decision {
+        self.verify_with_chain(bundle).0
+    }
+
+    /// The chain decision together with the chain this verifier decoded from `bundle`
+    /// (`None` only when decoding failed). Crate-internal: used by the RQ5 session
+    /// service to read the accepted G without a public pre-decoded decision path.
+    pub(crate) fn verify_with_chain(&self, bundle: &Bundle) -> (Decision, Option<DecodedChain>) {
         match decode_chain(bundle) {
-            Ok(chain) => self.evaluate(&chain),
-            Err(reason) => Decision::reject(Stage::Format, reason),
+            Ok(chain) => (self.evaluate(&chain), Some(chain)),
+            Err(reason) => (Decision::reject(Stage::Format, reason), None),
         }
     }
 

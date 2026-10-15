@@ -3,7 +3,7 @@
 
 use std::fs;
 
-use aisig_proto::experiment::{cases, report};
+use aisig_proto::experiment::{cases, report, session_cases};
 
 fn main() {
     let labels = cases::load_default().unwrap_or_else(|e| panic!("{e}"));
@@ -51,4 +51,32 @@ fn main() {
         q_bad
     );
     println!("wrote results/case_comparison.md and results/case_comparison.json");
+
+    // RQ5 session slice: separate labels, separate output.
+    let session_labels =
+        cases::load(session_cases::SESSION_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
+    let session_rows = session_cases::run_all(&session_labels);
+    fs::write(
+        "results/session_cases.md",
+        session_cases::render_markdown(&session_rows),
+    )
+    .expect("write session md");
+    let json =
+        serde_json::to_string_pretty(&session_cases::render_json(&session_rows)).expect("json");
+    fs::write("results/session_cases.json", json + "\n").expect("write session json");
+    let ok = session_rows
+        .iter()
+        .filter(|r| r.actual == r.label.expected)
+        .count();
+    println!(
+        "session slice (proposed labels): {ok}/{} match",
+        session_rows.len()
+    );
+    for r in session_rows.iter().filter(|r| r.actual != r.label.expected) {
+        println!(
+            "SESSION MISMATCH {}: expected `{}`, got `{}`",
+            r.label.id, r.label.expected, r.actual
+        );
+    }
+    println!("wrote results/session_cases.md and results/session_cases.json");
 }

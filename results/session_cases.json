@@ -1,0 +1,230 @@
+{
+  "cases": [
+    {
+      "actual": "SessionAccept",
+      "expected": "SessionAccept",
+      "id": "SS01",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / proof / MissingProof",
+      "expected": "SessionReject / proof / MissingProof",
+      "id": "SS02",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / pop / InvalidProofSignature",
+      "expected": "SessionReject / pop / InvalidProofSignature",
+      "id": "SS03",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / pop / InvalidProofSignature",
+      "expected": "SessionReject / pop / InvalidProofSignature",
+      "id": "SS04",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionAccept ; SessionReject / challenge / ChallengeAlreadyConsumed",
+      "expected": "SessionAccept ; SessionReject / challenge / ChallengeAlreadyConsumed",
+      "id": "SS05",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / binding / SessionMismatch",
+      "expected": "SessionReject / binding / SessionMismatch",
+      "id": "SS06",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / binding / GrantMismatch",
+      "expected": "SessionReject / binding / GrantMismatch",
+      "id": "SS07",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / binding / ChallengeAudienceMismatch",
+      "expected": "SessionReject / binding / ChallengeAudienceMismatch",
+      "id": "SS08",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / time / ChallengeExpired",
+      "expected": "SessionReject / time / ChallengeExpired",
+      "id": "SS09",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionIndeterminate / time / ClockUncertainty",
+      "expected": "SessionIndeterminate / time / ClockUncertainty",
+      "id": "SS10",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionAccept",
+      "expected": "SessionAccept",
+      "id": "SS11",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionIndeterminate / challenge / ChallengeStateUnavailable",
+      "expected": "SessionIndeterminate / challenge / ChallengeStateUnavailable",
+      "id": "SS12",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / challenge / UnknownChallenge",
+      "expected": "SessionReject / challenge / UnknownChallenge",
+      "id": "SS13",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / chain / ChainRejected(Reject / S / InvalidSignature{G})",
+      "expected": "SessionReject / chain / ChainRejected(Reject / S / InvalidSignature{G})",
+      "id": "SS14",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable)",
+      "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable)",
+      "id": "SS15",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / pop / InvalidProofSignature",
+      "expected": "SessionReject / pop / InvalidProofSignature",
+      "id": "SS16",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / pop / InvalidProofSignature",
+      "expected": "SessionReject / pop / InvalidProofSignature",
+      "id": "SS17",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / pop / InvalidProofSignature",
+      "expected": "SessionReject / pop / InvalidProofSignature",
+      "id": "SS18",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / proof / MalformedProof",
+      "expected": "SessionReject / proof / MalformedProof",
+      "id": "SS19",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / pop / InvalidProofSignature ; SessionAccept",
+      "expected": "SessionReject / pop / InvalidProofSignature ; SessionAccept",
+      "id": "SS20",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) ; SessionAccept",
+      "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) ; SessionAccept",
+      "id": "SS21",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "accepts=1 already_consumed=7 other=0",
+      "expected": "accepts=1 already_consumed=7 other=0",
+      "id": "SS22",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionReject / chain / ChainRejected(Reject / X / Revoked{G})",
+      "expected": "SessionReject / chain / ChainRejected(Reject / X / Revoked{G})",
+      "id": "SS23",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / ClockUnavailable)",
+      "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / ClockUnavailable)",
+      "id": "SS24",
+      "kind": "session",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Issued expires_at=2026-10-15T10:02:00Z",
+      "expected": "Issued expires_at=2026-10-15T10:02:00Z",
+      "id": "SI01",
+      "kind": "issue",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "IssueRefused / Reject / X / Revoked{G}",
+      "expected": "IssueRefused / Reject / X / Revoked{G}",
+      "id": "SI02",
+      "kind": "issue",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "IssueUnavailable / ChallengeStateUnavailable",
+      "expected": "IssueUnavailable / ChallengeStateUnavailable",
+      "id": "SI03",
+      "kind": "issue",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Issued expires_at=2026-10-15T10:01:00Z",
+      "expected": "Issued expires_at=2026-10-15T10:01:00Z",
+      "id": "SI04",
+      "kind": "issue",
+      "label_status": "proposed",
+      "match": true
+    }
+  ],
+  "matched": 28,
+  "total": 28
+}
