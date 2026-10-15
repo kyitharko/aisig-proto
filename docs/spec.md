@@ -1,7 +1,8 @@
-# Provider-verified authorization chains — specification (DRAFT r3)
+# Provider-verified authorization chains — specification (DRAFT r3.1)
 
-**Status:** DRAFT r3, 2026-10-15. Owner decisions on r1 open questions are applied, and r3
-adds exact-object status identity, registry-record checks and named scope lookups (§10).
+**Status:** DRAFT r3.1, 2026-10-15. Owner decisions on r1 open questions are applied, and r3
+adds exact-object status identity, registry-record checks and named scope lookups. r3.1
+records decisions Q9–Q11 and the public API trust boundary (§7.5, §10).
 This is a research working hypothesis, not a final protocol or a proven contribution.
 Case labels carry an explicit review status in [experiment.md](experiment.md).
 
@@ -393,13 +394,22 @@ the owner's test classes or targets.
   every signed field. The signature bytes are not included: the status identifies the
   signed content, and the signer is already fixed by the chain and by `issuer_key_id`
   inside the payload. The explicit org/type/id/version fields are redundant with the digest
-  but let a status service index and audit records.
+  but let a status service index and audit records. **Content-identity choice (Q10):** the
+  digest identifies the signed content, not a particular signature. The signer is fixed by
+  the signed `issuer_key_id` and the verified chain, so signature bytes are not hashed.
+
+  **Issuance rule:** an issuer that changes any signed content must issue it under a new
+  `version` or a new `id`. Re-signing different content under an existing
+  (org, type, id, version) is not a supported way to amend an object; it yields an
+  unregistered object (Q9).
 
   The status source answers a record's status **only for an exact key match**. A record for
   another object never answers, even with the same id and version, or the same id in
   another type. Active → ok. Revoked → `Reject(Revoked{obj})`. Superseded →
   `Reject(Superseded{obj})` (in v0 a superseded parent invalidates all its descendants).
-  No matching record → `Indeterminate(StatusUnknown{obj})`, never Accept. Unavailable →
+  No matching record → `Indeterminate(StatusUnknown{obj})`, never Accept. This holds even
+  when a record exists for the same (org, type, id, version) with a different digest. v0
+  does not infer equivocation from a digest difference alone (Q9). Unavailable →
   `Indeterminate(StatusUnavailable)`. The fixture is a simulation; real freshness and
   revocation delay are RQ7.
 
@@ -477,6 +487,27 @@ proof of the spec.
 It performs no registry, canonical-form, linkage, scope, binding, time or status checks.
 It exists only as a comparison point; its outcomes are measured, never used as labels.
 
+
+### 7.5 Public API trust boundary (r3.1)
+
+The decision procedure has exactly one public entry point,
+`ChainVerifier::verify(&Bundle)`, which takes raw envelope bytes and performs stages F
+through X itself. Inside it, every policy field is read from a body that the verifier
+obtained by strictly decoding the very payload bytes it then verifies and hashes.
+
+- `decode_chain` is public for inspection only. Its result (`DecodedChain`, `Signed<T>`)
+  is read-only: private fields, getters only, no constructor other than decoding. A
+  `Signed<T>` body is always the decoding of its own `payload`.
+- There is no public way to submit a pre-decoded chain for a decision. In r3 the public
+  `verify_decoded` let a caller change a decoded body after decoding while the signature
+  and status digest still covered the original payload. Policy then ran on unsigned
+  content (reproduced at commit `bcfe70f`). That entry point is now private.
+- If a pre-decoded API is needed later, it must accept only values produced by the
+  verifier's own decoding (an unforgeable, immutable type), and it must derive every policy
+  field from the verified payload.
+- This issue concerned the pre-decoded API. No bypass of `verify(&Bundle)` was shown:
+  the same alteration made in raw bundle bytes fails signature verification.
+
 ---
 
 ## 8. Assumptions
@@ -533,3 +564,14 @@ and V09, V10, M20, M21 were approved.
 | Q10 | Should the status digest also cover the signature bytes, or the issuer key id explicitly? | Covers type-separated signed bytes only (issuer_key_id is inside them). |
 | Q11 | Multiple root records per org (key rotation) | Not modelled: one record per org_id. |
 | Q12 | Labels for R07, R08, X07–X09, Q11, U01–U04 | Proposed. |
+
+**r3.1 owner decisions (2026-10-15):**
+
+| # | Decision |
+| --- | --- |
+| Q9 | Keep an unmatched exact StatusKey as `Indeterminate / X / StatusUnknown` in v0. Do not infer equivocation from a different digest under the same (org, type, id, version). A future authoritative, complete status service may expose a distinct, evidenced *conflict* result; that result must be defined separately before any Reject is assigned to it. Issuance must use a new version or id for changed content (§6). |
+| Q10 | Keep the digest over the type-separated signed payload bytes; do not add signature bytes. The signed `issuer_key_id` and the verified chain determine the signer. Documented as a content-identity choice (§6). |
+| Q11 | Root rotation and multiple root records per org are deferred beyond v0. The verifier must not silently accept any available key for an organization; a future design needs explicit record versions, validity and retirement rules. v0 keeps exactly one record per org_id, checked as in §6. |
+| Q12 | R07, R08, X07–X09, Q11 and U01–U04 approved; all labels are now reviewed. |
+
+**r3.1 change:** public pre-decoded decision API removed; decoded objects read-only (§7.5).

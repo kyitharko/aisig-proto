@@ -1,6 +1,6 @@
-# Threat model — RQ4 chain verifier (DRAFT r3)
+# Threat model — RQ4 chain verifier (DRAFT r3.1)
 
-**Status:** DRAFT r3, 2026-10-15. See [spec.md](spec.md) for symbols.
+**Status:** DRAFT r3.1, 2026-10-15. See [spec.md](spec.md) for symbols.
 
 ## 1. System and trust boundary
 
@@ -62,6 +62,7 @@ before their signature verifies.
 | TH17 | Status substitution: a newly signed object reuses another object's id/version (same or different type) to inherit its Active status | Status keyed by exact StatusKey incl. SHA-256 of type-separated signed bytes; no match → Indeterminate, never Accept (X) | X07, X08, X09, property |
 | TH18 | Misfiled or mismatched registry record: the record returned for O names another org, or a different algorithm | Anchor checks record.org_id and record.algorithm, not just the lookup key; fails closed (N) | R07, R08 |
 | TH19 | Exact-node lookup misread as a subtree permission (`/app` InScope although `/app/admin` is excluded) | Separate `exact_node_lookup` and `subtree_lookup` APIs with effective-set semantics for the latter; still not enforcement | Q11, U01–U04, SO3 |
+| TH20 | API caller (integrating code) runs policy on a decoded body that differs from the verified payload | Single public entry point `verify(&Bundle)`; decoded objects read-only; pre-decoded evaluation private (spec §7.5) | tests/predecoded_api.rs, verifier doctests |
 
 ## 4. Out of scope (non-goals for v0)
 

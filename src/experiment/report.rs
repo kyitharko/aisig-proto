@@ -40,7 +40,7 @@ pub fn run_chain_cases(labels: &[CaseLabel]) -> Vec<ChainRow> {
 pub fn run_scope_queries(labels: &[CaseLabel]) -> Vec<QueryRow> {
     let bundle = Scenario::base().build();
     let chain = decode_chain(&bundle).expect("base chain decodes");
-    let scope = grant_scope(&chain.grant.body);
+    let scope = grant_scope(chain.grant().body());
     labels
         .iter()
         .filter(|l| l.kind == "exact_node_query" || l.kind == "subtree_query")

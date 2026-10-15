@@ -1,6 +1,6 @@
-# Limitations (DRAFT r3)
+# Limitations (DRAFT r3.1)
 
-**Status:** DRAFT r3, 2026-10-15. Updated as stages land; measured limits are added only
+**Status:** DRAFT r3.1, 2026-10-15. Updated as stages land; measured limits are added only
 after they are measured.
 
 ## What an Accept does not mean
@@ -22,9 +22,15 @@ after they are measured.
   the exact signed object (spec §6). That prevents status inheritance between objects,
   but says nothing about how a real status service learns of objects or keeps up to date.
 - An object with no exact status record is Indeterminate, not Reject, even when a record
-  exists for the same id/version with different content (possible equivocation; spec Q9).
-- The anchor stage now checks that the returned registry record names O and Ed25519. The
-  registry itself is still a trusted fixture (RQ1), and key rotation is not modelled.
+  exists for the same id/version with different content. By owner decision (spec Q9) v0
+  does not infer equivocation from a digest difference; an evidenced conflict result is
+  future work and needs its own definition.
+- Only `verify(&Bundle)` is a supported decision API (spec §7.5). The r3 public
+  pre-decoded API allowed policy to run on unsigned, altered bodies; it was removed in r3.1.
+  Integrations must not reconstruct decisions from `decode_chain` output.
+- The anchor stage checks that the returned registry record names O and Ed25519. The
+  registry itself is still a trusted fixture (RQ1). Root rotation and multiple records per
+  org are deferred (spec Q11); v0 never accepts "any available key" for an org.
 - It is not P's service decision (ProviderExec). P may still refuse to run something under
   its own policy; that refusal is not a statement about O's authorization.
 - "Indeterminate" and "Reject" are not accusations of malicious activity.

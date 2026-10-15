@@ -107,7 +107,7 @@ fn main() {
     let chain = decode_chain(bundle).expect("decodes");
     let view = chain.view();
     let root_key = *scenario.registry.records[ACME].root_key.bytes();
-    let (a, d, g) = (&chain.admin, &chain.issuer, &chain.grant);
+    let (a, d, g) = (chain.admin(), chain.issuer(), chain.grant());
     let status: &dyn StatusSource = &prepared.status;
     let keys = chain.status_keys();
 
@@ -121,18 +121,18 @@ fn main() {
             "signature_x3",
             "Ed25519 verify_strict of C_A, D_U, G over pre-decoded payloads",
             measure(&args, || {
-                crypto::verify(&root_key, "AdminDelegation", &a.payload, &a.sig)
+                crypto::verify(&root_key, "AdminDelegation", a.payload(), a.sig())
                     && crypto::verify(
-                        a.body.subject_key.bytes(),
+                        a.body().subject_key.bytes(),
                         "IssuerDelegation",
-                        &d.payload,
-                        &d.sig,
+                        d.payload(),
+                        d.sig(),
                     )
                     && crypto::verify(
-                        d.body.subject_key.bytes(),
+                        d.body().subject_key.bytes(),
                         "EngagementGrant",
-                        &g.payload,
-                        &g.sig,
+                        g.payload(),
+                        g.sig(),
                     )
             }),
         ),

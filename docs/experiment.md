@@ -1,6 +1,6 @@
-# Experiment design — RQ4 chain verifier (DRAFT r3)
+# Experiment design — RQ4 chain verifier (DRAFT r3.1)
 
-**Status:** DRAFT r3, 2026-10-15. Each label carries a review status (§3). Labels marked
+**Status:** DRAFT r3.1, 2026-10-15. All labels are owner-reviewed. Each label carries a review status (§3). Labels marked
 **Pr** (proposed) still need independent owner review. Results are reported only in
 `results/` and [report.md](report.md) after they have been produced by a run.
 
@@ -70,9 +70,10 @@ differs from its label is a **test failure to investigate**, never a label to up
 
 - **Rv** — label agreed by the owner as written on 2026-10-15 (V09, V10, M04 with its
   clarified mutation, M20, M21 and P03 were approved in the owner's Stage 0–4 review,
-  also on 2026-10-15).
+  also on 2026-10-15; R07, R08, X07–X09, Q11 and U01–U04 were approved in the owner's
+  r3 review, also on 2026-10-15).
 - **Rv\*** — label set by explicit owner instruction on 2026-10-15 (changed from r1).
-- **Pr** — proposed; needs owner review (new in r3).
+- **Pr** — proposed; needs owner review. None remain as of r3.1.
 
 Decision notation: **A** = Accept, **R** = Reject, **I** = Indeterminate. Stage letters as
 in spec §7 (F, N, S, L, P, B, T, X).
@@ -104,8 +105,8 @@ in spec §7 (F, N, S, L, P, B, T, X).
 | R04 | Registry unavailable | I | N / RegistryUnavailable | Rv |
 | R05 | Registry acme validity end = 2026-10-15T09:30:00Z | R | T / Expired{root} | Rv |
 | R06 | Registry acme usage = `tls-server` | R | N / RootUsageMismatch | Rv |
-| R07 | Registry entry looked up for `org-acme-synthetic` has record `org_id = org-globex-synthetic` (key, usage, status otherwise acme's) | R | N / RootOrgMismatch | Pr |
-| R08 | Registry acme record `algorithm = Ed448` (same key bytes) | R | N / RootAlgorithmMismatch | Pr |
+| R07 | Registry entry looked up for `org-acme-synthetic` has record `org_id = org-globex-synthetic` (key, usage, status otherwise acme's) | R | N / RootOrgMismatch | Rv |
+| R08 | Registry acme record `algorithm = Ed448` (same key bytes) | R | N / RootAlgorithmMismatch | Rv |
 
 ### S — signature and encoding
 
@@ -196,9 +197,9 @@ mutation was approved in the owner's Stage 0–4 review. M20 covers the admissib
 | X04 | Status source unavailable | I | X / StatusUnavailable | Rv |
 | X05 | Status source has no record for g-acme-001 | I | X / StatusUnknown{G} | Rv |
 | X06 | Status ca-acme-001 v1 = superseded (D_U still references v1) | R | X / Superseded{C_A} | Rv |
-| X07 | G re-issued with `id = ca-acme-001`, `version = 1` (C_A's id/version), validly signed by K(acme-authorizer); no status record for this G (C_A keeps its own Active record) | I | X / StatusUnknown{G} | Pr |
-| X08 | G re-issued with the original `id = g-acme-001`, `version = 1` but `tester_key = K(tester-2)`, validly signed; only the original base G is registered Active | I | X / StatusUnknown{G} | Pr |
-| X09 | G re-issued with the original id/version but test_scope classes {auth_testing, recon} instead of {injection_testing, recon}, validly signed; only the original base G is registered Active | I | X / StatusUnknown{G} | Pr |
+| X07 | G re-issued with `id = ca-acme-001`, `version = 1` (C_A's id/version), validly signed by K(acme-authorizer); no status record for this G (C_A keeps its own Active record) | I | X / StatusUnknown{G} | Rv |
+| X08 | G re-issued with the original `id = g-acme-001`, `version = 1` but `tester_key = K(tester-2)`, validly signed; only the original base G is registered Active | I | X / StatusUnknown{G} | Rv |
+| X09 | G re-issued with the original id/version but test_scope classes {auth_testing, recon} instead of {injection_testing, recon}, validly signed; only the original base G is registered Active | I | X / StatusUnknown{G} | Rv |
 
 **X07–X09 note.** Before r3 the status source was keyed only by (id, version), so each of
 these G objects would have received another object's Active record and been accepted.
@@ -254,7 +255,7 @@ Stage 0–4 review.
 Labels: 11 Accept (V01–V10, T03), 71 Reject, 11 Indeterminate (R04, T04, T05, T10, X04,
 X05, X07, X08, X09, B01, B03). The 88 r2 cases are unchanged: 11 Accept, 69 Reject,
 8 Indeterminate. Of the original 84 r1 cases: 9 Accept, 67 Reject, 8 Indeterminate.
-Review status: 88 Rv/Rv\*, 5 Pr (R07, R08, X07, X08, X09); every label carries its status.
+Review status: 93 Rv/Rv\* (88 Rv, 5 Rv\*), 0 Pr; every label carries its status.
 
 ### Documented non-case
 
@@ -267,7 +268,7 @@ Two lookups exist (spec §4.4). Neither authorizes or enforces anything (RQ6).
 
 **Exact-node lookup** (`exact_node_lookup`): where the single node named by the probe lies.
 Its answer says nothing about the probe's descendants. Q01–Q10 are Rv (run under the r2
-name `scope_query`; labels unchanged). Q11 is Pr.
+name `scope_query`; labels unchanged). Q11 is Rv (approved in the r3 review).
 
 | ID | Probe | Exp |
 | --- | --- | --- |
@@ -284,7 +285,7 @@ name `scope_query`; labels unchanged). Q11 is Pr.
 | Q11 | `web:…/app` (the node itself; its descendant `/app/admin` is excluded) | InScope |
 
 **Subtree lookup** (`subtree_lookup`): how much of the probe's whole subtree lies in
-Allowed(G), using effective-set semantics. All Pr (new in r3).
+Allowed(G), using effective-set semantics. All Rv (new in r3, approved in the r3 review).
 
 | ID | Probe subtree | Exp |
 | --- | --- | --- |
@@ -362,3 +363,16 @@ Allowed(G), using effective-set semantics. All Pr (new in r3).
 - Record: rustc/cargo versions, crate versions (Cargo.lock), CPU model, core count, kernel,
   build profile, N, R and seeds. Results go to `results/bench_<timestamp>.json` and `.md`.
 - Reported numbers are only what the run produced; nothing is extrapolated.
+
+## 10. Public API boundary test (r3.1)
+
+Not a labelled case. `tests/predecoded_api.rs` and the doctests in `src/verifier.rs` pin
+the decision API boundary (spec §7.5). The reproduction (commit `bcfe70f`) showed that the
+former public `verify_decoded` accepted a decoded grant whose body had been changed to
+test_scope [auth_testing] while its signed payload still said [injection_testing, recon].
+After the fix:
+
+- the field assignment and the `verify_decoded` call no longer compile (E0616, E0599);
+- decoded bodies equal the strict decoding of their signed payloads;
+- the same alteration made in a raw bundle's grant payload, keeping the original
+  signature, is `Reject / S / InvalidSignature{G}`.

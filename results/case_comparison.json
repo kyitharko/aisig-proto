@@ -151,7 +151,7 @@
       "chain_aware_exact_match": true,
       "expected": "Reject / N / RootOrgMismatch",
       "id": "R07",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -160,7 +160,7 @@
       "chain_aware_exact_match": true,
       "expected": "Reject / N / RootAlgorithmMismatch",
       "id": "R08",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Reject / S / InvalidSignature{G}",
@@ -673,7 +673,7 @@
       "chain_aware_exact_match": true,
       "expected": "Indeterminate / X / StatusUnknown{G}",
       "id": "X07",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -682,7 +682,7 @@
       "chain_aware_exact_match": true,
       "expected": "Indeterminate / X / StatusUnknown{G}",
       "id": "X08",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -691,7 +691,7 @@
       "chain_aware_exact_match": true,
       "expected": "Indeterminate / X / StatusUnknown{G}",
       "id": "X09",
-      "label_status": "proposed"
+      "label_status": "reviewed"
     },
     {
       "baseline": "Accept",
@@ -933,7 +933,7 @@
       "actual": "InScope",
       "expected": "InScope",
       "id": "Q11",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "lookup": "exact_node_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app"
@@ -942,7 +942,7 @@
       "actual": "PartiallyAllowed",
       "expected": "PartiallyAllowed",
       "id": "U01",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "lookup": "subtree_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app"
@@ -951,7 +951,7 @@
       "actual": "NoneAllowed",
       "expected": "NoneAllowed",
       "id": "U02",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "lookup": "subtree_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/admin"
@@ -960,7 +960,7 @@
       "actual": "WhollyAllowed",
       "expected": "WhollyAllowed",
       "id": "U03",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "lookup": "subtree_query",
       "match": true,
       "probe": "web:https://app.acme.test:443/app/reports"
@@ -969,7 +969,7 @@
       "actual": "PartiallyAllowed",
       "expected": "PartiallyAllowed",
       "id": "U04",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "lookup": "subtree_query",
       "match": true,
       "probe": "db:cluster1/main"
@@ -986,10 +986,10 @@
       "indeterminate_on_accept_label": 0
     },
     "baseline_reviewed_only": {
-      "cases": 88,
+      "cases": 93,
       "class_mismatch_reject_vs_indeterminate": 0,
       "exact_stage_reason_match": 15,
-      "false_accept": 70,
+      "false_accept": 75,
       "false_reject": 2,
       "indeterminate": 0,
       "indeterminate_on_accept_label": 0
@@ -1004,12 +1004,12 @@
       "indeterminate_on_accept_label": 0
     },
     "chain_aware_reviewed_only": {
-      "cases": 88,
+      "cases": 93,
       "class_mismatch_reject_vs_indeterminate": 0,
-      "exact_stage_reason_match": 88,
+      "exact_stage_reason_match": 93,
       "false_accept": 0,
       "false_reject": 0,
-      "indeterminate": 8,
+      "indeterminate": 11,
       "indeterminate_on_accept_label": 0
     }
   }

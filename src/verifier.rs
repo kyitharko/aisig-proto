@@ -1,4 +1,38 @@
 //! ValidChain_P decision procedure (spec §7).
+//!
+//! Trust boundary (spec §7.5): the only public decision entry point is
+//! [`ChainVerifier::verify`] on raw bundle bytes. [`decode_chain`] is public for inspection,
+//! but its result is read-only and cannot be handed back for a decision.
+//!
+//! ```
+//! use aisig_proto::experiment::fixture::Scenario;
+//! use aisig_proto::verifier::decode_chain;
+//! let s = Scenario::base();
+//! let chain = decode_chain(&s.build()).unwrap();
+//! let _scope = &chain.grant().body().test_scope; // read access is fine
+//! ```
+//!
+//! Decoded bodies cannot be replaced (private field):
+//!
+//! ```compile_fail,E0616
+//! use aisig_proto::experiment::fixture::Scenario;
+//! use aisig_proto::model::{TestClass, TestScope};
+//! use aisig_proto::verifier::decode_chain;
+//! let s = Scenario::base();
+//! let mut chain = decode_chain(&s.build()).unwrap();
+//! chain.grant.body.test_scope = TestScope::Classes { classes: vec![TestClass::AuthTesting] };
+//! ```
+//!
+//! A decoded chain cannot be submitted for a decision (no public pre-decoded API):
+//!
+//! ```compile_fail,E0599
+//! use aisig_proto::experiment::fixture::Scenario;
+//! use aisig_proto::verifier::decode_chain;
+//! let s = Scenario::base();
+//! let p = s.prepare();
+//! let chain = decode_chain(&p.bundle).unwrap();
+//! let _ = p.verifier().verify_decoded(&chain);
+//! ```
 
 use crate::codec::{decode_signed, Signed, TypeTag};
 use crate::crypto;
@@ -23,19 +57,34 @@ pub struct Bundle {
     pub grant: Option<Vec<u8>>,
 }
 
+/// A decoded chain, obtainable only from [`decode_chain`]. Read-only: fields are private
+/// and each [`Signed`] body is bound to its signed payload. Decoding is not verification;
+/// the only public way to obtain a decision is [`ChainVerifier::verify`] on raw bytes.
 #[derive(Clone, Debug)]
 pub struct DecodedChain {
-    pub admin: Signed<AdminDelegation>,
-    pub issuer: Signed<IssuerDelegation>,
-    pub grant: Signed<EngagementGrant>,
+    admin: Signed<AdminDelegation>,
+    issuer: Signed<IssuerDelegation>,
+    grant: Signed<EngagementGrant>,
 }
 
 impl DecodedChain {
+    pub fn admin(&self) -> &Signed<AdminDelegation> {
+        &self.admin
+    }
+
+    pub fn issuer(&self) -> &Signed<IssuerDelegation> {
+        &self.issuer
+    }
+
+    pub fn grant(&self) -> &Signed<EngagementGrant> {
+        &self.grant
+    }
+
     pub fn view(&self) -> ChainView<'_> {
         ChainView {
-            admin: &self.admin.body,
-            issuer: &self.issuer.body,
-            grant: &self.grant.body,
+            admin: self.admin.body(),
+            issuer: self.issuer.body(),
+            grant: self.grant.body(),
         }
     }
 
@@ -49,31 +98,31 @@ impl DecodedChain {
             (
                 Obj::Admin,
                 key(
-                    &a.body.org_id,
+                    &a.body().org_id,
                     TypeTag::AdminDelegation,
-                    &a.body.id,
-                    a.body.version,
-                    &a.payload,
+                    &a.body().id,
+                    a.body().version,
+                    a.payload(),
                 ),
             ),
             (
                 Obj::Issuer,
                 key(
-                    &d.body.org_id,
+                    &d.body().org_id,
                     TypeTag::IssuerDelegation,
-                    &d.body.id,
-                    d.body.version,
-                    &d.payload,
+                    &d.body().id,
+                    d.body().version,
+                    d.payload(),
                 ),
             ),
             (
                 Obj::Grant,
                 key(
-                    &g.body.org_id,
+                    &g.body().org_id,
                     TypeTag::EngagementGrant,
-                    &g.body.id,
-                    g.body.version,
-                    &g.payload,
+                    &g.body().id,
+                    g.body().version,
+                    g.payload(),
                 ),
             ),
         ]
@@ -156,21 +205,25 @@ macro_rules! reject {
 }
 
 impl ChainVerifier<'_> {
+    /// ValidChain_P over raw envelope bytes. This is the only public decision entry point
+    /// (spec §7.5): callers cannot supply pre-decoded or modified bodies.
     pub fn verify(&self, bundle: &Bundle) -> Decision {
         match decode_chain(bundle) {
-            Ok(chain) => self.verify_decoded(&chain),
+            Ok(chain) => self.evaluate(&chain),
             Err(reason) => Decision::reject(Stage::Format, reason),
         }
     }
 
-    /// Stages N through X on an already-decoded chain.
-    pub fn verify_decoded(&self, chain: &DecodedChain) -> Decision {
+    /// Stages N through X on a chain this verifier has just decoded. Private by design: a
+    /// public pre-decoded entry point allowed policy to run on a body that differed from
+    /// the verified payload (r3 review; tests/predecoded_api.rs).
+    fn evaluate(&self, chain: &DecodedChain) -> Decision {
         let ev = &self.evidence;
         let (a, d, g) = (&chain.admin, &chain.issuer, &chain.grant);
         let mut pending = Pending::default();
 
         // N — anchor. Unavailable ⇒ continue under hypothesis H (spec §7.2).
-        let anchor = match ev.registry.lookup(&a.body.org_id) {
+        let anchor = match ev.registry.lookup(&a.body().org_id) {
             Err(_) => {
                 pending.note(Stage::Anchor, Reason::RegistryUnavailable);
                 None
@@ -178,13 +231,13 @@ impl ChainVerifier<'_> {
             Ok(None) => reject!(Stage::Anchor, Reason::UnpinnedOrganization),
             Ok(Some(rec)) => {
                 // The record itself must name O and Ed25519; the lookup key alone does not.
-                if rec.org_id != a.body.org_id {
+                if rec.org_id != a.body().org_id {
                     reject!(Stage::Anchor, Reason::RootOrgMismatch);
                 }
                 if rec.algorithm != ROOT_ALGORITHM {
                     reject!(Stage::Anchor, Reason::RootAlgorithmMismatch);
                 }
-                if rec.key_id != a.body.issuer_key_id || rec.root_key.key_id() != rec.key_id {
+                if rec.key_id != a.body().issuer_key_id || rec.root_key.key_id() != rec.key_id {
                     reject!(Stage::Anchor, Reason::RootKeyNotPinned);
                 }
                 if rec.usage != ROOT_USAGE {
@@ -200,23 +253,28 @@ impl ChainVerifier<'_> {
         // S — signatures. C_A only with the pinned key; D_U and G with chain keys
         // (asserted, not authenticated, when the anchor is unavailable).
         if let Some(rec) = anchor {
-            if !crypto::verify(rec.root_key.bytes(), "AdminDelegation", &a.payload, &a.sig) {
+            if !crypto::verify(
+                rec.root_key.bytes(),
+                "AdminDelegation",
+                a.payload(),
+                a.sig(),
+            ) {
                 reject!(Stage::Signature, Reason::InvalidSignature(Obj::Admin));
             }
         }
         if !crypto::verify(
-            a.body.subject_key.bytes(),
+            a.body().subject_key.bytes(),
             "IssuerDelegation",
-            &d.payload,
-            &d.sig,
+            d.payload(),
+            d.sig(),
         ) {
             reject!(Stage::Signature, Reason::InvalidSignature(Obj::Issuer));
         }
         if !crypto::verify(
-            d.body.subject_key.bytes(),
+            d.body().subject_key.bytes(),
             "EngagementGrant",
-            &g.payload,
-            &g.sig,
+            g.payload(),
+            g.sig(),
         ) {
             reject!(Stage::Signature, Reason::InvalidSignature(Obj::Grant));
         }
@@ -231,13 +289,13 @@ impl ChainVerifier<'_> {
         }
 
         // B — binding of every grant target to O.
-        for target in &g.body.targets {
+        for target in &g.body().targets {
             match ev.bindings.owners_of(target) {
                 Err(_) => {
                     pending.note(Stage::Binding, Reason::BindingUnavailable);
                     break;
                 }
-                Ok(owners) if owners.contains(&a.body.org_id.as_str()) => {}
+                Ok(owners) if owners.contains(&a.body().org_id.as_str()) => {}
                 Ok(owners) if !owners.is_empty() => {
                     reject!(Stage::Binding, Reason::AssetBoundToOtherOrg)
                 }
@@ -253,9 +311,9 @@ impl ChainVerifier<'_> {
                     .map(|rec| (Obj::Root, rec.validity))
                     .into_iter()
                     .chain([
-                        (Obj::Admin, a.body.validity),
-                        (Obj::Issuer, d.body.validity),
-                        (Obj::Grant, g.body.window),
+                        (Obj::Admin, a.body().validity),
+                        (Obj::Issuer, d.body().validity),
+                        (Obj::Grant, g.body().window),
                     ]);
                 for (obj, w) in windows {
                     match time_check(&w, &reading) {

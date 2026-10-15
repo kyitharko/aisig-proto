@@ -316,13 +316,38 @@ impl EnvelopeWire {
 }
 
 /// A decoded, not-yet-verified signed object.
+///
+/// Fields are private and there is no mutable access: the only constructor is
+/// [`decode_signed`], which derives `body` from `payload`. A `Signed<T>` therefore always
+/// carries a body that is exactly the strict decoding of the bytes its signature covers
+/// (spec §7.5 trust boundary).
 #[derive(Debug, Clone)]
 pub struct Signed<T> {
-    pub body: T,
-    pub payload: Vec<u8>,
-    pub sig: [u8; 64],
+    body: T,
+    payload: Vec<u8>,
+    sig: [u8; 64],
+    key_hint: String,
+}
+
+impl<T> Signed<T> {
+    /// The typed body decoded from [`Signed::payload`].
+    pub fn body(&self) -> &T {
+        &self.body
+    }
+
+    /// The exact canonical payload bytes covered by the signature.
+    pub fn payload(&self) -> &[u8] {
+        &self.payload
+    }
+
+    pub fn sig(&self) -> &[u8; 64] {
+        &self.sig
+    }
+
     /// `sig.key_id` from the envelope: a lookup hint only, never trusted.
-    pub key_hint: String,
+    pub fn key_hint(&self) -> &str {
+        &self.key_hint
+    }
 }
 
 /// Decode one envelope from a bundle slot (spec §3 steps 1–6).

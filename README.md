@@ -4,10 +4,11 @@ Private research prototype. It asks whether an AI-agent provider P can check tha
 engagement grant for security testing is backed by a non-amplifying chain of authority:
 pinned organization root → admin delegation → issuer delegation → tester grant.
 
-**Status:** spec draft r3 with owner decisions applied; Rust prototype, reviewed-case
-harness, property tests and CPU benchmark implemented; r3 adds exact-object status
-identity, registry-record checks and named scope lookups. Five chain labels and five
-lookup labels are still *proposed* (see [docs/experiment.md](docs/experiment.md)). Results: [docs/report.md](docs/report.md).
+**Status:** spec draft r3.1 with owner decisions applied; Rust prototype, reviewed-case
+harness, property tests and CPU benchmark implemented; r3 added exact-object status
+identity, registry-record checks and named scope lookups; r3.1 removed the public
+pre-decoded decision API. All 93 chain and 15 lookup labels are owner-reviewed
+(see [docs/experiment.md](docs/experiment.md)). Results: [docs/report.md](docs/report.md).
 
 Everything here is synthetic: organizations, keys, `.test` hosts and databases. Nothing
 scans, connects to, or tests any real target. No real credentials, client data or live
@@ -46,6 +47,7 @@ tests/cases/reviewed_cases.toml   the label oracle (never edited to match output
 tests/reviewed_cases.rs           exact label agreement
 tests/scope_oracle.rs             independent brute-force set oracle (SO1–SO3)
 tests/properties.rs               property-based valid chains and mutations
+tests/predecoded_api.rs           public API boundary (decoded bodies bound to payloads)
 scripts/bench.sh                  benchmark with environment capture
 results/                          generated outputs (see results/README.md)
 ```
@@ -58,6 +60,7 @@ Requires Rust stable (tested with rustc 1.98.0). From the repository root:
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test --all-targets                      # unit, reviewed cases, property tests
+cargo test --doc                              # API-boundary doctests (incl. compile_fail)
 cargo test --all-targets -- --nocapture       # also prints the proptest seed
 AISIG_PROPTEST_SEED=1 cargo test --test properties --test scope_oracle   # another seed
 cargo run --release --bin eval                # writes results/case_comparison.{md,json}

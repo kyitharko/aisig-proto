@@ -1,9 +1,9 @@
-# Prototype report — RQ4 chain verifier (r3)
+# Prototype report — RQ4 chain verifier (r3.1)
 
 **Date:** 2026-10-15. **Branch:** `feature/chain-verifier-prototype` (local only, no remote).
 All numbers below were produced by the commands listed; files in `results/` are the raw
 outputs. Nothing here is extrapolated. Revision r3 follows the owner's review of
-Stages 0–4.
+Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 
 ## Research-question status
 
@@ -17,6 +17,40 @@ Stages 0–4.
 | RQ6 enforcement of agent actions | **Unresolved.** `exact_node_lookup` and `subtree_lookup` are lookups; TestClass→action mapping undefined. |
 | RQ7 revocation freshness | **Unresolved.** Status is an instant, always-current in-memory fixture, now keyed by exact object (r3). |
 | RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
+
+## r3.1 changes
+
+1. **Labels.** R07, R08, X07–X09, Q11 and U01–U04 are now reviewed (owner r3 review). All
+   93 chain labels and 15 lookup labels are reviewed. No expected decision, stage, reason
+   or probe changed; the original 88 chain labels are unchanged.
+2. **Decisions Q9–Q11** are recorded in spec §10:
+   - Q9: an unmatched exact key stays Indeterminate, with no equivocation inference, and
+     changed content needs a new version or id.
+   - Q10: the digest covers the signed payload only.
+   - Q11: root rotation is deferred; v0 never accepts "any available key".
+3. **Public pre-decoded API bypass (closed).**
+   - *Reproduced* at `bcfe70f` by `tests/predecoded_api.rs`. Starting from the accepted
+     base chain, changing only `chain.grant.body.test_scope` to `[auth_testing]` made the
+     public `verify_decoded` return **Accept**, while the signed payload still said
+     `[injection_testing, recon]`. Signatures and the status digest used `Signed.payload`;
+     policy used `Signed.body`.
+   - *Fix:* `verify_decoded` is now a private `evaluate`. `Signed<T>` and `DecodedChain`
+     have private fields with read-only getters and no constructor other than decoding.
+     `verify(&Bundle)` is the only public decision entry point (spec §7.5).
+   - *Evidence after the fix:*
+     - Two `compile_fail` doctests in `src/verifier.rs` cover the field assignment and the
+       `verify_decoded` call. Compiling each snippet as a scratch example confirmed the
+       intended errors, E0616 (private field) and E0599 (no such method); stable rustdoc
+       does not check the error code itself.
+     - A test checks that decoded bodies equal the strict decoding of their payloads.
+     - The same alteration made in raw bundle bytes is
+       `Reject / S / InvalidSignature{G}`.
+   - *Scope:* the issue concerned the public pre-decoded API. No bypass of the raw-bundle
+     `verify()` path was shown.
+4. **Benchmark not rerun.** The runtime verification steps are unchanged: the same
+   decode, anchor, signature, policy, binding, time and status work. Only field visibility
+   changed (inlined getters) and the evaluation helper became private. The r3 results
+   below still describe the current path.
 
 ## r3 changes
 
@@ -44,7 +78,15 @@ Stages 0–4.
 Labels for all new cases were written into docs/experiment.md and the labels file and
 committed (`e54774a`) before the implementation changed.
 
-## Checks run (at `526a3c6`)
+## Checks run
+
+r3.1 (this revision): `cargo fmt --all -- --check` clean; `cargo clippy --all-targets -- -D
+warnings` clean; `cargo test` 37 passed, 0 failed (17 unit, 2 predecoded-API, 5
+reviewed-case, 7 property, 3 scope-oracle, 3 doctests incl. 2 compile_fail);
+`AISIG_PROPTEST_SEED=1` and `=20261015` property + oracle tests passed; eval 93/93 chain
+and 15/15 lookups.
+
+r3 (at `526a3c6`):
 
 | Command | Outcome |
 | --- | --- |
@@ -60,16 +102,19 @@ committed (`e54774a`) before the implementation changed.
 | Verifier / subset | Cases | False accept | False reject | Indeterminate | R-vs-I mismatch | Exact stage+reason |
 | --- | --- | --- | --- | --- | --- | --- |
 | chain-aware, all | 93 | 0 | 0 | 11 | 0 | 93 |
-| chain-aware, reviewed only | 88 | 0 | 0 | 8 | 0 | 88 |
+| chain-aware, reviewed only | 93 | 0 | 0 | 11 | 0 | 93 |
 | signature-only, all | 93 | 75 | 2 | 0 | 0 | n/a |
-| signature-only, reviewed only | 88 | 70 | 2 | 0 | 0 | n/a |
+| signature-only, reviewed only | 93 | 75 | 2 | 0 | 0 | n/a |
+
+(As of r3.1 every case is reviewed, so the "reviewed only" rows equal the "all" rows.
+At r3 they covered 88 cases: chain-aware 0/0/8, signature-only 70 FA / 2 FR.)
 
 - **The original 88 cases still match their existing labels exactly** (decision, stage and
   reason). A field-by-field comparison with the r2 labels file shows no change to any
   `expected`, `stage`, `reason` or `probe` value. The only changes are: six status flips to
   reviewed (owner approval), and Q01–Q10's `kind` renamed from `scope_query` to
   `exact_node_query`.
-- The five new chain cases (proposed) match their pre-written labels: R07, R08 →
+- The five chain cases added in r3 (reviewed in r3.1) match their pre-written labels: R07, R08 →
   `Reject / N / …`; X07, X08, X09 → `Indeterminate / X / StatusUnknown{G}`. The baseline
   accepts all five.
 - Scope lookups: 15/15 match (Q01–Q11 exact-node, U01–U04 subtree).
@@ -129,14 +174,10 @@ keyed by (id, version) only, so these timings do not reflect the current status 
 | status lookup ×3 (id, version keys) | 133 | 150 | 212 |
 | full chain verify | 230 649 | 355 817 | 438 477 |
 
-## Unresolved questions
+## Remaining open items
 
-- **Q9 Equivocation.** A record exists for the same (org, type, id, version) but with a
-  different digest. Is that an issuer equivocating, which could merit Reject, or a stale
-  record? It currently gets the missing-record policy (Indeterminate).
-- **Q10 Digest coverage.** Should the status digest also cover signature bytes or an explicit
-  issuer key id? It currently covers the type-separated signed bytes, which contain
-  `issuer_key_id`.
-- **Q11 Root records.** Root key rotation and multiple records per org are not modelled.
-- **Q12 Labels.** R07, R08, X07–X09, Q11 and U01–U04 are still **proposed**.
+- Q9–Q12 are decided (spec §10). Their follow-ups are future work:
+  - an evidenced *conflict* result from an authoritative, complete status service (Q9);
+  - root rotation with explicit record versions, validity and retirement (Q11).
+- No proposed labels remain.
 - RQ5, RQ6 and RQ7 remain unresolved as listed above.
