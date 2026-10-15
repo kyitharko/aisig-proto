@@ -6,6 +6,7 @@ AI_Agent_*.md
 
 # Review/export archives
 *.zip
+/zip/
 
 # Never commit real credentials, keys, or client material
 *.pem
