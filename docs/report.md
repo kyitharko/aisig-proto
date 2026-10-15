@@ -1,4 +1,4 @@
-# Prototype report — RQ4 chain verifier (r3.1)
+# Prototype report — RQ4 chain verifier (r3.1) and RQ5 session slice (s1)
 
 **Date:** 2026-10-15. **Branch:** `feature/chain-verifier-prototype` (local only, no remote).
 All numbers below were produced by the commands listed; files in `results/` are the raw
@@ -13,10 +13,63 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ2 asset binding | **Assumed.** In-memory binding fixture. |
 | RQ3 delegation non-amplification | **Partly exercised.** Fixed depth-3 chain only. |
 | RQ4 grant scope semantics | **Implemented and tested** against owner-reviewed labels (spec r3). |
-| RQ5 tester/session binding | **Unresolved.** `tester_key` is signed but never challenged (non-case K01). |
+| RQ5 tester/session binding | **First slice (s1), proposed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
 | RQ6 enforcement of agent actions | **Unresolved.** `exact_node_lookup` and `subtree_lookup` are lookups; TestClass→action mapping undefined. |
 | RQ7 revocation freshness | **Unresolved.** Status is an instant, always-current in-memory fixture, now keyed by exact object (r3). |
 | RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
+
+## RQ5 session slice s1 (proposed; separate from the chain results)
+
+Spec [session.md](session.md); labels `tests/cases/session_cases.toml` (28, all
+**proposed**), committed in `c96a39b` before the implementation (`0123190`).
+
+**Result: 28/28 session labels match** (24 redemption, 4 issuance;
+`results/session_cases.md`). These are reported separately. The chain and lookup results
+above are unchanged: `results/case_comparison.*` was byte-identical after the slice, and
+the reviewed labels file was not touched.
+
+| Group | Cases | Outcome |
+| --- | --- | --- |
+| Valid proof | SS01, SS11 (now + ε just before expiry) | `SessionAccept` |
+| Copied G without proof / wrong key | SS02 / SS03, SS04 | `MissingProof` / `InvalidProofSignature` |
+| Replay, sequential and concurrent | SS05 / SS22 | second use `ChallengeAlreadyConsumed`; 8 threads → `accepts=1 already_consumed=7 other=0` |
+| Cross-session, cross-grant, wrong audience | SS06, SS07, SS08 | `SessionMismatch`, `GrantMismatch`, `ChallengeAudienceMismatch` |
+| Expiry boundary | SS09 / SS10 | `ChallengeExpired` / `SessionIndeterminate … ClockUncertainty` |
+| Challenge state unavailable / unknown | SS12 / SS13 | `SessionIndeterminate … ChallengeStateUnavailable` / `UnknownChallenge` |
+| Chain recheck at redemption | SS14, SS23, SS15, SS24 | altered or revoked G → `ChainRejected(…)`; status or clock unavailable → `ChainIndeterminate(…)` |
+| Reject dominates Indeterminate | SS16 | `InvalidProofSignature` despite the chain Indeterminate |
+| Rebinding / cross-protocol / malformed | SS17, SS18 / SS19 | `InvalidProofSignature` / `MalformedProof` |
+| No consumption on failure | SS20, SS21 | a later valid proof still gets `SessionAccept` |
+| Issuance | SI01–SI04 | issued with 10:02:00Z expiry; refused for a revoked G; unavailable store; expiry clamped to 10:01:00Z |
+
+Additional checks:
+- The new `compile_fail` doctest (a `SessionAuthorization` cannot be built outside
+  redemption) fails with E0451, confirmed with a scratch example.
+- Changing SS01's label in a scratch copy made `session_outcomes_match_labels` fail. The
+  labels file was restored and checked identical to the commit.
+- SS22 gave the same tally in 200/200 repeated runs (release build).
+
+Checks at `0123190`:
+- `cargo fmt --check` clean; `clippy -D warnings` clean.
+- `cargo test`: 43 passed, 0 failed (20 unit, 2 predecoded-API, 5 reviewed-case,
+  7 property, 3 scope-oracle, 2 session-case, 4 doctests).
+- Seeds 1 and 20261015 passed.
+- Eval: 93/93 chain, 15/15 lookups, 28/28 session.
+
+**Benchmark not rerun.** `verify()` now returns the decision from an internal helper that
+also hands back the decoded chain it already built; the verification work is the same.
+The session path itself has not been benchmarked.
+
+**What s1 does not show:**
+- channel binding;
+- relay or phishing resistance (an attacker can relay their own session's challenge to a
+  victim tester);
+- proof of possession after redemption;
+- K_T compromise handling;
+- a distributed store's atomicity (assumed);
+- RQ6 enforcement and RQ7 freshness during a session.
+
+See [session.md §8](session.md).
 
 ## r3.1 changes
 
@@ -180,4 +233,4 @@ keyed by (id, version) only, so these timings do not reflect the current status 
   - an evidenced *conflict* result from an authoritative, complete status service (Q9);
   - root rotation with explicit record versions, validity and retirement (Q11).
 - No proposed labels remain.
-- RQ5, RQ6 and RQ7 remain unresolved as listed above.
+- RQ5 s1 labels (28) await owner review; RQ5 channel binding, relay resistance and per-request PoP remain open. RQ6 and RQ7 remain unresolved.

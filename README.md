@@ -8,7 +8,9 @@ pinned organization root → admin delegation → issuer delegation → tester g
 harness, property tests and CPU benchmark implemented; r3 added exact-object status
 identity, registry-record checks and named scope lookups; r3.1 removed the public
 pre-decoded decision API. All 93 chain and 15 lookup labels are owner-reviewed
-(see [docs/experiment.md](docs/experiment.md)). Results: [docs/report.md](docs/report.md).
+(see [docs/experiment.md](docs/experiment.md)). RQ5 slice s1 adds a separate session
+proof-of-possession decision ([docs/session.md](docs/session.md)); its 28 labels are
+proposed. Results: [docs/report.md](docs/report.md).
 
 Everything here is synthetic: organizations, keys, `.test` hosts and databases. Nothing
 scans, connects to, or tests any real target. No real credentials, client data or live
@@ -20,14 +22,15 @@ assets are in this repository.
 - [docs/threat-model.md](docs/threat-model.md) — actors, threats in scope, non-goals, what tests can and cannot show
 - [docs/experiment.md](docs/experiment.md) — base fixture, 93 chain cases and 15 scope lookups with review status, oracle, metrics, benchmark protocol
 - [docs/limitations.md](docs/limitations.md) — what an Accept does and does not mean
+- [docs/session.md](docs/session.md) — RQ5 slice s1: challenge/response proof of possession bound to a provider session
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
 ## Research questions
 
 - RQ1 (organization identity) and RQ2 (asset binding): **assumed**, as trusted in-memory fixtures.
 - RQ4 (grant scope semantics, non-amplification): **this prototype**.
-- RQ5 (tester/session binding), RQ6 (tool effect enforcement), RQ7 (revocation freshness):
-  **unresolved, not implemented**.
+- RQ5 (tester/session binding): **first slice s1** — session proof of possession, separate decision; channel binding and relay resistance not addressed.
+- RQ6 (tool effect enforcement), RQ7 (revocation freshness): **unresolved, not implemented**.
 
 ## Layout
 
@@ -40,6 +43,7 @@ src/policy.rs       linkage (L) and policy (P) predicates — pure, no crypto
 src/evidence.rs     registry / binding / clock / status traits, exact-object StatusKey, fixtures
 src/verifier.rs     ValidChain_P decision procedure
 src/baseline.rs     deliberately weak signature-only verifier
+src/session.rs      RQ5 s1: challenge issuance/redemption, SessionDecision (separate from chain)
 src/experiment/     synthetic fixture, case mutations, label loading, reporting
 src/bin/eval.rs     runs all labelled cases through both verifiers
 src/bin/bench.rs    CPU micro-benchmark
@@ -48,6 +52,7 @@ tests/reviewed_cases.rs           exact label agreement
 tests/scope_oracle.rs             independent brute-force set oracle (SO1–SO3)
 tests/properties.rs               property-based valid chains and mutations
 tests/predecoded_api.rs           public API boundary (decoded bodies bound to payloads)
+tests/session_cases.rs            RQ5 session labels (tests/cases/session_cases.toml)
 scripts/bench.sh                  benchmark with environment capture
 results/                          generated outputs (see results/README.md)
 ```
@@ -63,7 +68,7 @@ cargo test --all-targets                      # unit, reviewed cases, property t
 cargo test --doc                              # API-boundary doctests (incl. compile_fail)
 cargo test --all-targets -- --nocapture       # also prints the proptest seed
 AISIG_PROPTEST_SEED=1 cargo test --test properties --test scope_oracle   # another seed
-cargo run --release --bin eval                # writes results/case_comparison.{md,json}
+cargo run --release --bin eval                # writes results/case_comparison.* and session_cases.*
 scripts/bench.sh                              # writes results/bench_<UTC>.{json,md}
 N=2000 R=5 scripts/bench.sh                   # shorter benchmark
 ```

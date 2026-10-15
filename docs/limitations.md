@@ -10,7 +10,18 @@ after they are measured.
   fixture and asset binding (RQ2) is an in-memory binding fixture. Both are assumed
   correct; nothing in this prototype checks them against real evidence.
 - It is not proof that the party presenting G holds K_T, nor that a given agent session
-  or subagent is bound to G (RQ5). A copied grant verifies exactly like the original.
+  or subagent is bound to G. A copied grant verifies exactly like the original. The RQ5
+  slice (docs/session.md) adds a *separate* `SessionAccept` decision for that. A chain
+  Accept is never a session authorization.
+- A `SessionAccept` (s1, proposed labels) shows only that a holder of K_T's key signed a
+  fresh, one-time, P-issued challenge naming P's session and the exact G, and that the
+  chain re-verified at that moment. It does not provide:
+  - channel or TLS binding;
+  - relay or phishing resistance;
+  - proof of possession on later requests;
+  - protection against K_T compromise;
+  - any check that P's session belongs to an entitled account.
+  The challenge store's atomic compare-and-set is shown only for the in-memory store.
 - It is not enforcement of what an agent or tool actually does. `exact_node_lookup` and
   `subtree_lookup` are lookups on a grant, not mediation of traffic or effects (RQ6). An
   exact-node InScope answer covers one node only, never its subtree. Effects of unmanaged or opaque
