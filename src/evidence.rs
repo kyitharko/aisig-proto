@@ -145,6 +145,38 @@ impl TrustedClock for FixedClock {
     }
 }
 
+/// A clock that returns a fixed sequence of readings across successive `now()` calls,
+/// repeating the last entry once exhausted. Used to model a clock that advances between
+/// the chain check and a later read (RQ5 issuance clock edge case). Test support only.
+#[derive(Debug)]
+pub struct SequenceClock {
+    readings: Vec<Option<ClockReading>>,
+    next: std::sync::atomic::AtomicUsize,
+}
+
+impl SequenceClock {
+    pub fn new(readings: Vec<Option<ClockReading>>) -> Self {
+        assert!(
+            !readings.is_empty(),
+            "SequenceClock needs at least one reading"
+        );
+        SequenceClock {
+            readings,
+            next: std::sync::atomic::AtomicUsize::new(0),
+        }
+    }
+}
+
+impl TrustedClock for SequenceClock {
+    fn now(&self) -> Option<ClockReading> {
+        let i = self.next.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        self.readings
+            .get(i)
+            .copied()
+            .unwrap_or_else(|| *self.readings.last().unwrap())
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct InMemoryStatus {
     pub entries: HashMap<StatusKey, ObjStatus>,

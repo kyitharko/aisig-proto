@@ -69,7 +69,7 @@ fn main() {
         .filter(|r| r.actual == r.label.expected)
         .count();
     println!(
-        "session slice: {ok}/{} match (labels reviewed)",
+        "session slice: {ok}/{} match (28 reviewed, SI05 proposed)",
         session_rows.len()
     );
     for r in session_rows.iter().filter(|r| r.actual != r.label.expected) {

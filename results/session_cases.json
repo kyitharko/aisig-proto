@@ -223,8 +223,16 @@
       "kind": "issue",
       "label_status": "reviewed",
       "match": true
+    },
+    {
+      "actual": "IssueUnavailable / InvalidClockReading",
+      "expected": "IssueUnavailable / InvalidClockReading",
+      "id": "SI05",
+      "kind": "issue",
+      "label_status": "proposed",
+      "match": true
     }
   ],
-  "matched": 28,
-  "total": 28
+  "matched": 29,
+  "total": 29
 }

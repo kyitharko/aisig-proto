@@ -169,3 +169,9 @@ id = "SI04"
 kind = "issue"
 expected = "Issued expires_at=2026-10-15T10:01:00Z"
 label_status = "reviewed"
+
+[[case]]
+id = "SI05"
+kind = "issue"
+expected = "IssueUnavailable / InvalidClockReading"
+label_status = "proposed"

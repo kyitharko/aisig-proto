@@ -173,8 +173,12 @@ enum TimeVerdict {
 }
 
 fn time_check(w: &Window, r: &ClockReading) -> TimeVerdict {
-    let lo = r.now.0 - r.epsilon;
-    let hi = r.now.0 + r.epsilon;
+    // Clamp a hand-built negative epsilon to 0 and saturate so an extreme reading cannot
+    // overflow (debug panic / release wrap). Behaviour is unchanged for epsilon >= 0 and
+    // any realistic time.
+    let eps = r.epsilon.max(0);
+    let lo = r.now.0.saturating_sub(eps);
+    let hi = r.now.0.saturating_add(eps);
     if w.start.0 <= lo && hi < w.end.0 {
         TimeVerdict::Ok
     } else if hi < w.start.0 {
@@ -352,6 +356,36 @@ impl ChainVerifier<'_> {
         match pending.0 {
             Some(f) => Decision::Indeterminate(f),
             None => Decision::Accept,
+        }
+    }
+}
+
+#[cfg(test)]
+mod time_check_tests {
+    use super::{time_check, TimeVerdict};
+    use crate::evidence::ClockReading;
+    use crate::model::{Ts, Window};
+
+    #[test]
+    fn extreme_epsilon_does_not_overflow() {
+        let w = Window {
+            start: Ts(0),
+            end: Ts(100),
+        };
+        // Extreme and negative epsilons must not panic; epsilon is clamped to >= 0 and
+        // bounds saturate. A huge epsilon straddles every edge -> Uncertain.
+        for eps in [i64::MAX, i64::MIN, -5] {
+            let r = ClockReading {
+                now: Ts(50),
+                epsilon: eps,
+            };
+            let v = time_check(&w, &r);
+            if eps < 0 {
+                // clamped to 0: now=50 strictly inside [0,100) -> Ok
+                assert!(matches!(v, TimeVerdict::Ok), "eps={eps}");
+            } else {
+                assert!(matches!(v, TimeVerdict::Uncertain), "eps={eps}");
+            }
         }
     }
 }

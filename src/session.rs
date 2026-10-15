@@ -353,6 +353,10 @@ pub enum IssueFailure {
     ClockUnavailable,
     NonceUnavailable,
     ChallengeStateUnavailable,
+    /// The issuance clock reading is out of the grant window or yields an expiry no later
+    /// than issuance (e.g. the clock advanced between the chain check and the issuance
+    /// read). Fail closed; no challenge is stored.
+    InvalidClockReading,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -414,6 +418,12 @@ impl<'a> SessionService<'a> {
             Some(end) => end.min(grant.window.end.0),
             None => grant.window.end.0,
         });
+        // The chain check and this issuance read are two clock calls; a clock that advanced
+        // between them (or a hand-built Ts) must not mint a challenge with no positive
+        // validity. Fail closed on an out-of-window issued_at or a non-positive lifetime.
+        if reading.now.0 >= grant.window.end.0 || expires_at.0 <= reading.now.0 {
+            return IssueOutcome::Unavailable(IssueFailure::InvalidClockReading);
+        }
         let mut nonce = [0u8; 32];
         let mut id = [0u8; 16];
         if self.random.fill(&mut nonce).is_err() || self.random.fill(&mut id).is_err() {
@@ -505,7 +515,8 @@ impl<'a> SessionService<'a> {
         match reading {
             None => note(&mut pending, S::Time, R::ClockUnavailable),
             Some(r) => {
-                let (lo, hi) = (r.now.0 - r.epsilon, r.now.0 + r.epsilon);
+                let eps = r.epsilon.max(0);
+                let (lo, hi) = (r.now.0.saturating_sub(eps), r.now.0.saturating_add(eps));
                 if lo >= record.expires_at.0 {
                     return SessionDecision::reject(S::Time, R::ChallengeExpired);
                 }
