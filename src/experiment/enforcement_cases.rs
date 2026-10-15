@@ -507,3 +507,115 @@ pub fn render_json(rows: &[EnforcementRow]) -> Value {
         })).collect::<Vec<_>>(),
     })
 }
+
+/// Reproduction evidence (RQ6), capturing the behaviour BEFORE the fix. These assertions
+/// document the bugs at this commit and are rewritten to assert the fixed behaviour in the
+/// fix commit (git history keeps both). See docs/report.md.
+#[cfg(test)]
+mod repro {
+    use super::super::fixture::{ts, P_AUD};
+    use super::*;
+    use crate::enforcement::{
+        EffectSink, InMemorySessionAuthStore, InMemorySink, Mediate, MediationRequest, Mediator,
+    };
+    use crate::evidence::{ClockReading, SequenceClock};
+    use crate::verifier::{ChainVerifier, Evidence};
+
+    fn rd(t: &str, e: i64) -> Option<ClockReading> {
+        Some(ClockReading {
+            now: ts(t),
+            epsilon: e,
+        })
+    }
+
+    fn mediate_seq(seq: SequenceClock) -> Mediate {
+        let s = enf_scenario();
+        let auth = auth_for(&s);
+        let store = InMemorySessionAuthStore::default();
+        store.insert(SESSION, auth);
+        let sink = InMemorySink::default();
+        let status = s.status_source();
+        let ev = Evidence {
+            registry: &s.registry,
+            bindings: &s.bindings,
+            clock: &seq,
+            status: &status,
+        };
+        let med = Mediator {
+            chain: ChainVerifier {
+                audience: P_AUD,
+                evidence: ev,
+            },
+            sessions: &store,
+            sink: &sink,
+        };
+        let req = MediationRequest {
+            bundle: s.build(),
+            operation: "web.get".to_owned(),
+            target_wire: web_wire("/app/reports"),
+            claimed_class: None,
+        };
+        med.mediate(SESSION, &req)
+    }
+
+    // BUG 1a: a third clock read at perform; None there panics.
+    #[test]
+    #[should_panic]
+    fn perform_clock_read_panics_on_none() {
+        let seq = SequenceClock::new(vec![
+            rd("2026-10-15T10:30:00Z", 2),
+            rd("2026-10-15T10:30:00Z", 2),
+            None,
+        ]);
+        let _ = mediate_seq(seq);
+    }
+
+    // BUG 1b: perform uses a different, later reading than the decision stages, so the
+    // receipt is stamped with a stale instant past the grant window.
+    #[test]
+    fn perform_reads_a_stale_later_clock() {
+        let seq = SequenceClock::new(vec![
+            rd("2026-10-15T10:30:00Z", 2),
+            rd("2026-10-15T10:30:00Z", 2),
+            rd("2026-10-15T23:00:00Z", 0),
+        ]);
+        match mediate_seq(seq) {
+            Mediate::Allow(r) => assert_eq!(r.performed_at(), ts("2026-10-15T23:00:00Z")),
+            other => panic!("expected stale Allow, got {other}"),
+        }
+    }
+
+    // BUG 2: the effect sink's append is publicly callable; a cloned receipt lets an
+    // external caller grow the sink without a second mediation.
+    #[test]
+    fn effect_sink_record_is_publicly_callable() {
+        let s = enf_scenario();
+        let auth = auth_for(&s);
+        let store = InMemorySessionAuthStore::default();
+        store.insert(SESSION, auth);
+        let sink = InMemorySink::default();
+        let mut s2 = s.clone();
+        s2.set_clock("2026-10-15T10:30:00Z", 2);
+        let prepared = s2.prepare();
+        let med = Mediator {
+            chain: prepared.verifier(),
+            sessions: &store,
+            sink: &sink,
+        };
+        let req = MediationRequest {
+            bundle: prepared.bundle.clone(),
+            operation: "web.get".to_owned(),
+            target_wire: web_wire("/app/reports"),
+            claimed_class: None,
+        };
+        let before = sink.len();
+        if let Mediate::Allow(r) = med.mediate(SESSION, &req) {
+            sink.record((*r).clone()); // external append of a cloned receipt
+        }
+        assert_eq!(
+            sink.len(),
+            before + 2,
+            "one mediation + one external append"
+        );
+    }
+}

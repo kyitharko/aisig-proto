@@ -334,3 +334,60 @@ pub fn render_json(rows: &[SessionRow]) -> Value {
         })).collect::<Vec<_>>(),
     })
 }
+
+/// Reproduction evidence (RQ5 issuance), capturing behaviour BEFORE the fix. Rewritten to
+/// assert fixed behaviour in the fix commit.
+#[cfg(test)]
+mod repro {
+    use super::*;
+    use crate::evidence::{ClockReading, SequenceClock};
+    use crate::verifier::{ChainVerifier, Evidence};
+
+    fn rd(t: &str, e: i64) -> Option<ClockReading> {
+        Some(ClockReading {
+            now: ts(t),
+            epsilon: e,
+        })
+    }
+    fn issue_seq(seq: SequenceClock) -> String {
+        let s = Scenario::base();
+        let store = InMemoryChallengeStore::default();
+        let status = s.status_source();
+        let ev = Evidence {
+            registry: &s.registry,
+            bindings: &s.bindings,
+            clock: &seq,
+            status: &status,
+        };
+        let svc = SessionService::new(
+            ChainVerifier {
+                audience: P_AUD,
+                evidence: ev,
+            },
+            &store,
+            &OsRandom,
+        );
+        svc.issue(&s.build(), SESSION).to_string()
+    }
+
+    // BUG 3a: in-window at the chain check, before G.window.start at issuance -> currently
+    // issues a challenge dated before the grant starts.
+    #[test]
+    fn issue_before_window_start_currently_issues() {
+        let out = issue_seq(SequenceClock::new(vec![
+            rd("2026-10-15T10:00:00Z", 2),
+            rd("2026-10-15T08:00:00Z", 2),
+        ]));
+        assert_eq!(out, "Issued expires_at=2026-10-15T08:02:00Z");
+    }
+
+    // BUG 3b: a negative uncertainty is ignored at issuance (silently accepted).
+    #[test]
+    fn issue_negative_epsilon_currently_issues() {
+        let out = issue_seq(SequenceClock::new(vec![
+            rd("2026-10-15T10:00:00Z", 2),
+            rd("2026-10-15T10:00:00Z", -5),
+        ]));
+        assert!(out.starts_with("Issued"), "got {out}");
+    }
+}
