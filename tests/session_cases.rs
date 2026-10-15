@@ -13,7 +13,7 @@ fn every_session_label_has_a_runner_and_vice_versa() {
     let runnable: BTreeSet<String> = SESSION_CASE_IDS.iter().map(|s| s.to_string()).collect();
     assert_eq!(labelled, runnable);
     assert_eq!(labels.len(), 28);
-    assert!(labels.iter().all(|l| l.label_status == "proposed"));
+    assert!(labels.iter().all(|l| l.label_status == "reviewed"));
 }
 
 #[test]

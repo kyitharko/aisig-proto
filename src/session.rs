@@ -383,7 +383,6 @@ pub struct SessionService<'a> {
     chain: ChainVerifier<'a>,
     store: &'a dyn ChallengeStore,
     random: &'a dyn RandomSource,
-    ttl_seconds: i64,
 }
 
 impl<'a> SessionService<'a> {
@@ -396,13 +395,7 @@ impl<'a> SessionService<'a> {
             chain,
             store,
             random,
-            ttl_seconds: DEFAULT_TTL_SECONDS,
         }
-    }
-
-    pub fn with_ttl(mut self, ttl_seconds: i64) -> Self {
-        self.ttl_seconds = ttl_seconds;
-        self
     }
 
     /// docs/session.md §4. `session_id` must come from P's own session state.
@@ -415,7 +408,12 @@ impl<'a> SessionService<'a> {
             return IssueOutcome::Unavailable(IssueFailure::ClockUnavailable);
         };
         let grant = chain.grant().body();
-        let expires_at = Ts((reading.now.0 + self.ttl_seconds).min(grant.window.end.0));
+        // Fixed 120 s TTL, clamped to the grant. Checked add: on overflow (unreachable with
+        // any RFC 3339 clock) fall back to the grant end, which never exceeds the grant.
+        let expires_at = Ts(match reading.now.0.checked_add(DEFAULT_TTL_SECONDS) {
+            Some(end) => end.min(grant.window.end.0),
+            None => grant.window.end.0,
+        });
         let mut nonce = [0u8; 32];
         let mut id = [0u8; 16];
         if self.random.fill(&mut nonce).is_err() || self.random.fill(&mut id).is_err() {

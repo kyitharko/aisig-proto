@@ -5,7 +5,7 @@
       "expected": "SessionAccept",
       "id": "SS01",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -13,7 +13,7 @@
       "expected": "SessionReject / proof / MissingProof",
       "id": "SS02",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -21,7 +21,7 @@
       "expected": "SessionReject / pop / InvalidProofSignature",
       "id": "SS03",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -29,7 +29,7 @@
       "expected": "SessionReject / pop / InvalidProofSignature",
       "id": "SS04",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -37,7 +37,7 @@
       "expected": "SessionAccept ; SessionReject / challenge / ChallengeAlreadyConsumed",
       "id": "SS05",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -45,7 +45,7 @@
       "expected": "SessionReject / binding / SessionMismatch",
       "id": "SS06",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -53,7 +53,7 @@
       "expected": "SessionReject / binding / GrantMismatch",
       "id": "SS07",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -61,7 +61,7 @@
       "expected": "SessionReject / binding / ChallengeAudienceMismatch",
       "id": "SS08",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -69,7 +69,7 @@
       "expected": "SessionReject / time / ChallengeExpired",
       "id": "SS09",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -77,7 +77,7 @@
       "expected": "SessionIndeterminate / time / ClockUncertainty",
       "id": "SS10",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -85,7 +85,7 @@
       "expected": "SessionAccept",
       "id": "SS11",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -93,7 +93,7 @@
       "expected": "SessionIndeterminate / challenge / ChallengeStateUnavailable",
       "id": "SS12",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -101,7 +101,7 @@
       "expected": "SessionReject / challenge / UnknownChallenge",
       "id": "SS13",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -109,7 +109,7 @@
       "expected": "SessionReject / chain / ChainRejected(Reject / S / InvalidSignature{G})",
       "id": "SS14",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -117,7 +117,7 @@
       "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable)",
       "id": "SS15",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -125,7 +125,7 @@
       "expected": "SessionReject / pop / InvalidProofSignature",
       "id": "SS16",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -133,7 +133,7 @@
       "expected": "SessionReject / pop / InvalidProofSignature",
       "id": "SS17",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -141,7 +141,7 @@
       "expected": "SessionReject / pop / InvalidProofSignature",
       "id": "SS18",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -149,7 +149,7 @@
       "expected": "SessionReject / proof / MalformedProof",
       "id": "SS19",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -157,7 +157,7 @@
       "expected": "SessionReject / pop / InvalidProofSignature ; SessionAccept",
       "id": "SS20",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -165,7 +165,7 @@
       "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) ; SessionAccept",
       "id": "SS21",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -173,7 +173,7 @@
       "expected": "accepts=1 already_consumed=7 other=0",
       "id": "SS22",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -181,7 +181,7 @@
       "expected": "SessionReject / chain / ChainRejected(Reject / X / Revoked{G})",
       "id": "SS23",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -189,7 +189,7 @@
       "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / ClockUnavailable)",
       "id": "SS24",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -197,7 +197,7 @@
       "expected": "Issued expires_at=2026-10-15T10:02:00Z",
       "id": "SI01",
       "kind": "issue",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -205,7 +205,7 @@
       "expected": "IssueRefused / Reject / X / Revoked{G}",
       "id": "SI02",
       "kind": "issue",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -213,7 +213,7 @@
       "expected": "IssueUnavailable / ChallengeStateUnavailable",
       "id": "SI03",
       "kind": "issue",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     },
     {
@@ -221,7 +221,7 @@
       "expected": "Issued expires_at=2026-10-15T10:01:00Z",
       "id": "SI04",
       "kind": "issue",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     }
   ],
