@@ -79,12 +79,13 @@ Challenge = {
 1. Run the chain verifier on the raw bundle. Anything other than chain Accept →
    `IssueRefused(decision)`; no challenge is created.
 2. Read the clock. `issued_at = now`.
-   TTL is **fixed at 120 s** (no override). Using checked addition,
-   `expires_at = min(issued_at + 120 s, G.window.end)`, so a challenge never outlives its
-   grant. If `issued_at + 120 s` overflowed `i64` (unreachable with any RFC 3339 clock,
-   whose maximum year 9999 is far below `i64::MAX`), `expires_at` falls back to
-   `G.window.end`. This fails closed: the challenge is then born no later than the grant's
-   end, so it adds no new issuance outcome.
+   TTL is **fixed at 120 s** (no override). With any RFC 3339 clock (maximum year 9999,
+   ~2.5e11 s, far below `i64::MAX`), `issued_at + 120 s` never overflows, so
+   `expires_at = min(issued_at + 120 s, G.window.end)` exactly — the fixed-120 guarantee
+   always holds for every representable clock. The implementation still uses checked
+   addition; the overflow branch (falling back to `G.window.end`) is an unreachable
+   fail-closed guard, not a second behaviour, so it does not weaken the guarantee and adds
+   no issuance outcome.
 3. Draw the nonce (32 bytes) and challenge_id (16 bytes) from the OS CSPRNG. On failure →
    `IssueUnavailable(NonceUnavailable)`.
 4. Insert the record into the store in state `Pending`. If the store is unavailable →

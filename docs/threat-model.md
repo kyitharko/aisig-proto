@@ -64,7 +64,7 @@ before their signature verifies.
 | TH19 | Exact-node lookup misread as a subtree permission (`/app` InScope although `/app/admin` is excluded) | Separate `exact_node_lookup` and `subtree_lookup` APIs with effective-set semantics for the latter; still not enforcement | Q11, U01–U04, SO3 |
 | TH20 | API caller (integrating code) runs policy on a decoded body that differs from the verified payload | Single public entry point `verify(&Bundle)`; decoded objects read-only; pre-decoded evaluation private (spec §7.5) | tests/predecoded_api.rs, verifier doctests |
 
-## 3a. RQ5 session-slice threats (s1, proposed; see [session.md](session.md))
+## 3a. RQ5 session-slice threats (s1, reviewed; see [session.md](session.md))
 
 | ID | Threat | Expected defence (session stage) | Cases |
 | --- | --- | --- | --- |
@@ -92,13 +92,15 @@ These are proposed with the design; **no RQ6 code exists yet**.
 
 | ID | Threat | Expected defence (mediation stage) | Cases |
 | --- | --- | --- | --- |
-| TH30 | An agent acts outside the granted scope through a tool | Mediator checks the target against the live grant's effective scope/exclusions before any effect (scope) | EE05-EE09 |
+| TH30 | An agent acts outside the granted scope through a tool | Mediator checks the validated target against the live grant's effective scope/exclusions before any effect; a subtree only partly in scope is denied whole (scope) | EE05-EE09, EE24 |
 | TH31 | An agent mislabels its action to dodge the class check | Operation classified from the versioned table `aisig-tooltable/v0`, never from the agent's claim (classify, class) | EE10-EE12 |
-| TH32 | An unmodeled or unclassifiable operation slips through | Unknown op and target-type mismatch fail closed (classify, effects) | EE13, EE14 |
+| TH32 | An unmodeled op or a wrong-typed target slips through | Unknown op and target-type mismatch fail closed (classify, effects) | EE13, EE14 |
 | TH33 | An operation with effects beyond the target (whole origin, other tenants) | Unbounded secondary effects denied (effects) | EE15 |
-| TH34 | Acting after the session/grant window, or with no/!wrong session | Session load, session-window expiry, and grant-ref match (session, expiry, chain) | EE16, EE17, EE18 |
-| TH35 | A tampered or revoked grant used at action time | Chain re-verified at mediation (chain) | EE18, EE22 |
+| TH34 | Acting after the session/grant window, with no session, or naming another session | `session_ref` from P's authenticated context (not a request field); session-window expiry; grant-ref match (session, expiry, chain) | EE16, EE17, EE18 |
+| TH35 | A tampered or revoked grant used at action time | Chain (status stage included) re-verified at mediation; the open RQ7 item is status-source freshness, not whether status is checked (chain) | EE22, EE26 |
 | TH36 | An evidence outage produces an effect | Indeterminate never performs an effect; every non-Allow is effects=0 (session, expiry, chain) | EE19-EE21 |
+| TH37 | A non-canonical target smuggled past scope, or a directly-built `AssetRef` bypassing validation | Target decoded and canonical-validated before scope; the mediator takes the wire form, not a pre-built `AssetRef` (validate) | EE25 |
+| TH38 | A GET-style read of an excluded resource treated as mere metadata | `web.get` classed `read_only_data_access`, but an excluded/out-of-scope target is denied at scope before the class check (scope) | EE05-EE07, EE23 |
 
 Out of scope for e1, stated so none is read as defended:
 - interception of real tools, processes, syscalls or network traffic (only modeled effects);

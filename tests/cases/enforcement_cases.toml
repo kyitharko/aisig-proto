@@ -1,7 +1,8 @@
-# Proposed outcomes for the RQ6 enforcement slice (docs/enforcement.md), transcribed
-# from docs/experiment.md section 12. DESIGN ONLY: no RQ6 implementation exists; these
-# labels are proposed and await owner review of the action-to-TestClass mapping. Separate
-# from reviewed_cases.toml and session_cases.toml. Never edit to match implementation output.
+# Proposed outcomes for the RQ6 enforcement slice (docs/enforcement.md, DRAFT e2),
+# transcribed from docs/experiment.md section 12. DESIGN ONLY: no RQ6 implementation
+# exists; these labels are proposed and await owner review of the action-to-TestClass
+# mapping. Separate from reviewed_cases.toml and session_cases.toml. Never edit to match
+# implementation output.
 
 [[case]]
 id = "EE01"
@@ -84,7 +85,7 @@ label_status = "proposed"
 [[case]]
 id = "EE14"
 kind = "enforcement"
-expected = "Deny / effects / DenyUnclassifiableEffect effects=0"
+expected = "Deny / effects / DenyTargetTypeMismatch effects=0"
 label_status = "proposed"
 
 [[case]]
@@ -133,4 +134,28 @@ label_status = "proposed"
 id = "EE22"
 kind = "enforcement"
 expected = "Deny / chain / ChainRejected(Reject / S / InvalidSignature{G}) effects=0"
+label_status = "proposed"
+
+[[case]]
+id = "EE23"
+kind = "enforcement"
+expected = "Deny / class / DenyTestClassNotPermitted effects=0"
+label_status = "proposed"
+
+[[case]]
+id = "EE24"
+kind = "enforcement"
+expected = "Deny / scope / DenySubtreePartiallyExcluded effects=0"
+label_status = "proposed"
+
+[[case]]
+id = "EE25"
+kind = "enforcement"
+expected = "Deny / validate / DenyNoncanonicalTarget effects=0"
+label_status = "proposed"
+
+[[case]]
+id = "EE26"
+kind = "enforcement"
+expected = "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0"
 label_status = "proposed"

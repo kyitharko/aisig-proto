@@ -434,56 +434,64 @@ outcome of each step in order, separated by ` ; `.
 **Count:** 28 session-slice cases (24 redemption, 4 issuance), all owner-reviewed on
 2026-10-16. Reported separately from the 93 chain and 15 lookup labels, which are unchanged.
 
-**TTL is fixed at 120 s** (no public override). Issuance uses checked time arithmetic:
-`expires_at = min(issued_at + 120 s, G.window.end)`. If `issued_at + 120 s` overflowed
-(unreachable with any RFC 3339 clock, whose maximum year 9999 is far below `i64::MAX`),
-it falls back to `G.window.end`, which never grants more than the grant allows. This adds
-no new outcome and no new case.
+**TTL is fixed at 120 s** (no public override). With any RFC 3339 clock (max year 9999 ≪
+`i64::MAX`) `issued_at + 120 s` never overflows, so `expires_at = min(issued_at + 120 s,
+G.window.end)` exactly and the fixed-120 guarantee always holds. The implementation uses
+checked arithmetic; the overflow branch (fall back to `G.window.end`) is an unreachable
+fail-closed guard, not a second behaviour, and adds no new outcome or case.
 
-## 12. RQ6 enforcement cases (slice e1; design only; all **Pr**)
+## 12. RQ6 enforcement cases (slice e1/e2; design only; all **Pr**)
 
-Spec: [enforcement.md](enforcement.md). Labels live in `tests/cases/enforcement_cases.toml`,
-a separate file. **Not implemented** — these are written for owner review of the
-action-to-TestClass mapping before any RQ6 code. All **proposed**.
+Spec: [enforcement.md](enforcement.md) (DRAFT e2). Labels live in
+`tests/cases/enforcement_cases.toml`, a separate file. **Not implemented** — these are
+written for owner review of the action-to-TestClass mapping before any RQ6 code. All
+**proposed**.
 
 **Enforcement fixture.**
 - Base chain (§2), all objects Active; a session is authorized for the base G.
 - G `test_scope = {injection_testing, read_only_data_access, recon}` (a subset of D_U's
   ceiling); targets `{/app, cluster1/main/billing}`; exclusions `{/app/admin, /app/private}`.
+  So `web.get` (now `read_only_data_access`) and `web.injection_probe` are in class scope,
+  while `db.write` (`data_modification`) and `web.auth_probe` (`auth_testing`) are not.
 - The session's `grant_window_end` = G.window.end = 2026-10-15T11:00:00Z.
-- Mediation runs at now = 2026-10-15T10:30:00Z, ε = 2, `session_ref = sess-p-0001`.
+- Mediation runs at now = 2026-10-15T10:30:00Z, ε = 2; `session_ref` is supplied by P's
+  authenticated server context (not a request field), `= sess-p-0001` unless noted.
 - `web:…` abbreviates `web:https://app.acme.test:443`.
 
 Display: `Allow effects=1`, or `<Deny|Indeterminate> / <stage> / <Reason> effects=0`.
 
-| ID | Operation, target (claim) | Expected |
+| ID | Operation, target (note) | Expected |
 | --- | --- | --- |
 | EE01 | `web.get` `/app/reports` | `Allow effects=1` |
 | EE02 | `web.head` `/app` | `Allow effects=1` |
-| EE03 | `web.injection_probe` `/app/reports` | `Allow effects=1` |
+| EE03 | `web.injection_probe` `/app/reports` (subtree wholly allowed) | `Allow effects=1` |
 | EE04 | `db.read` `db:cluster1/main/billing` | `Allow effects=1` |
 | EE05 | `web.get` `/app/admin` | `Deny / scope / DenyTargetExcluded effects=0` |
 | EE06 | `web.get` `/app/admin/users/7` | `Deny / scope / DenyTargetExcluded effects=0` |
 | EE07 | `web.get` `/app/private/report` | `Deny / scope / DenyTargetExcluded effects=0` |
 | EE08 | `web.get` `/other` | `Deny / scope / DenyTargetOutOfScope effects=0` |
 | EE09 | `web.get` `web:https://shop.globex.test:443/` | `Deny / scope / DenyTargetOutOfScope effects=0` |
-| EE10 | `db.write` `db:cluster1/main/billing` | `Deny / class / DenyTestClassNotPermitted effects=0` |
-| EE11 | `web.auth_probe` `/app/reports` | `Deny / class / DenyTestClassNotPermitted effects=0` |
-| EE12 | `db.write` `db:cluster1/main/billing` (claimed_class = recon) | `Deny / class / DenyTestClassNotPermitted effects=0` |
+| EE10 | `db.write` `db:cluster1/main/billing` (`data_modification` not in scope) | `Deny / class / DenyTestClassNotPermitted effects=0` |
+| EE11 | `web.auth_probe` `/app/reports` (`auth_testing` not in grant scope) | `Deny / class / DenyTestClassNotPermitted effects=0` |
+| EE12 | `db.write` `db:cluster1/main/billing` (claimed_class = recon; claim ignored) | `Deny / class / DenyTestClassNotPermitted effects=0` |
 | EE13 | `fs.delete` `/app` (unknown operation) | `Deny / classify / DenyUnknownOperation effects=0` |
-| EE14 | `db.read` `/app/reports` (Web target; type mismatch) | `Deny / effects / DenyUnclassifiableEffect effects=0` |
-| EE15 | `web.flood` `/app` (unbounded secondary) | `Deny / effects / DenyUnboundedSecondaryEffect effects=0` |
+| EE14 | `db.read` `/app/reports` (target-type mismatch: a Db operation on a Web target) | `Deny / effects / DenyTargetTypeMismatch effects=0` |
+| EE15 | `web.flood` `/app` (type-valid Web target; unbounded footprint) | `Deny / effects / DenyUnboundedSecondaryEffect effects=0` |
 | EE16 | `web.get` `/app/reports`, now = 2026-10-15T11:00:00Z, ε = 0 (session window ended) | `Deny / expiry / DenySessionExpired effects=0` |
-| EE17 | `web.get` `/app/reports`, `session_ref = sess-p-9999` (no authorization) | `Deny / session / DenyNoSession effects=0` |
+| EE17 | `web.get` `/app/reports`, authenticated `session_ref = sess-p-9999` (no authorization) | `Deny / session / DenyNoSession effects=0` |
 | EE18 | `web.get` `/app/reports`, session authorized for base G but the bundle presents G2 (engagement_id changed, re-signed, Active); StatusKey differs | `Deny / chain / DenyGrantMismatch effects=0` |
 | EE19 | `web.get` `/app/reports`, session store unavailable | `Indeterminate / session / SessionStateUnavailable effects=0` |
 | EE20 | `web.get` `/app/reports`, status source unavailable | `Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable) effects=0` |
 | EE21 | `web.get` `/app/reports`, clock unavailable | `Indeterminate / expiry / ClockUnavailable effects=0` |
 | EE22 | `web.get` `/app/reports`, grant payload altered with the original signature kept | `Deny / chain / ChainRejected(Reject / S / InvalidSignature{G}) effects=0` |
+| EE23 | `web.get` `/app/reports`, session authorized for a recon-only grant (G.test_scope = {recon}, re-signed within the D_U ceiling) | `Deny / class / DenyTestClassNotPermitted effects=0` |
+| EE24 | `web.injection_probe` `/app` (subtree contains the excluded `/app/admin` and `/app/private`) | `Deny / scope / DenySubtreePartiallyExcluded effects=0` |
+| EE25 | `web.get` with target host `APP.acme.test` (non-canonical) | `Deny / validate / DenyNoncanonicalTarget effects=0` |
+| EE26 | `web.get` `/app/reports`, G status set revoked before mediation | `Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0` |
 
 Zero-effect property: every non-Allow label carries `effects=0`; a future runner must
-assert the effect sink length is unchanged for EE05–EE22.
+assert the effect sink length is unchanged for EE05–EE26.
 
-**Count:** 22 proposed enforcement cases (4 allow, 15 deny, 3 indeterminate). Reported
+**Count:** 26 proposed enforcement cases (4 allow, 19 deny, 3 indeterminate). Reported
 separately from the 93 chain, 15 lookup and 28 session labels, which are unchanged. These
 are design artifacts; no RQ6 code exists yet.

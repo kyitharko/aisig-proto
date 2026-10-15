@@ -13,12 +13,12 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ2 asset binding | **Assumed.** In-memory binding fixture. |
 | RQ3 delegation non-amplification | **Partly exercised.** Fixed depth-3 chain only. |
 | RQ4 grant scope semantics | **Implemented and tested** against owner-reviewed labels (spec r3). |
-| RQ5 tester/session binding | **First slice (s1), proposed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
+| RQ5 tester/session binding | **First slice (s1), reviewed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
 | RQ6 enforcement of agent actions | **Unresolved.** `exact_node_lookup` and `subtree_lookup` are lookups; TestClass→action mapping undefined. |
 | RQ7 revocation freshness | **Unresolved.** Status is an instant, always-current in-memory fixture, now keyed by exact object (r3). |
 | RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
 
-## RQ5 session slice s1 (proposed; separate from the chain results)
+## RQ5 session slice s1 (reviewed; separate from the chain results)
 
 Spec [session.md](session.md); labels `tests/cases/session_cases.toml` (28, all
 **proposed**), committed in `c96a39b` before the implementation (`0123190`).
