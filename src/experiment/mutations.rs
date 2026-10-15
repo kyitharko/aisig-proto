@@ -19,7 +19,7 @@ pub const CHAIN_CASE_IDS: &[&str] = &[
     "D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08", "D09", "D10", "D11", //
     "M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08", "M09", "M10", "M11", "M12", "M13",
     "M14", "M15", "M16", "M17", "M18", "M19", "M20", "M21", //
-    "T01", "T02", "T03", "T04", "T05", "T06", "T07", "T08", "T09", "T10", "T11", //
+    "T01", "T02", "T03", "T04", "T05", "T06", "T07", "T08", "T09", "T10", "T11", "T12", //
     "X01", "X02", "X03", "X04", "X05", "X06", "X07", "X08", "X09", //
     "A01", "A02", "A03", //
     "F01", "F02", "F03", "F04", "F05", "F06", "F07", //
@@ -241,6 +241,7 @@ pub fn apply(id: &str, s: &mut Scenario) -> bool {
         "T09" => put(s.issuer(), "validity.end", json!("2026-10-15T10:30:00Z")),
         "T10" => s.clock.reading = None,
         "T11" => put(s.grant(), "window.start", json!("2026-10-15T09:00:00.000Z")),
+        "T12" => s.set_clock("2026-10-15T10:00:00Z", -5),
 
         // ---- X: status
         "X01" => s.status.grant = Some(ObjStatus::Revoked),

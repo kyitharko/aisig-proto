@@ -25,7 +25,7 @@ pub const REDEEM_AT: &str = "2026-10-15T10:01:00Z";
 pub const SESSION_CASE_IDS: &[&str] = &[
     "SS01", "SS02", "SS03", "SS04", "SS05", "SS06", "SS07", "SS08", "SS09", "SS10", "SS11", "SS12",
     "SS13", "SS14", "SS15", "SS16", "SS17", "SS18", "SS19", "SS20", "SS21", "SS22", "SS23", "SS24",
-    "SI01", "SI02", "SI03", "SI04", "SI05", "SI06", "SI07",
+    "SI01", "SI02", "SI03", "SI04", "SI05", "SI06", "SI07", "SI08", "SS25",
 ];
 
 fn issue_outcome(s: &Scenario, store: &dyn ChallengeStore, session: &str) -> IssueOutcome {
@@ -185,12 +185,51 @@ pub fn run(id: &str) -> Option<String> {
             s.clock.reading = None;
             one(&s, &store, SESSION, Some(&good))
         }
+        "SS25" => {
+            // Negative uncertainty at redemption must not SessionAccept or consume; a
+            // later valid retry with the same proof then succeeds.
+            s.set_clock(REDEEM_AT, -5);
+            let a = one(&s, &store, SESSION, Some(&good));
+            s.set_clock(REDEEM_AT, 2);
+            let b = one(&s, &store, SESSION, Some(&good));
+            format!("{a} ; {b}")
+        }
         _ => return None,
     };
     Some(out)
 }
 
 fn run_issue(rest: &str, mut s: Scenario, store: &InMemoryChallengeStore) -> String {
+    if rest == "08" {
+        // Negative uncertainty on the chain-check (first) reading; a valid issuance read
+        // second must not override it: chain verify fails closed -> IssueRefused.
+        let status = s.status_source();
+        let seq = SequenceClock::new(vec![
+            Some(ClockReading {
+                now: ts("2026-10-15T10:00:00Z"),
+                epsilon: -5,
+            }),
+            Some(ClockReading {
+                now: ts("2026-10-15T10:00:00Z"),
+                epsilon: 2,
+            }),
+        ]);
+        let ev = Evidence {
+            registry: &s.registry,
+            bindings: &s.bindings,
+            clock: &seq,
+            status: &status,
+        };
+        let svc = SessionService::new(
+            ChainVerifier {
+                audience: P_AUD,
+                evidence: ev,
+            },
+            store,
+            &OsRandom,
+        );
+        return svc.issue(&s.build(), SESSION).to_string();
+    }
     // SI05/06/07: a changing clock, in-window at the chain check but invalid at the
     // issuance read. issue() must fail closed with InvalidClockReading.
     let chain_read = ClockReading {

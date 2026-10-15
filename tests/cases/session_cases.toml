@@ -187,3 +187,15 @@ id = "SI07"
 kind = "issue"
 expected = "IssueUnavailable / InvalidClockReading"
 label_status = "proposed"
+
+[[case]]
+id = "SI08"
+kind = "issue"
+expected = "IssueRefused / Indeterminate / T / InvalidClockReading"
+label_status = "proposed"
+
+[[case]]
+id = "SS25"
+kind = "session"
+expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / InvalidClockReading) ; SessionAccept"
+label_status = "proposed"

@@ -165,3 +165,9 @@ id = "EE27"
 kind = "enforcement"
 expected = "Deny / scope / DenySubtreePartiallyAllowed effects=0"
 label_status = "reviewed"
+
+[[case]]
+id = "EE28"
+kind = "enforcement"
+expected = "Indeterminate / expiry / InvalidClockReading effects=0"
+label_status = "proposed"

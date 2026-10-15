@@ -19,14 +19,14 @@ fn every_label_has_a_runner_and_vice_versa() {
     let labelled: BTreeSet<String> = ls.iter().map(|l| l.id.clone()).collect();
     let runnable: BTreeSet<String> = ENFORCEMENT_CASE_IDS.iter().map(|s| s.to_string()).collect();
     assert_eq!(labelled, runnable);
-    assert_eq!(ls.len(), 27);
+    assert_eq!(ls.len(), 28);
     assert_eq!(
         ls.iter().filter(|l| l.label_status == "reviewed").count(),
         27
     );
     assert_eq!(
         ls.iter().filter(|l| l.label_status == "proposed").count(),
-        0
+        1
     );
 }
 

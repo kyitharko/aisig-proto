@@ -537,6 +537,15 @@ reason = "NonCanonicalTime"
 label_status = "reviewed"
 
 [[case]]
+id = "T12"
+kind = "chain"
+expected = "Indeterminate"
+stage = "T"
+reason = "InvalidClockReading"
+label_status = "proposed"
+note = "round 3: negative clock uncertainty must not Accept"
+
+[[case]]
 id = "X01"
 kind = "chain"
 expected = "Reject"

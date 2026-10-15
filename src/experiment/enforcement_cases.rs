@@ -31,7 +31,7 @@ pub const ENFORCEMENT_CASES_PATH: &str = concat!(
 pub const ENFORCEMENT_CASE_IDS: &[&str] = &[
     "EE01", "EE02", "EE03", "EE04", "EE05", "EE06", "EE07", "EE08", "EE09", "EE10", "EE11", "EE12",
     "EE13", "EE14", "EE15", "EE16", "EE17", "EE18", "EE19", "EE20", "EE21", "EE22", "EE23", "EE24",
-    "EE25", "EE26", "EE27",
+    "EE25", "EE26", "EE27", "EE28",
 ];
 
 /// Base enforcement grant: adds read_only_data_access to the base grant's test scope
@@ -447,6 +447,16 @@ pub fn run(id: &str) -> Option<String> {
                 None,
             )
         }
+        "EE28" => mediate(
+            &s0,
+            Some(("2026-10-15T10:30:00Z", -5)),
+            SESSION,
+            Some(&a0),
+            false,
+            "web.get",
+            web_wire("/app/reports"),
+            None,
+        ),
         _ => return None,
     };
     Some(out)

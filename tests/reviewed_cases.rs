@@ -22,7 +22,7 @@ fn every_label_has_a_mutation_and_vice_versa() {
         .collect();
     let mutated: BTreeSet<String> = CHAIN_CASE_IDS.iter().map(|s| s.to_string()).collect();
     assert_eq!(labelled, mutated);
-    assert_eq!(labelled.len(), 93);
+    assert_eq!(labelled.len(), 94);
 }
 
 #[test]
@@ -37,13 +37,13 @@ fn label_counts_match_experiment_doc() {
     };
     assert_eq!(count(DecisionClass::Accept), 11);
     assert_eq!(count(DecisionClass::Reject), 71);
-    assert_eq!(count(DecisionClass::Indeterminate), 11);
+    assert_eq!(count(DecisionClass::Indeterminate), 12);
     assert_eq!(
         chain
             .iter()
             .filter(|l| l.label_status == "proposed")
             .count(),
-        0
+        1
     );
     let kind = |k: &str| ls.iter().filter(|l| l.kind == k).count();
     assert_eq!(kind("exact_node_query"), 11);
