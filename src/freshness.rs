@@ -196,6 +196,31 @@ enum ActiveCommit {
 /// P's in-memory high-water-mark per `StatusKey`: the greatest accepted epoch, the digest of
 /// the response accepted at that epoch, and a sticky revoked/superseded flag. **Not persisted
 /// across restarts** (docs/freshness.md §4 restart limitation).
+///
+/// The store exposes **no public mutation path**. The only way its state changes at runtime is
+/// through [`FreshnessOracle`] (which holds `&HwmStore`); the seeding seams are crate-internal
+/// (`pub(crate)`), so an external holder of a `&HwmStore` cannot clear a recorded sticky
+/// revocation and let a previously signed, still-fresh Active through:
+///
+/// ```compile_fail,E0603
+/// use aisig_proto::codec::TypeTag;
+/// use aisig_proto::evidence::StatusKey;
+/// use aisig_proto::freshness::HwmStore;
+/// let hwm = HwmStore::new();
+/// let k = StatusKey::for_object("org", TypeTag::EngagementGrant, "g", 1, b"{}");
+/// // `seed_epoch` is pub(crate): replacing the entry would clear the sticky flag.
+/// hwm.seed_epoch(&k, 0, [0u8; 32]);
+/// ```
+///
+/// ```compile_fail,E0603
+/// use aisig_proto::codec::TypeTag;
+/// use aisig_proto::evidence::StatusKey;
+/// use aisig_proto::freshness::HwmStore;
+/// let hwm = HwmStore::new();
+/// let k = StatusKey::for_object("org", TypeTag::EngagementGrant, "g", 1, b"{}");
+/// // `seed_sticky_revoked` is pub(crate) too: no external mutation of the HWM.
+/// hwm.seed_sticky_revoked(&k);
+/// ```
 #[derive(Debug, Default)]
 pub struct HwmStore(Mutex<HashMap<StatusKey, HwmEntry>>);
 
@@ -576,6 +601,73 @@ mod tests {
         assert!(
             recorded.is_none(),
             "an Active must not commit its epoch after a recorded revocation (got {recorded:?})"
+        );
+    }
+
+    // Reproduction/retained regression (seed_epoch privacy): a validated Revoked makes a later
+    // still-fresh, validly signed (not forged) Active Reject by the sticky flag. Clearing the
+    // high-water-mark via seed_epoch would wrongly accept that Active — which is exactly why
+    // the seeding seams are now crate-internal (pub(crate); the external boundary is guarded by
+    // the compile_fail doctests on HwmStore). No responder signature is forged here.
+    #[test]
+    fn sticky_revocation_dominates_a_signed_active_until_the_hwm_is_reseeded() {
+        let pins = pinned();
+        let hwm = HwmStore::new();
+
+        // A real, K_R-signed Revoked response records the sticky flag.
+        let mut r_rev = StatusResponder::new();
+        r_rev.insert(
+            key(),
+            SignedResponse::build(
+                &kr(),
+                &key(),
+                ResponderStatus::Revoked,
+                1,
+                ts("2026-10-15T09:59:00Z"),
+                ts("2026-10-15T09:59:00Z"),
+                ts("2026-10-15T11:00:00Z"),
+            ),
+        );
+        let oracle_rev = FreshnessOracle {
+            responder: &r_rev,
+            pinned: &pins,
+            f_seconds: DEFAULT_F_SECONDS,
+            hwm: &hwm,
+        };
+        assert_eq!(
+            oracle_rev.evaluate(Obj::Grant, &key(), reading()),
+            StatusStageOutcome::Reject(Reason::Revoked(Obj::Grant))
+        );
+
+        // A real, K_R-signed fresh Active (not forged).
+        let mut r_act = StatusResponder::new();
+        r_act.insert(
+            key(),
+            active(
+                2,
+                "2026-10-15T09:59:00Z",
+                "2026-10-15T09:59:00Z",
+                "2026-10-15T11:00:00Z",
+            ),
+        );
+        let oracle_act = FreshnessOracle {
+            responder: &r_act,
+            pinned: &pins,
+            f_seconds: DEFAULT_F_SECONDS,
+            hwm: &hwm,
+        };
+        // Retained regression: the sticky revocation dominates the fresh Active.
+        assert_eq!(
+            oracle_act.evaluate(Obj::Grant, &key(), reading()),
+            StatusStageOutcome::Reject(Reason::Revoked(Obj::Grant))
+        );
+
+        // The hazard, now reachable only crate-internally: reseeding clears the sticky flag,
+        // after which the still-fresh, validly signed Active is accepted.
+        hwm.seed_epoch(&key(), 0, [0u8; 32]);
+        assert_eq!(
+            oracle_act.evaluate(Obj::Grant, &key(), reading()),
+            StatusStageOutcome::Ok
         );
     }
 
