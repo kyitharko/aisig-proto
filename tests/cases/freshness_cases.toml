@@ -1,7 +1,8 @@
-# Proposed RQ7 status-freshness labels (docs/freshness.md DRAFT f2). DESIGN ONLY: no
-# RQ7 implementation exists and no runner loads this file yet; written before any code for
-# owner review. Separate from reviewed_cases/session_cases/enforcement_cases. Never edit a
-# label to match implementation output. All proposed.
+# Proposed RQ7 status-freshness labels (docs/freshness.md DRAFT f2). The RQ7 implementation
+# (src/freshness.rs) matches every label here; the freshness-slice runner compares against
+# this file. Written before the code; all labels remain `proposed` pending owner review.
+# Separate from reviewed_cases/session_cases/enforcement_cases. Never edit a label to match
+# implementation output.
 
 [[case]]
 id = "FR01"

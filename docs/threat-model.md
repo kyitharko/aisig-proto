@@ -108,11 +108,11 @@ Out of scope for e1, stated so none is read as defended:
 - completeness of the modeled effect taxonomy;
 - RQ7 status freshness during a session (the mediator trusts the session window).
 
-## 3c. RQ7 status-freshness threats (f2, design only; see [freshness.md](freshness.md))
+## 3c. RQ7 status-freshness threats (f2; see [freshness.md](freshness.md))
 
-Proposed with the design; **no RQ7 code exists**. The status stage is shared by all three
-decision paths (chain, session redemption, mediation), so these apply everywhere status is
-checked.
+Implemented behind the freshness-slice runner; the 31 labels remain `proposed` pending owner
+review. The status stage is shared by all three decision paths (chain, session redemption,
+mediation), so these apply everywhere status is checked.
 
 | ID | Threat | Expected defence (status stage) | Cases |
 | --- | --- | --- | --- |

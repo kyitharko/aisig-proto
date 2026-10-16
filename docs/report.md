@@ -333,8 +333,11 @@ runs are marked historical in results/README.md.
   per-request PoP remain open.
 - RQ6 e2 is implemented for synthetic operations; all 28 labels reviewed. Live tool
   enforcement is not claimed.
-- RQ7 (status-source freshness / bounded revocation delay) remains unresolved; a
-  design-only draft is in [freshness.md](freshness.md) (f2; 31 proposed labels, no code).
+- RQ7 (status-source freshness / bounded revocation delay): slice f2 is implemented behind a
+  separate freshness-slice runner ([freshness.md](freshness.md); `src/freshness.rs`). All 31
+  labels are `proposed` and matched by the implementation (`results/freshness_cases.md`),
+  awaiting owner review; the bounded-revocation-delay figure stays a conjecture (§6, withdrawn
+  as a claim).
 - RQ5 issuance now rejects inconsistent clock readings (SI05 reviewed; SI06/SI07 proposed).
 - Round 3: all time paths reject a negative ε (never clamp). New proposed labels T12,
   SS25, SI08, EE28 await owner review.

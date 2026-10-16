@@ -1,10 +1,12 @@
-# RQ7 slice — status freshness and bounded revocation delay (DRAFT f2, design only)
+# RQ7 slice — status freshness and bounded revocation delay (DRAFT f2)
 
-**Status:** DRAFT f2, revised 2026-10-17. **Design and proposed labels for owner review
-*before* any RQ7 code.** This document and the proposed labels in
-`tests/cases/freshness_cases.toml` are the oracle the implementation must match; they are
-written first. They do not change the existing chain / session / enforcement outcomes
-(94 / 15 / 34 / 28), which stand.
+**Status:** DRAFT f2, revised 2026-10-17. **Implemented behind a separate runner; the 31
+proposed labels in `tests/cases/freshness_cases.toml` are the oracle and remain `proposed`
+pending owner review.** The design here was written first; the implementation
+(`src/freshness.rs`, the status stage in `src/verifier.rs`) matches all 31 labels
+(`results/freshness_cases.md`), and **no label was adjusted to match output**. The freshness
+policy runs only where an oracle backed by the synthetic responder is wired in; the existing
+chain / session / enforcement outcomes (94 / 15 / 34 / 28) are unchanged.
 Builds on spec r3.1 ([spec.md](spec.md)), in particular the status stage (spec §6, stage X)
 and the exact-object `StatusKey`.
 
@@ -247,10 +249,11 @@ Base chain fixture (experiment.md §2) plus a modeled responder:
 - A case overrides only the fields it names. Session timings reuse experiment.md §11
   (issue at 10:00:00Z, redeem at 10:01:00Z).
 
-## 9. Proposed case labels (design only; all **Pr**)
+## 9. Proposed case labels (all **proposed**; the implementation's oracle)
 
-In `tests/cases/freshness_cases.toml`, written before any code, **not** wired to a runner.
-Expected outcomes are at the chain status stage (X) unless noted.
+In `tests/cases/freshness_cases.toml`, written before the code and now matched by it
+(`results/freshness_cases.md`). Labels stay `proposed` until owner review. Expected outcomes
+are at the chain status stage (X) unless noted.
 
 ### Policy cases
 

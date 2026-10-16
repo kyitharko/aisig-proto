@@ -27,7 +27,7 @@ assets are in this repository.
 - [docs/limitations.md](docs/limitations.md) — what an Accept does and does not mean
 - [docs/session.md](docs/session.md) — RQ5 slice s1: challenge/response proof of possession bound to a provider session
 - [docs/enforcement.md](docs/enforcement.md) — RQ6 slice e2 (implemented, synthetic): provider-mediated synthetic tool adapter
-- [docs/freshness.md](docs/freshness.md) — RQ7 slice f2 (design only): status freshness and bounded revocation delay
+- [docs/freshness.md](docs/freshness.md) — RQ7 slice f2 (implemented; labels proposed): status freshness and bounded revocation delay
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
 ## Research questions
@@ -36,7 +36,7 @@ assets are in this repository.
 - RQ4 (grant scope semantics, non-amplification): **this prototype**.
 - RQ5 (tester/session binding): **slice s1, reviewed** (34 labels) — session proof of possession, separate decision; channel binding and relay resistance not addressed.
 - RQ6 (tool effect enforcement): **slice e2, implemented (synthetic)** — a provider-side mediator for synthetic tool operations ([docs/enforcement.md](docs/enforcement.md)); 28 reviewed labels; only modeled in-memory effects, no live tool enforcement.
-- RQ7 (revocation freshness): **design-only draft f2** — whole-interval status-freshness policy over a signed, timestamped responder statement ([docs/freshness.md](docs/freshness.md)); 31 proposed labels, no code.
+- RQ7 (revocation freshness): **slice f2 implemented** — whole-interval status-freshness policy over a signed, timestamped responder statement ([docs/freshness.md](docs/freshness.md)); 31 labels, all **proposed** (the implementation matches them; awaiting owner review). Runs behind a separate freshness-slice runner; the chain/session/enforcement outcomes are unchanged.
 
 ## Layout
 
@@ -74,7 +74,7 @@ cargo test --all-targets                      # unit, reviewed cases, property t
 cargo test --doc                              # API-boundary doctests (incl. compile_fail)
 cargo test --all-targets -- --nocapture       # also prints the proptest seed
 AISIG_PROPTEST_SEED=1 cargo test --test properties --test scope_oracle   # another seed
-cargo run --release --bin eval                # writes results/case_comparison.* and session_cases.*
+cargo run --release --bin eval                # writes results/case_comparison.*, session_cases.*, enforcement_cases.*, freshness_cases.*
 scripts/bench.sh                              # writes results/bench_<UTC>.{json,md}
 N=2000 R=5 scripts/bench.sh                   # shorter benchmark
 ```

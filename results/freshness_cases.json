@@ -1,0 +1,223 @@
+{
+  "cases": [
+    {
+      "actual": "Accept",
+      "expected": "Accept",
+      "id": "FR01",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusStale",
+      "expected": "Indeterminate / X / StatusStale",
+      "id": "FR02",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusStale",
+      "expected": "Indeterminate / X / StatusStale",
+      "id": "FR03",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Reject / X / Revoked{G}",
+      "expected": "Reject / X / Revoked{G}",
+      "id": "FR04",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Reject / X / Revoked{G}",
+      "expected": "Reject / X / Revoked{G}",
+      "id": "FR05",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Reject / X / Superseded{C_A}",
+      "expected": "Reject / X / Superseded{C_A}",
+      "id": "FR06",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusUnknown{G}",
+      "expected": "Indeterminate / X / StatusUnknown{G}",
+      "id": "FR07",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusUnavailable",
+      "expected": "Indeterminate / X / StatusUnavailable",
+      "id": "FR08",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusTimestampInFuture",
+      "expected": "Indeterminate / X / StatusTimestampInFuture",
+      "id": "FR09",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusRollback",
+      "expected": "Indeterminate / X / StatusRollback",
+      "id": "FR11",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusUnknown{G}",
+      "expected": "Indeterminate / X / StatusUnknown{G}",
+      "id": "FR12",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Reject / X / Revoked{G}",
+      "expected": "Reject / X / Revoked{G}",
+      "id": "FR13",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusResponseInvalid",
+      "expected": "Indeterminate / X / StatusResponseInvalid",
+      "id": "FR14",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusResponseInvalid",
+      "expected": "Indeterminate / X / StatusResponseInvalid",
+      "id": "FR15",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Reject / X / Revoked{G}",
+      "expected": "Reject / X / Revoked{G}",
+      "id": "FR16",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Accept",
+      "expected": "Accept",
+      "id": "FB01",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusFreshnessUncertain",
+      "expected": "Indeterminate / X / StatusFreshnessUncertain",
+      "id": "FB02",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Accept",
+      "expected": "Accept",
+      "id": "FB03",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusFreshnessUncertain",
+      "expected": "Indeterminate / X / StatusFreshnessUncertain",
+      "id": "FB04",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusStale",
+      "expected": "Indeterminate / X / StatusStale",
+      "id": "FB05",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusTimestampInFuture",
+      "expected": "Indeterminate / X / StatusTimestampInFuture",
+      "id": "FB06",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusTimestampInFuture",
+      "expected": "Indeterminate / X / StatusTimestampInFuture",
+      "id": "FB07",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Accept",
+      "expected": "Accept",
+      "id": "FB08",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / X / StatusEpochConflict",
+      "expected": "Indeterminate / X / StatusEpochConflict",
+      "id": "FB09",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Issued expires_at=2026-10-15T10:02:00Z",
+      "expected": "Issued expires_at=2026-10-15T10:02:00Z",
+      "id": "FS01",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "IssueRefused / Indeterminate / X / StatusStale",
+      "expected": "IssueRefused / Indeterminate / X / StatusStale",
+      "id": "FS02",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "IssueRefused / Reject / X / Revoked{G}",
+      "expected": "IssueRefused / Reject / X / Revoked{G}",
+      "id": "FS03",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "IssueRefused / Indeterminate / X / StatusUnavailable",
+      "expected": "IssueRefused / Indeterminate / X / StatusUnavailable",
+      "id": "FS04",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)",
+      "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)",
+      "id": "FR17",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) effects=0",
+      "expected": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) effects=0",
+      "id": "FR18",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0",
+      "expected": "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0",
+      "id": "FR19",
+      "label_status": "proposed",
+      "match": true
+    }
+  ],
+  "matched": 31,
+  "total": 31
+}

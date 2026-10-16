@@ -9,7 +9,8 @@ Case labels carry an explicit review status in [experiment.md](experiment.md).
 **Scope of this slice:** RQ4 — how an issuer delegation and an engagement grant express
 asset, time, exclusion and constraint scope, and how provider P checks that the chain
 O → admin → authorizer → tester never amplifies authority. RQ1 and RQ2 are *assumed*
-(trusted fixtures). RQ5, RQ6 and RQ7 are *unresolved* and are not implemented (§9).
+(trusted fixtures). RQ5, RQ6 and RQ7 are separate decisions outside this RQ4 core, each
+implemented synthetically in its own slice (§9); none is part of ValidChain_P itself.
 
 ---
 
@@ -532,8 +533,10 @@ specified and implemented separately and do not change the chain decision:
 - **RQ6:** mediating actual agent/tool effects, including how a TestClass maps to actions —
   a separate provider-side mediator (docs/enforcement.md), implemented synthetically.
   `exact_node_lookup`/`subtree_lookup` here remain lookups, not mediation.
-- **RQ7:** status freshness and bounded revocation delay remain **unresolved**. Status is an
-  in-memory fixture.
+- **RQ7:** status freshness and bounded revocation delay — a separate whole-interval
+  freshness policy over a signed responder statement (docs/freshness.md f2, `src/freshness.rs`),
+  implemented synthetically behind its own runner; labels still `proposed`. The in-memory
+  always-current status fixture remains the default for the chain/session/enforcement runs.
 - RQ3 is partially exercised (fixed depth-3 chain, non-amplification); arbitrary depth and multi-admin policy are not.
 - RQ8 (privacy, onboarding cost) is out of scope; CPU latency is measured only for this prototype.
 - ProviderExec (P's own service policy) is separate from ValidChain and not modelled.
