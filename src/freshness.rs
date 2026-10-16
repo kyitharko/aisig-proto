@@ -119,6 +119,12 @@ impl SignedResponse {
     pub fn digest(&self) -> [u8; 32] {
         crypto::object_digest(RESPONSE_TAG, &self.payload)
     }
+
+    /// The exact canonical response bytes R signed (read-only; for inspection, e.g. the RQ8
+    /// field-disclosure audit). The signature is over `signed_bytes(RESPONSE_TAG, payload)`.
+    pub fn payload(&self) -> &[u8] {
+        &self.payload
+    }
 }
 
 /// Decode and strictly re-canonicalize a response (spec §3 encoding rules, canonical UTC `Z`
