@@ -193,7 +193,7 @@
       "actual": "Indeterminate / expiry / InvalidClockReading effects=0",
       "expected": "Indeterminate / expiry / InvalidClockReading effects=0",
       "id": "EE28",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     }
   ],

@@ -154,13 +154,14 @@ r3 (at `526a3c6`):
 
 | Verifier / subset | Cases | False accept | False reject | Indeterminate | R-vs-I mismatch | Exact stage+reason |
 | --- | --- | --- | --- | --- | --- | --- |
-| chain-aware, all | 93 | 0 | 0 | 11 | 0 | 93 |
-| chain-aware, reviewed only | 93 | 0 | 0 | 11 | 0 | 93 |
-| signature-only, all | 93 | 75 | 2 | 0 | 0 | n/a |
-| signature-only, reviewed only | 93 | 75 | 2 | 0 | 0 | n/a |
+| chain-aware, all | 94 | 0 | 0 | 12 | 0 | 94 |
+| chain-aware, reviewed only | 94 | 0 | 0 | 12 | 0 | 94 |
+| signature-only, all | 94 | 76 | 2 | 0 | 0 | n/a |
+| signature-only, reviewed only | 94 | 76 | 2 | 0 | 0 | n/a |
 
-(As of r3.1 every case is reviewed, so the "reviewed only" rows equal the "all" rows.
-At r3 they covered 88 cases: chain-aware 0/0/8, signature-only 70 FA / 2 FR.)
+(Every chain case is reviewed, so the "reviewed only" rows equal the "all" rows. The 94th
+case, T12, is the negative-ε case added this round; the signature-only baseline false-accepts
+it, 76 vs 75 before, because it ignores the clock entirely.)
 
 - **The original 88 cases still match their existing labels exactly** (decision, stage and
   reason). A field-by-field comparison with the r2 labels file shows no change to any
@@ -285,7 +286,8 @@ New labels: SI06, SI07 (proposed), each `IssueUnavailable / InvalidClockReading`
 flips to reviewed: SI05, EE27. No expected value of any previously-reviewed case changed
 (verified by diffing the label files against `36e2875`): the 93 chain, 15 lookup, the
 original 28 session and 26 RQ6 outcomes are unchanged. Post-fix eval: 93/93, 15/15,
-session 31/31 (29 reviewed + SI06/SI07 proposed), RQ6 27/27.
+session 31/31 (29 reviewed + SI06/SI07 proposed), RQ6 27/27. *(Round-2 snapshot; superseded
+by the round-3 counts below.)*
 
 ## Review round 3 (2026-10-16): reject negative clock uncertainty
 
