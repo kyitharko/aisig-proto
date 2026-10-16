@@ -148,6 +148,30 @@ kind = "freshness"
 expected = "Indeterminate / X / StatusEpochConflict"
 label_status = "proposed"
 
+# FB10: epoch 0 is a valid epoch; an identical epoch-0 Active response replayed against the
+# same high-water-mark must stay idempotently accepted (two steps, shared HWM).
+[[case]]
+id = "FB10"
+kind = "freshness"
+expected = "Accept ; Accept"
+label_status = "proposed"
+
+# FB11: shared HWM, competing Active epochs: accept a newer epoch, then an older epoch must
+# roll back (an older response cannot win after a newer one).
+[[case]]
+id = "FB11"
+kind = "freshness"
+expected = "Accept ; Indeterminate / X / StatusRollback"
+label_status = "proposed"
+
+# FB12: shared HWM, a validated Revoked then a newer Active: the Active must stay rejected by
+# the sticky flag (revocation is monotonic across the shared store).
+[[case]]
+id = "FB12"
+kind = "freshness"
+expected = "Reject / X / Revoked{G} ; Reject / X / Revoked{G}"
+label_status = "proposed"
+
 [[case]]
 id = "FS01"
 kind = "freshness"
@@ -175,7 +199,7 @@ label_status = "proposed"
 [[case]]
 id = "FR17"
 kind = "freshness"
-expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)"
+expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) ; SessionAccept"
 label_status = "proposed"
 
 [[case]]

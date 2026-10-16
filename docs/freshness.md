@@ -1,10 +1,11 @@
 # RQ7 slice — status freshness and bounded revocation delay (DRAFT f2)
 
-**Status:** DRAFT f2, revised 2026-10-17. **Implemented behind a separate runner; the 31
+**Status:** DRAFT f2, revised 2026-10-17. **Implemented behind a separate runner; the 34
 proposed labels in `tests/cases/freshness_cases.toml` are the oracle and remain `proposed`
 pending owner review.** The design here was written first; the implementation
-(`src/freshness.rs`, the status stage in `src/verifier.rs`) matches all 31 labels
-(`results/freshness_cases.md`), and **no label was adjusted to match output**. The freshness
+(`src/freshness.rs`, the status stage in `src/verifier.rs`) matches all 34 labels
+(`results/freshness_cases.md`), gated in `cargo test` and by a nonzero `eval` exit on any
+mismatch, and **no label was adjusted to match output**. The freshness
 policy runs only where an oracle backed by the synthetic responder is wired in; the existing
 chain / session / enforcement outcomes (94 / 15 / 34 / 28) are unchanged.
 Builds on spec r3.1 ([spec.md](spec.md)), in particular the status stage (spec §6, stage X)
@@ -161,18 +162,29 @@ or invalid Indeterminate. An Indeterminate is **never** upgraded to Accept: miss
 evidence of liveness blocks Accept but does not prove revocation.
 
 **Epoch / rollback / conflict & high-water-mark.** P keeps, per `StatusKey`, an **in-memory**
-high-water-mark: the greatest `status_epoch` it has accepted, the digest of the exact signed
-response accepted at that epoch, plus a sticky "revoked-seen" flag. Accepting a response sets
-`hwm = max(hwm, status_epoch)` and records that response's digest at its epoch. For a
-validated `Active`:
-- `status_epoch < hwm` → rollback → `Indeterminate(StatusRollback)`;
-- `status_epoch = hwm` and the response's digest **equals** the one recorded at `hwm` →
-  idempotent replay, allowed (the same signed answer re-presented within its own freshness
-  limits; FB08);
-- `status_epoch = hwm` and the response's digest **differs** → two different signed answers
-  claim the same epoch; this is a conflict → `Indeterminate(StatusEpochConflict)` (FB09). A
-  conflict never makes Active acceptable; it does not advance `hwm`;
-- `status_epoch > hwm` → newer; accepted (and becomes the new `hwm`).
+high-water-mark: `None` until the first Active is accepted, then `Some(epoch, digest)` — the
+greatest `status_epoch` accepted and the digest of the exact signed response accepted at that
+epoch — plus a sticky "revoked-seen" flag. **`status_epoch = 0` is a valid epoch:** the first
+accepted response records its real `(0, digest)`; there is no sentinel epoch-0 entry, so an
+identical epoch-0 response replays idempotently (FB10). For a validated `Active` against a
+recorded `Some(hwm_epoch, hwm_digest)`:
+- `status_epoch < hwm_epoch` → rollback → `Indeterminate(StatusRollback)`;
+- `status_epoch = hwm_epoch` and the digest **equals** `hwm_digest` → idempotent replay,
+  allowed (the same signed answer re-presented within its own freshness limits; FB08, FB10);
+- `status_epoch = hwm_epoch` and the digest **differs** → two different signed answers claim
+  the same epoch; conflict → `Indeterminate(StatusEpochConflict)` (FB09). A conflict never
+  makes Active acceptable; it does not advance `hwm`;
+- `status_epoch > hwm_epoch` → newer; accepted (becomes the new `hwm`).
+
+**Atomic commit & linearization (concurrency).** The sticky re-check, the epoch comparison
+and the `hwm` advance for an accepted Active happen under **one** lock acquisition, which is
+the decision's **linearization point**. An Active that acquires the lock *after* a `Revoked`
+has been recorded observes the sticky flag and is rejected (`Revoked`), never committed; two
+competing Active epochs are ordered by whoever acquires the lock first, so an older response
+cannot commit after a newer one (the loser rolls back). Recording a `Revoked`/`Superseded` is
+likewise a single locked step. If an Active's lock precedes the `Revoked`'s, that ordering is
+allowed (the Active linearizes first). The early epoch read (for the rollback/conflict
+*reason* and its precedence over expiry) is only a hint; the atomic commit is authoritative.
 
 The digest here is the SHA-256 of the response's signed bytes (the whole statement), distinct
 from the object digest inside `StatusKey`. **Restart limitation (explicit):** the `hwm`
@@ -243,11 +255,13 @@ Base chain fixture (experiment.md §2) plus a modeled responder:
 
 - `F = 3600 s` (1 h), global. Pinned `K_R` per org.
 - Decision `now = 2026-10-15T10:00:00Z`, `ε = 2 s` (so interval `[09:59:58Z, 10:00:02Z]`).
-- Each object's response defaults: `status = Active`, `status_epoch = 1`, `hwm = 0` (empty),
+- Each object's response defaults: `status = Active`, `status_epoch = 1`, `hwm = None` (empty),
   `status_known_at = 2026-10-15T09:59:00Z`, `published_at = 2026-10-15T09:59:00Z`,
   `response_expires_at = 2026-10-15T11:00:00Z`.
 - A case overrides only the fields it names. Session timings reuse experiment.md §11
   (issue at 10:00:00Z, redeem at 10:01:00Z).
+- **Multi-step cases** (FB10–FB12, FR17) use one provider high-water-mark shared across the
+  steps; their expected value joins the per-step outcomes with ` ; `.
 
 ## 9. Proposed case labels (all **proposed**; the implementation's oracle)
 
@@ -288,6 +302,9 @@ are at the chain status stage (X) unless noted.
 | FB07 | G `status_known_at = published_at = 10:00:03Z` (= now+ε+1), `response_expires_at = 11:00:03Z` (future for the whole interval) | `Indeterminate / X / StatusTimestampInFuture` |
 | FB08 | G valid Active, `status_epoch = 2`, `hwm = 2` recorded from **this same** signed response (idempotent replay) | `Accept` |
 | FB09 | G valid Active, `status_epoch = 2`, `hwm = 2` recorded from a **different** signed response (same-epoch conflict) | `Indeterminate / X / StatusEpochConflict` |
+| FB10 | shared HWM: accept an epoch-**0** Active, then replay the identical signed response | `Accept ; Accept` |
+| FB11 | shared HWM: accept a newer epoch-2 Active, then present an older epoch-1 Active | `Accept ; Indeterminate / X / StatusRollback` |
+| FB12 | shared HWM: a validated `Revoked`, then a newer epoch-2 Active | `Reject / X / Revoked{G} ; Reject / X / Revoked{G}` |
 
 ### Session-issuance cases (RQ5 `issue`; reuse experiment.md §11 timings)
 
@@ -302,11 +319,11 @@ are at the chain status stage (X) unless noted.
 
 | ID | Situation | Expected |
 | --- | --- | --- |
-| FR17 | session redemption with a stale-Active G | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)` ; no consume |
+| FR17 | one shared HWM: issue with G fresh, advance the clock until the *same* signed G response is stale (challenge and grant still valid), redeem (no consume), then retry with a newer fresh G response | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) ; SessionAccept` |
 | FR18 | RQ6 mediation with a stale-Active G | `Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) effects=0` |
 | FR19 | RQ6 mediation with a `Revoked` G | `Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0` |
 
-**Count:** 31 proposed RQ7 labels (15 policy, 9 boundary, 4 session-issuance, 3
+**Count:** 34 proposed RQ7 labels (15 policy, 12 boundary, 4 session-issuance, 3
 inheritance). None change the existing 94 / 15 / 34 / 28 reviewed outcomes.
 
 **FS04 note (open).** Whether an unavailable responder at issuance is reported as
