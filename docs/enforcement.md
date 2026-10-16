@@ -114,7 +114,8 @@ exactly once, and never on `Deny`/`Indeterminate` (so a non-Allow performs zero 
    - no authorization for `session_ref` → `Deny(DenyNoSession)`.
 3. **expiry** — the mediator reads the clock **once** here, at the start of the
    decision, into a single snapshot `(now, ε)` used by this stage, by the chain-time check
-   (stage 4), and by the receipt (stage 9). It is never re-read. ε is clamped to ≥ 0 and the
+   (stage 4), and by the receipt (stage 9). It is never re-read. A negative ε is rejected (see
+   below), not clamped; for a valid reading the
    `now ± ε` bounds saturate (no overflow). Check vs the session's `grant_window_end`
    (half-open, spec §6); in s1 `grant_window_end = G.window.end`, and the stage is kept
    explicit so a future session-scoped TTL (tighter than the grant) has a home.

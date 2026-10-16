@@ -327,11 +327,14 @@ runs are marked historical in results/README.md.
 - Q9–Q12 are decided (spec §10). Their follow-ups are future work:
   - an evidenced *conflict* result from an authoritative, complete status service (Q9);
   - root rotation with explicit record versions, validity and retirement (Q11).
-- No proposed labels remain.
-- RQ5 s1 (28 labels) is owner-reviewed; SI05 (clock-edge) is proposed. RQ5 channel
-  binding, relay resistance and per-request PoP remain open.
-- RQ6 e2 is implemented for synthetic operations; all 27 labels reviewed. Live tool
-  enforcement is not claimed. RQ7 (status-source freshness) remains unresolved.
+- As of the round-3 cleanup, no proposed labels remain: chain 94, lookup 15, session 34,
+  enforcement 28 are all owner-reviewed.
+- RQ5 s1 (34 labels) is owner-reviewed. RQ5 channel binding, relay resistance and
+  per-request PoP remain open.
+- RQ6 e2 is implemented for synthetic operations; all 28 labels reviewed. Live tool
+  enforcement is not claimed.
+- RQ7 (status-source freshness / bounded revocation delay) remains unresolved; a
+  design-only draft is prepared separately (proposed labels, no code).
 - RQ5 issuance now rejects inconsistent clock readings (SI05 reviewed; SI06/SI07 proposed).
 - Round 3: all time paths reject a negative ε (never clamp). New proposed labels T12,
   SS25, SI08, EE28 await owner review.

@@ -1,9 +1,8 @@
 # RQ5 slice — tester proof of possession bound to a provider session (DRAFT s1)
 
-**Status:** DRAFT s1, 2026-10-15. Research working hypothesis. Every case label for this
-slice is **proposed** until the research owner reviews it. Builds on spec r3.1
-([spec.md](spec.md)); the chain decision `ValidChain_P` and its 93 chain and 15 lookup
-labels are unchanged.
+**Status:** DRAFT s1, 2026-10-15 (labels owner-reviewed through round 3). Research working
+hypothesis. Builds on spec r3.1 ([spec.md](spec.md)); the chain decision `ValidChain_P` and
+its 94 chain and 15 lookup labels are unchanged by this slice.
 
 ## 1. Question and scope
 

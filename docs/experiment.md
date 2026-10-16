@@ -378,7 +378,7 @@ After the fix:
 - the same alteration made in a raw bundle's grant payload, keeping the original
   signature, is `Reject / S / InvalidSignature{G}`.
 
-## 11. RQ5 session cases (slice s1; SS01–SS25, SI01–SI08 **Rv**; SS26 **Pr**)
+## 11. RQ5 session cases (slice s1; SS01–SS26, SI01–SI08 all **Rv**)
 
 Spec: [session.md](session.md). Labels live in `tests/cases/session_cases.toml`, a separate
 file; the r3.1 chain and lookup labels file is not touched. They were written before the
@@ -439,7 +439,7 @@ outcome of each step in order, separated by ` ; `.
 | SI08 | negative uncertainty on the **chain-check** (first) reading, valid issuance read second — the later read must not override the invalid first | `IssueRefused / Indeterminate / T / InvalidClockReading` |
 
 **Count:** 34 session-slice cases (26 redemption, 8 issuance): SS01–SS25 and SI01–SI08
-reviewed (33), and SS26 proposed (1). Reported separately from the chain and lookup labels.
+reviewed (34). Reported separately from the chain and lookup labels.
 Negative uncertainty (ε < 0) is rejected, never clamped, at every time path: chain
 verification (T12; and redemption via the chain re-verify, SS25), issuance (SI07, and the
 chain-check read SI08), the session redemption-**time** stage (SS26), and mediation (EE28).
@@ -470,10 +470,10 @@ Their runners use a changing injected clock and are added with the clock-fix com
 ## 12. RQ6 enforcement cases (slice e2; implemented; EE01–EE28 **Rv**)
 
 Spec: [enforcement.md](enforcement.md) (DRAFT e2). Labels live in
-`tests/cases/enforcement_cases.toml`, a separate file. **Not implemented** — these are
-implemented in `src/enforcement.rs`. EE01–EE27 are owner-reviewed (the tooltable/v0
-mapping is approved, and EE27 — the PartiallyAllowed-without-exclusion boundary — is now
-reviewed too).
+`tests/cases/enforcement_cases.toml`, a separate file. The slice is **implemented** in
+`src/enforcement.rs`; EE01–EE28 are all owner-reviewed (the `aisig-tooltable/v0` mapping is
+approved, including EE27 — the PartiallyAllowed-without-exclusion boundary — and EE28, the
+negative clock uncertainty at mediation).
 
 **Enforcement fixture.**
 - Base chain (§2), all objects Active; a session is authorized for the base G.

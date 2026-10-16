@@ -269,7 +269,7 @@
       "expected": "SessionIndeterminate / time / InvalidClockReading ; SessionAccept",
       "id": "SS26",
       "kind": "session",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true
     }
   ],
