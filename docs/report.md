@@ -334,7 +334,7 @@ runs are marked historical in results/README.md.
 - RQ6 e2 is implemented for synthetic operations; all 28 labels reviewed. Live tool
   enforcement is not claimed.
 - RQ7 (status-source freshness / bounded revocation delay) remains unresolved; a
-  design-only draft is in [freshness.md](freshness.md) (f2; 30 proposed labels, no code).
+  design-only draft is in [freshness.md](freshness.md) (f2; 31 proposed labels, no code).
 - RQ5 issuance now rejects inconsistent clock readings (SI05 reviewed; SI06/SI07 proposed).
 - Round 3: all time paths reject a negative ε (never clamp). New proposed labels T12,
   SS25, SI08, EE28 await owner review.

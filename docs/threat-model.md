@@ -118,9 +118,9 @@ checked.
 | --- | --- | --- | --- |
 | TH39 | Relying on a stale Active after a real revocation | Whole-interval freshness bound F + response expiry; any boundary overlap → Indeterminate, never Accept (X) | FR02, FR03, FR17, FR18, FB02, FB04, FB05 |
 | TH40 | Revocation hidden by an expired/stale responder answer | Revoked/Superseded is monotonic and sticky → Reject regardless of freshness; Reject dominates Indeterminate (X) | FR04, FR05, FR13, FR16, FR19 |
-| TH41 | Replay/rollback to an older Active response | Per-StatusKey monotonic high-water-mark (epoch/published_at); older Active → Indeterminate (X) | FR11 |
+| TH41 | Replay/rollback to an older Active, or two different signed answers at one epoch | Per-StatusKey monotonic high-water-mark with the accepted response's digest; older epoch → `StatusRollback`, same epoch + different signed response → `StatusEpochConflict`; identical replay is idempotent (X) | FR11, FB08, FB09 |
 | TH42 | Replaying another object's Active | Exact StatusKey (incl. digest) must match → else StatusUnknown (X) | FR12 |
-| TH43 | Future-dated, mis-ordered, or wrongly-signed responder statement | published_at/status_known_at ≤ now+ε; ordered timestamps; responder signature under a pinned key → else Indeterminate (X) | FR09, FB07, FR14, FR15 |
+| TH43 | Future-dated, mis-ordered, or wrongly-signed responder statement | whole-interval future check (`max(status_known_at, published_at) ≤ now−ε`); ordered timestamps; responder signature under a pinned key → else Indeterminate (X) | FR09, FR14, FR15, FB06, FB07 |
 | TH44 | Unavailable status source silently accepted | Unavailable/unknown → Indeterminate, never Accept (X) | FR07, FR08, FS04 |
 
 Out of scope for f2, stated so none is read as defended:

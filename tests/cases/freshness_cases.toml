@@ -126,7 +126,7 @@ label_status = "proposed"
 [[case]]
 id = "FB06"
 kind = "freshness"
-expected = "Accept"
+expected = "Indeterminate / X / StatusTimestampInFuture"
 label_status = "proposed"
 
 [[case]]
@@ -139,6 +139,12 @@ label_status = "proposed"
 id = "FB08"
 kind = "freshness"
 expected = "Accept"
+label_status = "proposed"
+
+[[case]]
+id = "FB09"
+kind = "freshness"
+expected = "Indeterminate / X / StatusEpochConflict"
 label_status = "proposed"
 
 [[case]]
