@@ -51,12 +51,12 @@ mediation records — beyond what the engagement already discloses? Privacy here
   mediation receipts record operation, target, class and time.
 
 **Measurable methods.**
-- *Field inventory (synthetic; feasible as an extension):* enumerate, per observer, the artifacts
-  received and the fields each discloses, from the actual canonical signed bytes / wire forms
-  (and, for the effect receipt, its struct fields). A structural audit, not a number — reported
-  as a disclosure table. No network.
-- *Linkability comparison (synthetic; feasible as an extension):* a deterministic comparison of a
-  repeated identical signed grant versus a legitimately reissued grant, reporting equality of
+- *Field inventory (synthetic; implemented, `rq8_privacy.rs`):* enumerate, per observer, the
+  artifacts received and the fields each discloses, from the actual canonical signed bytes / wire
+  forms (and, for the effect receipt, its struct fields). A structural audit, not a number —
+  reported as a disclosure table. No network.
+- *Linkability comparison (synthetic; implemented, `rq8_privacy.rs`):* a deterministic comparison
+  of a repeated identical signed grant versus a legitimately reissued grant, reporting equality of
   signed bytes, key ids and exact `StatusKey` **separately** to show which fields correlate across
   showings. Uses the existing fixture; no network.
 - *Query-pattern leakage (synthetic model; feasible as an extension):* from the status-stage call
@@ -64,9 +64,8 @@ mediation records — beyond what the engagement already discloses? Privacy here
   principle; the *real* timing/size signal (O4) needs a deployment.
 
 **Support level.**
-- Measured now: none for Q1 yet.
-- Feasible as a synthetic extension (no network): the field inventory and the linkability
-  comparison.
+- Measured now: the field inventory and the linkability comparison (`rq8_privacy.rs`,
+  `results/rq8_privacy.md`).
 - Requires a real deployment: O4 (network/traffic analysis — timing, size, endpoint
   correlation), any claim about an actual responder protocol's metadata, and any adversary with
   side channels.
@@ -220,8 +219,8 @@ real deployment and is out of scope here.
 
 | Method | Support level | Where / note |
 | --- | --- | --- |
-| Q1 field-disclosure inventory (per observer) | extension | planned RQ8 privacy runner (not yet implemented) |
-| Q1 linkability / correlation counts (O1–O3) | extension | planned RQ8 privacy runner (not yet implemented) |
+| Q1 field-disclosure inventory (per observer) | measured | `rq8_privacy.rs` (`results/rq8_privacy.md`), FD01–FD08 + PO1/PO2/PO3/PO5 |
+| Q1 linkability comparison (identical vs reissued) | measured | `rq8_privacy.rs`, PL01/PL02 |
 | Q1 network/traffic metadata (O4) | deployment | no network modeled |
 | Q2 per-stage CPU (sig / policy / status), p50/p95/p99 | measured | `bench.rs`: `signature_x3`, `typed_policy`, `status_key_x3`, `status_lookup_x3` |
 | Q2 whole-`ValidChain_P` CPU | measured | `bench.rs`: `full_chain_verify` |

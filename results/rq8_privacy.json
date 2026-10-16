@@ -1,0 +1,118 @@
+{
+  "cases": [
+    {
+      "actual": "audience,bounds,format,id,issuer_key_id,org_id,rights,subject_key,validity,version",
+      "expected": "audience,bounds,format,id,issuer_key_id,org_id,rights,subject_key,validity,version",
+      "id": "FD01",
+      "label_status": "proposed",
+      "match": true,
+      "note": "C_A (AdminDelegation) canonical signed payload fields"
+    },
+    {
+      "actual": "audience,envelope,format,id,issuer_key_id,org_id,parent,right,subject_key,validity,version",
+      "expected": "audience,envelope,format,id,issuer_key_id,org_id,parent,right,subject_key,validity,version",
+      "id": "FD02",
+      "label_status": "proposed",
+      "match": true,
+      "note": "D_U (IssuerDelegation) canonical signed payload fields"
+    },
+    {
+      "actual": "audience,engagement_id,exclusions,format,id,issuer_key_id,org_id,parent,targets,test_scope,tester_key,version,window",
+      "expected": "audience,engagement_id,exclusions,format,id,issuer_key_id,org_id,parent,targets,test_scope,tester_key,version,window",
+      "id": "FD03",
+      "label_status": "proposed",
+      "match": true,
+      "note": "G (EngagementGrant) canonical signed payload fields"
+    },
+    {
+      "actual": "published_at,response_expires_at,status,status_epoch,status_key,status_known_at",
+      "expected": "published_at,response_expires_at,status,status_epoch,status_key,status_known_at",
+      "id": "FD04",
+      "label_status": "proposed",
+      "match": true,
+      "note": "status response (R-signed) canonical fields"
+    },
+    {
+      "actual": "digest,id,object_type,org_id,version",
+      "expected": "digest,id,object_type,org_id,version",
+      "id": "FD05",
+      "label_status": "proposed",
+      "match": true,
+      "note": "status_key — exactly what O3 (responder R) receives as a query"
+    },
+    {
+      "actual": "audience,challenge_id,expires_at,format,grant,issued_at,nonce,session_id",
+      "expected": "audience,challenge_id,expires_at,format,grant,issued_at,nonce,session_id",
+      "id": "FD06",
+      "label_status": "proposed",
+      "match": true,
+      "note": "session challenge (P-issued) canonical fields"
+    },
+    {
+      "actual": "challenge_id,format,sig",
+      "expected": "challenge_id,format,sig",
+      "id": "FD07",
+      "label_status": "proposed",
+      "match": true,
+      "note": "session proof (tester response) canonical fields"
+    },
+    {
+      "actual": "effects,operation,performed_at,session_ref,target,test_class",
+      "expected": "effects,operation,performed_at,session_ref,target,test_class",
+      "id": "FD08",
+      "label_status": "proposed",
+      "match": true,
+      "note": "effect receipt (in-memory log record) fields; not a wire object"
+    },
+    {
+      "actual": "admin,grant,issuer",
+      "expected": "admin,grant,issuer",
+      "id": "PO1",
+      "label_status": "proposed",
+      "match": true,
+      "note": "O1 bundle holder (e.g. tester / anyone shown a grant): the three chain objects"
+    },
+    {
+      "actual": "admin,challenge,grant,issuer,proof,status_response",
+      "expected": "admin,challenge,grant,issuer,proof,status_response",
+      "id": "PO2",
+      "label_status": "proposed",
+      "match": true,
+      "note": "O2 provider P: the bundle, the status response from R, and the session exchange"
+    },
+    {
+      "actual": "status_key",
+      "expected": "status_key",
+      "id": "PO3",
+      "label_status": "proposed",
+      "match": true,
+      "note": "O3 responder R: only the StatusKey query; the model assumes R never gets P's now/ε"
+    },
+    {
+      "actual": "effect_receipt",
+      "expected": "effect_receipt",
+      "id": "PO5",
+      "label_status": "proposed",
+      "match": true,
+      "note": "O5 log/effect-sink reader: the effect receipts"
+    },
+    {
+      "actual": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key=equal",
+      "expected": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key=equal",
+      "id": "PL01",
+      "label_status": "proposed",
+      "match": true,
+      "note": "the identical signed grant presented twice -> fully linkable"
+    },
+    {
+      "actual": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key=differ",
+      "expected": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key=differ",
+      "id": "PL02",
+      "label_status": "proposed",
+      "match": true,
+      "note": "a reissued grant (new engagement_id, same parties): key ids still correlate, signed bytes and StatusKey do not"
+    }
+  ],
+  "matched": 14,
+  "total": 14
+}

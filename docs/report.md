@@ -342,6 +342,11 @@ runs are marked historical in results/README.md.
   with a `cargo test` gate and a nonzero `eval` exit on any mismatch. The HWM seeding seams are
   crate-internal (`pub(crate)`), so an external holder of a `&HwmStore` cannot clear a sticky
   revocation. The bounded-revocation-delay figure stays a conjecture (§6, withdrawn as a claim).
+- RQ8 (privacy / latency / onboarding): design in [rq8.md](rq8.md). Q1 slice 1 is implemented —
+  a synthetic field-disclosure inventory and an identical-vs-reissued linkability comparison
+  (`src/experiment/rq8_privacy.rs`, `results/rq8_privacy.md`; 14 **proposed** observations, gated
+  in `cargo test` and `eval`). It is a structural observation, not a privacy guarantee; O4
+  network metadata is unmeasured. Q2 latency and Q3 onboarding remain design-only.
 - RQ5 issuance rejects inconsistent clock readings; all time paths reject a negative ε (never
   clamp). The labels those rounds introduced (SI05, SI06, SI07, SI08, SS25, SS26, T12, EE28)
   are all owner-reviewed now and included in the counts above; the "proposed" notes in the
