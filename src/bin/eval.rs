@@ -128,6 +128,10 @@ fn main() {
         "freshness slice: {ok}/{} match (all proposed)",
         fresh_rows.len()
     );
+    let fresh_mismatches = fresh_rows
+        .iter()
+        .filter(|r| r.actual != r.label.expected)
+        .count();
     for r in fresh_rows.iter().filter(|r| r.actual != r.label.expected) {
         println!(
             "FRESHNESS MISMATCH {}: expected `{}`, got `{}`",
@@ -135,4 +139,23 @@ fn main() {
         );
     }
     println!("wrote results/freshness_cases.md and results/freshness_cases.json");
+
+    // Fail the run (nonzero exit) on any label mismatch, so eval gates the labels in CI as
+    // well as in `cargo test`. Freshness mismatches are included (RQ7 review finding 4).
+    let session_bad = session_rows
+        .iter()
+        .filter(|r| r.actual != r.label.expected)
+        .count();
+    let enf_bad = enf_rows
+        .iter()
+        .filter(|r| r.actual != r.label.expected)
+        .count();
+    let total_bad = mismatches.len() + q_bad + session_bad + enf_bad + fresh_mismatches;
+    if total_bad > 0 {
+        eprintln!(
+            "eval: {total_bad} mismatch(es) (chain={}, scope={q_bad}, session={session_bad}, enforcement={enf_bad}, freshness={fresh_mismatches})",
+            mismatches.len()
+        );
+        std::process::exit(1);
+    }
 }

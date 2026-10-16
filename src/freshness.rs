@@ -245,6 +245,16 @@ impl HwmStore {
     pub fn seed_sticky_revoked(&self, key: &StatusKey) {
         self.set_sticky(key, Sticky::Revoked);
     }
+
+    /// Test accessor: the recorded high-water epoch (`None` if no Active has been accepted)
+    /// and the sticky flag.
+    #[cfg(test)]
+    fn snapshot(&self, key: &StatusKey) -> (Option<u64>, Option<Sticky>) {
+        match self.0.lock().expect("hwm lock").get(key) {
+            None => (None, None),
+            Some(e) => (Some(e.epoch), e.sticky),
+        }
+    }
 }
 
 /// The freshness-aware status stage (docs/freshness.md §3–§4). Borrows the responder, the
@@ -466,6 +476,61 @@ mod tests {
         assert_eq!(
             oracle.evaluate(Obj::Grant, &key(), reading()),
             StatusStageOutcome::Indeterminate(Reason::StatusResponseInvalid)
+        );
+    }
+
+    // Reproduction (finding 1): epoch 0 is a valid epoch. Accept an epoch-0 Active, then
+    // replay the identical signed response against the same HWM; it must remain accepted.
+    #[test]
+    fn epoch_zero_active_replays_idempotently() {
+        let r0 = active(
+            0,
+            "2026-10-15T09:59:00Z",
+            "2026-10-15T09:59:00Z",
+            "2026-10-15T11:00:00Z",
+        );
+        let mut r = StatusResponder::new();
+        r.insert(key(), r0);
+        let pins = pinned();
+        let hwm = HwmStore::new();
+        let oracle = FreshnessOracle {
+            responder: &r,
+            pinned: &pins,
+            f_seconds: DEFAULT_F_SECONDS,
+            hwm: &hwm,
+        };
+        assert_eq!(
+            oracle.evaluate(Obj::Grant, &key(), reading()),
+            StatusStageOutcome::Ok,
+            "first epoch-0 Active must be accepted"
+        );
+        assert_eq!(
+            oracle.evaluate(Obj::Grant, &key(), reading()),
+            StatusStageOutcome::Ok,
+            "an identical epoch-0 Active must replay idempotently, not conflict"
+        );
+    }
+
+    // Reproduction (finding 2): a validated Revoked commits between an Active request's initial
+    // checks and its final commit. The commit must be atomic: the Active must not advance the
+    // high-water-mark over a recorded revocation.
+    #[test]
+    fn active_does_not_commit_after_a_concurrent_revocation() {
+        let hwm = HwmStore::new();
+        let k = key();
+        let dg = [7u8; 32];
+        // Active request's initial checks pass (no sticky, epoch fine):
+        assert!(hwm.sticky(&k).is_none());
+        assert_eq!(hwm.epoch_cmp(&k, 1, dg), EpochCmp::Ok);
+        // A validated Revoked commits in the window:
+        hwm.set_sticky(&k, Sticky::Revoked);
+        // The Active's final commit must be atomic and must not record its epoch:
+        let _ = hwm.accept(&k, 1, dg);
+        let (recorded, sticky) = hwm.snapshot(&k);
+        assert_eq!(sticky, Some(Sticky::Revoked));
+        assert!(
+            recorded.is_none(),
+            "an Active must not commit its epoch after a recorded revocation (got {recorded:?})"
         );
     }
 }

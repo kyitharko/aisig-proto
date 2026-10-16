@@ -43,7 +43,7 @@ const MED: &str = "2026-10-15T10:30:00Z";
 pub const FRESHNESS_CASE_IDS: &[&str] = &[
     "FR01", "FR02", "FR03", "FR04", "FR05", "FR06", "FR07", "FR08", "FR09", "FR11", "FR12", "FR13",
     "FR14", "FR15", "FR16", "FB01", "FB02", "FB03", "FB04", "FB05", "FB06", "FB07", "FB08", "FB09",
-    "FS01", "FS02", "FS03", "FS04", "FR17", "FR18", "FR19",
+    "FB10", "FB11", "FB12", "FS01", "FS02", "FS03", "FS04", "FR17", "FR18", "FR19",
 ];
 
 // ---------------------------------------------------------------------------
@@ -153,6 +153,42 @@ fn chain_case(
     let hwm = HwmStore::new();
     setup(&ak, &dk, &gk, &mut responder, &hwm);
     chain_decision(&s, &responder, &hwm)
+}
+
+/// Two chain decisions against **one shared** high-water-mark, with G carrying `g1` then
+/// `g2` (C_A/D_U stay fresh). Models the multi-step boundary cases FB10–FB12; the per-step
+/// outcomes are joined with ` ; `.
+fn chain_twice(g1: SignedResponse, g2: SignedResponse) -> String {
+    let s = Scenario::base();
+    let (ak, dk, gk) = keys(&s);
+    let pins = pinned();
+    let hwm = HwmStore::new();
+    let step = |g: SignedResponse| {
+        let mut responder = base_responder(&ak, &dk);
+        responder.insert(gk.clone(), g);
+        let o = oracle(&responder, &pins, &hwm);
+        let bundle = s.build();
+        ChainVerifier {
+            audience: P_AUD,
+            evidence: Evidence {
+                registry: &s.registry,
+                bindings: &s.bindings,
+                clock: &s.clock,
+                status: &o,
+            },
+        }
+        .verify(&bundle)
+        .to_string()
+    };
+    let a = step(g1);
+    let b = step(g2);
+    format!("{a} ; {b}")
+}
+
+/// The grant's exact StatusKey in the base fixture (deterministic), for building G responses
+/// before `chain_twice` rebuilds the same scenario.
+fn base_grant_key() -> StatusKey {
+    keys(&Scenario::base()).2
 }
 
 // ---------------------------------------------------------------------------
@@ -438,6 +474,28 @@ pub fn run(id: &str) -> Option<String> {
             h.seed_epoch(gk, 2, [0xABu8; 32]); // a different signed response at the hwm epoch
             r.insert(gk.clone(), resp(gk, Active, 2, KNOWN, KNOWN, EXP));
         }),
+        // --- multi-step boundary (shared high-water-mark) ---
+        "FB10" => {
+            // epoch 0 is valid; replay the identical signed response -> idempotent.
+            let g = resp(&base_grant_key(), Active, 0, KNOWN, KNOWN, EXP);
+            chain_twice(g.clone(), g)
+        }
+        "FB11" => {
+            // accept a newer epoch, then an older epoch must roll back.
+            let gk = base_grant_key();
+            chain_twice(
+                resp(&gk, Active, 2, KNOWN, KNOWN, EXP),
+                resp(&gk, Active, 1, KNOWN, KNOWN, EXP),
+            )
+        }
+        "FB12" => {
+            // a validated Revoked, then a newer Active stays rejected by the sticky flag.
+            let gk = base_grant_key();
+            chain_twice(
+                resp(&gk, Revoked, 1, KNOWN, KNOWN, EXP),
+                resp(&gk, Active, 2, KNOWN, KNOWN, EXP),
+            )
+        }
         // --- session issuance ---
         "FS01" => {
             let s = Scenario::base();
@@ -493,42 +551,57 @@ pub fn run(id: &str) -> Option<String> {
     Some(out)
 }
 
-/// Issue fresh (minting a challenge), then redeem the same challenge when G has gone stale.
+/// One shared provider high-water-mark across issuance and redemption. Issue with G fresh;
+/// advance the clock until the *same* signed G response is stale (challenge and grant still
+/// valid) and redeem — it must be `StatusStale` with no consume; then retry with a newer fresh
+/// G response, which consumes the still-pending challenge.
 fn fr17() -> String {
-    let s = Scenario::base();
-    let (ak, dk, gk) = keys(&s);
+    use ResponderStatus::Active;
+    let s_issue = Scenario::base(); // clock 10:00:00Z
+    let (ak, dk, gk) = keys(&s_issue);
     let pins = pinned();
-    let bundle = s.build();
+    let hwm = HwmStore::new(); // one provider HWM shared by every phase
+    let bundle = s_issue.build();
     let store = InMemoryChallengeStore::default();
 
-    // issue — fresh responder.
-    let mut fresh_resp = base_responder(&ak, &dk);
-    fresh_resp.insert(gk.clone(), fresh(&gk));
-    let fresh_hwm = HwmStore::new();
-    let o_fresh = oracle(&fresh_resp, &pins, &fresh_hwm);
-    let c = match session_service(&s, &o_fresh, &store).issue(&bundle, SESSION) {
+    // issue at 10:00:00Z with R1 (expires 10:00:30Z), fresh now.
+    let r1 = resp(&gk, Active, 1, KNOWN, KNOWN, "2026-10-15T10:00:30Z");
+    let mut responder_issue = base_responder(&ak, &dk);
+    responder_issue.insert(gk.clone(), r1.clone());
+    let o_issue = oracle(&responder_issue, &pins, &hwm);
+    let c = match session_service(&s_issue, &o_issue, &store).issue(&bundle, SESSION) {
         IssueOutcome::Issued(c) => *c,
         other => return format!("issue failed: {other}"),
     };
+    let proof = tester_proof(&c);
 
-    // redeem — G now stale (expired).
-    let mut stale_resp = base_responder(&ak, &dk);
-    stale_resp.insert(
-        gk.clone(),
-        resp(
-            &gk,
-            ResponderStatus::Active,
-            1,
-            KNOWN,
-            KNOWN,
-            "2026-10-15T09:59:58Z",
-        ),
+    // redeem at 10:01:00Z with the SAME R1, now expired -> StatusStale, no consume.
+    let mut s_redeem = s_issue.clone();
+    s_redeem.set_clock("2026-10-15T10:01:00Z", 2);
+    let mut responder_stale = base_responder(&ak, &dk);
+    responder_stale.insert(gk.clone(), r1);
+    let o_stale = oracle(&responder_stale, &pins, &hwm);
+    let stale = session_service(&s_redeem, &o_stale, &store)
+        .redeem(&bundle, SESSION, Some(&proof))
+        .to_string();
+
+    // retry at 10:01:00Z with a newer, fresh R2 (epoch 2) -> accept and consume.
+    let r2 = resp(
+        &gk,
+        Active,
+        2,
+        "2026-10-15T10:00:00Z",
+        "2026-10-15T10:00:00Z",
+        EXP,
     );
-    let stale_hwm = HwmStore::new();
-    let o_stale = oracle(&stale_resp, &pins, &stale_hwm);
-    session_service(&s, &o_stale, &store)
-        .redeem(&bundle, SESSION, Some(&tester_proof(&c)))
-        .to_string()
+    let mut responder_fresh = base_responder(&ak, &dk);
+    responder_fresh.insert(gk.clone(), r2);
+    let o_fresh = oracle(&responder_fresh, &pins, &hwm);
+    let retry = session_service(&s_redeem, &o_fresh, &store)
+        .redeem(&bundle, SESSION, Some(&proof))
+        .to_string();
+
+    format!("{stale} ; {retry}")
 }
 
 // ---------------------------------------------------------------------------
