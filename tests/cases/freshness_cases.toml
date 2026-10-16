@@ -1,0 +1,106 @@
+# Proposed RQ7 status-freshness labels (docs/freshness.md DRAFT f1). DESIGN ONLY: no
+# RQ7 implementation exists and no runner loads this file yet; written before any code for
+# owner review. Separate from reviewed_cases/session_cases/enforcement_cases. Never edit a
+# label to match implementation output. All proposed.
+
+[[case]]
+id = "FR01"
+kind = "freshness"
+expected = "Accept"
+label_status = "proposed"
+
+[[case]]
+id = "FR02"
+kind = "freshness"
+expected = "Indeterminate / X / StatusStale"
+label_status = "proposed"
+
+[[case]]
+id = "FR03"
+kind = "freshness"
+expected = "Indeterminate / X / StatusStale"
+label_status = "proposed"
+
+[[case]]
+id = "FR04"
+kind = "freshness"
+expected = "Reject / X / Revoked{G}"
+label_status = "proposed"
+
+[[case]]
+id = "FR05"
+kind = "freshness"
+expected = "Reject / X / Revoked{G}"
+label_status = "proposed"
+
+[[case]]
+id = "FR06"
+kind = "freshness"
+expected = "Reject / X / Superseded{C_A}"
+label_status = "proposed"
+
+[[case]]
+id = "FR07"
+kind = "freshness"
+expected = "Indeterminate / X / StatusUnknown{G}"
+label_status = "proposed"
+
+[[case]]
+id = "FR08"
+kind = "freshness"
+expected = "Indeterminate / X / StatusUnavailable"
+label_status = "proposed"
+
+[[case]]
+id = "FR09"
+kind = "freshness"
+expected = "Indeterminate / X / StatusTimestampInFuture"
+label_status = "proposed"
+
+[[case]]
+id = "FR10"
+kind = "freshness"
+expected = "Indeterminate / X / StatusFreshnessUncertain"
+label_status = "proposed"
+
+[[case]]
+id = "FR11"
+kind = "freshness"
+expected = "Indeterminate / X / StatusRollback"
+label_status = "proposed"
+
+[[case]]
+id = "FR12"
+kind = "freshness"
+expected = "Indeterminate / X / StatusUnknown{G}"
+label_status = "proposed"
+
+[[case]]
+id = "FR13"
+kind = "freshness"
+expected = "Reject / X / Revoked{G}"
+label_status = "proposed"
+
+[[case]]
+id = "FR14"
+kind = "freshness"
+expected = "Indeterminate / X / StatusResponseInvalid"
+label_status = "proposed"
+
+[[case]]
+id = "FR15"
+kind = "freshness"
+expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)"
+label_status = "proposed"
+
+[[case]]
+id = "FR16"
+kind = "freshness"
+expected = "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) effects=0"
+label_status = "proposed"
+
+[[case]]
+id = "FR17"
+kind = "freshness"
+expected = "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0"
+label_status = "proposed"
