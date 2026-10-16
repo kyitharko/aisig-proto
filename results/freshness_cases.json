@@ -169,6 +169,27 @@
       "match": true
     },
     {
+      "actual": "Accept ; Accept",
+      "expected": "Accept ; Accept",
+      "id": "FB10",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Accept ; Indeterminate / X / StatusRollback",
+      "expected": "Accept ; Indeterminate / X / StatusRollback",
+      "id": "FB11",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
+      "actual": "Reject / X / Revoked{G} ; Reject / X / Revoked{G}",
+      "expected": "Reject / X / Revoked{G} ; Reject / X / Revoked{G}",
+      "id": "FB12",
+      "label_status": "proposed",
+      "match": true
+    },
+    {
       "actual": "Issued expires_at=2026-10-15T10:02:00Z",
       "expected": "Issued expires_at=2026-10-15T10:02:00Z",
       "id": "FS01",
@@ -197,8 +218,8 @@
       "match": true
     },
     {
-      "actual": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)",
-      "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)",
+      "actual": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) ; SessionAccept",
+      "expected": "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) ; SessionAccept",
       "id": "FR17",
       "label_status": "proposed",
       "match": true
@@ -218,6 +239,6 @@
       "match": true
     }
   ],
-  "matched": 31,
-  "total": 31
+  "matched": 34,
+  "total": 34
 }

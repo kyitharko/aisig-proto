@@ -36,7 +36,7 @@ assets are in this repository.
 - RQ4 (grant scope semantics, non-amplification): **this prototype**.
 - RQ5 (tester/session binding): **slice s1, reviewed** (34 labels) — session proof of possession, separate decision; channel binding and relay resistance not addressed.
 - RQ6 (tool effect enforcement): **slice e2, implemented (synthetic)** — a provider-side mediator for synthetic tool operations ([docs/enforcement.md](docs/enforcement.md)); 28 reviewed labels; only modeled in-memory effects, no live tool enforcement.
-- RQ7 (revocation freshness): **slice f2 implemented** — whole-interval status-freshness policy over a signed, timestamped responder statement ([docs/freshness.md](docs/freshness.md)); 31 labels, all **proposed** (the implementation matches them; awaiting owner review). Runs behind a separate freshness-slice runner; the chain/session/enforcement outcomes are unchanged.
+- RQ7 (revocation freshness): **slice f2 implemented** — whole-interval status-freshness policy over a signed, timestamped responder statement ([docs/freshness.md](docs/freshness.md)); 34 labels, all **proposed** (the implementation matches them; awaiting owner review). Runs behind a separate freshness-slice runner; the chain/session/enforcement outcomes are unchanged.
 
 ## Layout
 
