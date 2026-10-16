@@ -110,9 +110,9 @@ Out of scope for e1, stated so none is read as defended:
 
 ## 3c. RQ7 status-freshness threats (f2; see [freshness.md](freshness.md))
 
-Implemented behind the freshness-slice runner; the 34 labels remain `proposed` pending owner
-review. The status stage is shared by all three decision paths (chain, session redemption,
-mediation), so these apply everywhere status is checked.
+Implemented behind the freshness-slice runner; the 34 labels are owner-`reviewed`. The status
+stage is shared by all three decision paths (chain, session redemption, mediation), so these
+apply everywhere status is checked.
 
 | ID | Threat | Expected defence (status stage) | Cases |
 | --- | --- | --- | --- |

@@ -108,7 +108,7 @@ fn main() {
     }
     println!("wrote results/enforcement_cases.md and results/enforcement_cases.json");
 
-    // RQ7 freshness slice: separate labels (all proposed; the oracle for the RQ7 code).
+    // RQ7 freshness slice: separate labels (all reviewed; owner-approved).
     let fresh_labels =
         cases::load(freshness_cases::FRESHNESS_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
     let fresh_rows = freshness_cases::run_all(&fresh_labels);
@@ -125,7 +125,7 @@ fn main() {
         .filter(|r| r.actual == r.label.expected)
         .count();
     println!(
-        "freshness slice: {ok}/{} match (all proposed)",
+        "freshness slice: {ok}/{} match (all reviewed)",
         fresh_rows.len()
     );
     let fresh_mismatches = fresh_rows

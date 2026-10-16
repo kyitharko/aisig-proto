@@ -1,11 +1,11 @@
 # RQ7 slice — status freshness and bounded revocation delay (DRAFT f2)
 
 **Status:** DRAFT f2, revised 2026-10-17. **Implemented behind a separate runner; the 34
-proposed labels in `tests/cases/freshness_cases.toml` are the oracle and remain `proposed`
-pending owner review.** The design here was written first; the implementation
-(`src/freshness.rs`, the status stage in `src/verifier.rs`) matches all 34 labels
-(`results/freshness_cases.md`), gated in `cargo test` and by a nonzero `eval` exit on any
-mismatch, and **no label was adjusted to match output**. The freshness
+labels in `tests/cases/freshness_cases.toml` are the oracle and are now `reviewed`
+(owner-approved; expected outcomes unchanged).** The design here was written first; the
+implementation (`src/freshness.rs`, the status stage in `src/verifier.rs`) matches all 34
+labels (`results/freshness_cases.md`), gated in `cargo test` and by a nonzero `eval` exit on
+any mismatch, and **no label was adjusted to match output**. The freshness
 policy runs only where an oracle backed by the synthetic responder is wired in; the existing
 chain / session / enforcement outcomes (94 / 15 / 34 / 28) are unchanged.
 Builds on spec r3.1 ([spec.md](spec.md)), in particular the status stage (spec §6, stage X)
@@ -249,7 +249,7 @@ The status stage is shared, so RQ7 slots in once and the rest inherit it:
 
 RQ1/RQ2 stay assumed; the responder-key pinning is an RQ1-style assumed step. Synthetic only.
 
-## 8. Fixture for the proposed cases
+## 8. Fixture for the case labels
 
 Base chain fixture (experiment.md §2) plus a modeled responder:
 
@@ -263,11 +263,11 @@ Base chain fixture (experiment.md §2) plus a modeled responder:
 - **Multi-step cases** (FB10–FB12, FR17) use one provider high-water-mark shared across the
   steps; their expected value joins the per-step outcomes with ` ; `.
 
-## 9. Proposed case labels (all **proposed**; the implementation's oracle)
+## 9. Case labels (all **reviewed**; the implementation's oracle)
 
 In `tests/cases/freshness_cases.toml`, written before the code and now matched by it
-(`results/freshness_cases.md`). Labels stay `proposed` until owner review. Expected outcomes
-are at the chain status stage (X) unless noted.
+(`results/freshness_cases.md`). The owner has reviewed all 34 expected outcomes. Expected
+outcomes are at the chain status stage (X) unless noted.
 
 ### Policy cases
 
@@ -323,7 +323,7 @@ are at the chain status stage (X) unless noted.
 | FR18 | RQ6 mediation with a stale-Active G | `Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) effects=0` |
 | FR19 | RQ6 mediation with a `Revoked` G | `Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0` |
 
-**Count:** 34 proposed RQ7 labels (15 policy, 12 boundary, 4 session-issuance, 3
+**Count:** 34 reviewed RQ7 labels (15 policy, 12 boundary, 4 session-issuance, 3
 inheritance). None change the existing 94 / 15 / 34 / 28 reviewed outcomes.
 
 **FS04 note (open).** Whether an unavailable responder at issuance is reported as

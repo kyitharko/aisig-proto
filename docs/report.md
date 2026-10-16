@@ -15,7 +15,7 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ4 grant scope semantics | **Implemented and tested** against owner-reviewed labels (spec r3). |
 | RQ5 tester/session binding | **First slice (s1), reviewed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
 | RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 28/28 reviewed cases match. One clock snapshot per mediation; the effect-sink append is private. Only modeled synthetic effects; no live tool enforcement. |
-| RQ7 revocation freshness | **Slice f2 implemented (synthetic).** Whole-interval freshness over a signed responder statement (docs/freshness.md; `src/freshness.rs`): 34/34 cases match. Labels all `proposed`, pending owner review. The chain/session/enforcement runs keep the instant, always-current fixture. |
+| RQ7 revocation freshness | **Slice f2 implemented (synthetic).** Whole-interval freshness over a signed responder statement (docs/freshness.md; `src/freshness.rs`): 34/34 cases match. Labels all owner-`reviewed`. The chain/session/enforcement runs keep the instant, always-current fixture. |
 | RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
 
 ## RQ5 session slice s1 (reviewed; separate from the chain results)
@@ -335,9 +335,10 @@ runs are marked historical in results/README.md.
   enforcement is not claimed.
 - RQ7 (status-source freshness / bounded revocation delay): slice f2 is implemented behind a
   separate freshness-slice runner ([freshness.md](freshness.md); `src/freshness.rs`). All 34
-  labels are `proposed` and matched by the implementation (`results/freshness_cases.md`), with
-  a `cargo test` gate and a nonzero `eval` exit on any mismatch; awaiting owner review. The
-  bounded-revocation-delay figure stays a conjecture (§6, withdrawn as a claim).
+  labels are owner-`reviewed` and matched by the implementation (`results/freshness_cases.md`),
+  with a `cargo test` gate and a nonzero `eval` exit on any mismatch. The HWM seeding seams are
+  crate-internal (`pub(crate)`), so an external holder of a `&HwmStore` cannot clear a sticky
+  revocation. The bounded-revocation-delay figure stays a conjecture (§6, withdrawn as a claim).
 - RQ5 issuance now rejects inconsistent clock readings (SI05 reviewed; SI06/SI07 proposed).
 - Round 3: all time paths reject a negative ε (never clamp). New proposed labels T12,
   SS25, SI08, EE28 await owner review.
