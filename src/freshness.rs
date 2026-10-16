@@ -161,17 +161,35 @@ enum Sticky {
     Superseded,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 struct HwmEntry {
-    epoch: u64,
-    digest: [u8; 32],
+    /// `None` until the first Active is accepted; then `(epoch, response-digest)`. Using an
+    /// `Option` (rather than a sentinel epoch 0) keeps `status_epoch = 0` a real, valid epoch
+    /// so an identical epoch-0 response replays idempotently (review finding 1; FB10).
+    recorded: Option<(u64, [u8; 32])>,
     sticky: Option<Sticky>,
 }
 
+/// Read-only epoch verdict, used for the early rollback/conflict *reason* (and its precedence
+/// over expiry). The authoritative commit is [`HwmStore::accept`], which re-checks atomically.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum EpochCmp {
     Ok,
     Rollback,
+    Conflict,
+}
+
+/// Outcome of the atomic Active commit ([`HwmStore::accept`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ActiveCommit {
+    /// Accepted; the high-water-mark now reflects this response.
+    Committed,
+    /// A `Revoked`/`Superseded` was recorded before this commit acquired the lock.
+    StickyRevoked,
+    StickySuperseded,
+    /// A newer epoch was committed before this one acquired the lock.
+    Rollback,
+    /// A different signed response holds this epoch.
     Conflict,
 }
 
@@ -196,34 +214,54 @@ impl HwmStore {
 
     fn set_sticky(&self, key: &StatusKey, kind: Sticky) {
         let mut m = self.0.lock().expect("hwm lock");
-        m.entry(key.clone())
-            .or_insert(HwmEntry {
-                epoch: 0,
-                digest: [0u8; 32],
-                sticky: None,
-            })
-            .sticky = Some(kind);
+        m.entry(key.clone()).or_default().sticky = Some(kind);
     }
 
     fn epoch_cmp(&self, key: &StatusKey, epoch: u64, digest: [u8; 32]) -> EpochCmp {
-        match self.0.lock().expect("hwm lock").get(key) {
+        match self
+            .0
+            .lock()
+            .expect("hwm lock")
+            .get(key)
+            .and_then(|e| e.recorded)
+        {
             None => EpochCmp::Ok,
-            Some(e) if epoch < e.epoch => EpochCmp::Rollback,
-            Some(e) if epoch == e.epoch && e.digest != digest => EpochCmp::Conflict,
+            Some((hep, _)) if epoch < hep => EpochCmp::Rollback,
+            Some((hep, hdg)) if epoch == hep && hdg != digest => EpochCmp::Conflict,
             Some(_) => EpochCmp::Ok,
         }
     }
 
-    fn accept(&self, key: &StatusKey, epoch: u64, digest: [u8; 32]) {
+    /// Atomically decide and commit an Active response: under **one** lock acquisition (the
+    /// decision's linearization point), re-check the sticky flag and the recorded epoch, then
+    /// advance the high-water-mark only if the response is still acceptable (docs/freshness.md
+    /// §4). This closes the window between the earlier read-only checks and the commit.
+    fn accept(&self, key: &StatusKey, epoch: u64, digest: [u8; 32]) -> ActiveCommit {
         let mut m = self.0.lock().expect("hwm lock");
-        let e = m.entry(key.clone()).or_insert(HwmEntry {
-            epoch: 0,
-            digest: [0u8; 32],
-            sticky: None,
-        });
-        if epoch > e.epoch {
-            e.epoch = epoch;
-            e.digest = digest;
+        let e = m.entry(key.clone()).or_default();
+        if let Some(s) = e.sticky {
+            return match s {
+                Sticky::Revoked => ActiveCommit::StickyRevoked,
+                Sticky::Superseded => ActiveCommit::StickySuperseded,
+            };
+        }
+        match e.recorded {
+            None => {
+                e.recorded = Some((epoch, digest));
+                ActiveCommit::Committed
+            }
+            Some((hep, _)) if epoch < hep => ActiveCommit::Rollback,
+            Some((hep, hdg)) if epoch == hep => {
+                if hdg == digest {
+                    ActiveCommit::Committed
+                } else {
+                    ActiveCommit::Conflict
+                }
+            }
+            Some(_) => {
+                e.recorded = Some((epoch, digest));
+                ActiveCommit::Committed
+            }
         }
     }
 
@@ -234,8 +272,7 @@ impl HwmStore {
         m.insert(
             key.clone(),
             HwmEntry {
-                epoch,
-                digest,
+                recorded: Some((epoch, digest)),
                 sticky: None,
             },
         );
@@ -252,7 +289,7 @@ impl HwmStore {
     fn snapshot(&self, key: &StatusKey) -> (Option<u64>, Option<Sticky>) {
         match self.0.lock().expect("hwm lock").get(key) {
             None => (None, None),
-            Some(e) => (Some(e.epoch), e.sticky),
+            Some(e) => (e.recorded.map(|(ep, _)| ep), e.sticky),
         }
     }
 }
@@ -346,7 +383,8 @@ impl StatusOracle for FreshnessOracle<'_> {
             return O::Indeterminate(Reason::StatusTimestampInFuture);
         }
 
-        // Precedence 4: epoch rollback / same-epoch conflict.
+        // Precedence 4: epoch rollback / same-epoch conflict (read-only reason; precedence
+        // over expiry). The atomic commit below is authoritative for the accept path.
         let resp_digest = resp.digest();
         match self.hwm.epoch_cmp(key, wire.status_epoch, resp_digest) {
             EpochCmp::Rollback => return O::Indeterminate(Reason::StatusRollback),
@@ -372,9 +410,16 @@ impl StatusOracle for FreshnessOracle<'_> {
             return O::Indeterminate(Reason::StatusFreshnessUncertain);
         }
 
-        // Live: advance the high-water-mark and accept.
-        self.hwm.accept(key, wire.status_epoch, resp_digest);
-        O::Ok
+        // Precedence 7: atomic commit (docs/freshness.md §4). Re-check sticky + epoch and
+        // advance the high-water-mark under one lock — the decision's linearization point —
+        // so an Active cannot commit after a concurrent revocation or over a newer epoch.
+        match self.hwm.accept(key, wire.status_epoch, resp_digest) {
+            ActiveCommit::Committed => O::Ok,
+            ActiveCommit::StickyRevoked => O::Reject(Reason::Revoked(obj)),
+            ActiveCommit::StickySuperseded => O::Reject(Reason::Superseded(obj)),
+            ActiveCommit::Rollback => O::Indeterminate(Reason::StatusRollback),
+            ActiveCommit::Conflict => O::Indeterminate(Reason::StatusEpochConflict),
+        }
     }
 }
 
@@ -524,13 +569,29 @@ mod tests {
         assert_eq!(hwm.epoch_cmp(&k, 1, dg), EpochCmp::Ok);
         // A validated Revoked commits in the window:
         hwm.set_sticky(&k, Sticky::Revoked);
-        // The Active's final commit must be atomic and must not record its epoch:
-        let _ = hwm.accept(&k, 1, dg);
+        // The Active's final commit must be atomic: it observes the revocation and refuses.
+        assert_eq!(hwm.accept(&k, 1, dg), ActiveCommit::StickyRevoked);
         let (recorded, sticky) = hwm.snapshot(&k);
         assert_eq!(sticky, Some(Sticky::Revoked));
         assert!(
             recorded.is_none(),
             "an Active must not commit its epoch after a recorded revocation (got {recorded:?})"
         );
+    }
+
+    // Regression (finding 2): competing Active epochs. Once a newer epoch has committed, an
+    // older epoch's commit must roll back rather than report success — the atomic commit takes
+    // the epoch decision at the lock, not from an earlier read.
+    #[test]
+    fn competing_epochs_older_does_not_commit_after_newer() {
+        let hwm = HwmStore::new();
+        let k = key();
+        // The older request reads an empty store (would-be Ok)...
+        assert_eq!(hwm.epoch_cmp(&k, 1, [1u8; 32]), EpochCmp::Ok);
+        // ...but a newer epoch commits first...
+        assert_eq!(hwm.accept(&k, 2, [2u8; 32]), ActiveCommit::Committed);
+        // ...so the older commit must roll back, not succeed.
+        assert_eq!(hwm.accept(&k, 1, [1u8; 32]), ActiveCommit::Rollback);
+        assert_eq!(hwm.snapshot(&k).0, Some(2));
     }
 }

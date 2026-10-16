@@ -14,7 +14,11 @@ fn freshness_labels_map_one_to_one_to_runners() {
     // No duplicate label ids.
     let mut seen = HashSet::new();
     for l in &labels {
-        assert!(seen.insert(l.id.as_str()), "duplicate freshness label {}", l.id);
+        assert!(
+            seen.insert(l.id.as_str()),
+            "duplicate freshness label {}",
+            l.id
+        );
     }
 
     // The label set and the runner-id set are exactly equal (one-to-one).
@@ -38,7 +42,8 @@ fn every_freshness_label_matches_its_runner_exactly() {
     let labels = cases::load(FRESHNESS_CASES_PATH).expect("load freshness labels");
     let mut mismatches = Vec::new();
     for l in &labels {
-        let actual = freshness_cases::run(&l.id).unwrap_or_else(|| format!("no runner for {}", l.id));
+        let actual =
+            freshness_cases::run(&l.id).unwrap_or_else(|| format!("no runner for {}", l.id));
         if actual != l.expected {
             mismatches.push(format!(
                 "{}: expected `{}`, got `{}`",
