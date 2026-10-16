@@ -1,0 +1,113 @@
+# RQ8 Q1 (privacy) proposed observations — docs/rq8.md "Q1 measurement slice 1".
+# Written BEFORE the runner; the runner extracts the ACTUAL field sets / comparisons and must
+# match these. Never edit a label to match implementation output. All `proposed` (owner review
+# pending). Synthetic only; no network, no real data. `expected` holds the full observation
+# string the runner emits.
+#
+# FD* = field-disclosure inventory per artifact (sorted canonical field names, comma-joined).
+# PO* = which artifacts each observer actually receives (sorted, comma-joined).
+# PL* = linkability comparison (signed bytes / key ids / exact StatusKey reported separately).
+
+# --- field disclosure per artifact ---
+
+[[case]]
+id = "FD01"
+kind = "rq8_privacy"
+expected = "audience,bounds,format,id,issuer_key_id,org_id,rights,subject_key,validity,version"
+label_status = "proposed"
+note = "C_A (AdminDelegation) canonical signed payload fields"
+
+[[case]]
+id = "FD02"
+kind = "rq8_privacy"
+expected = "audience,envelope,format,id,issuer_key_id,org_id,parent,right,subject_key,validity,version"
+label_status = "proposed"
+note = "D_U (IssuerDelegation) canonical signed payload fields"
+
+[[case]]
+id = "FD03"
+kind = "rq8_privacy"
+expected = "audience,engagement_id,exclusions,format,id,issuer_key_id,org_id,parent,targets,test_scope,tester_key,version,window"
+label_status = "proposed"
+note = "G (EngagementGrant) canonical signed payload fields"
+
+[[case]]
+id = "FD04"
+kind = "rq8_privacy"
+expected = "published_at,response_expires_at,status,status_epoch,status_key,status_known_at"
+label_status = "proposed"
+note = "status response (R-signed) canonical fields"
+
+[[case]]
+id = "FD05"
+kind = "rq8_privacy"
+expected = "digest,id,object_type,org_id,version"
+label_status = "proposed"
+note = "status_key — exactly what O3 (responder R) receives as a query"
+
+[[case]]
+id = "FD06"
+kind = "rq8_privacy"
+expected = "audience,challenge_id,expires_at,format,grant,issued_at,nonce,session_id"
+label_status = "proposed"
+note = "session challenge (P-issued) canonical fields"
+
+[[case]]
+id = "FD07"
+kind = "rq8_privacy"
+expected = "challenge_id,format,sig"
+label_status = "proposed"
+note = "session proof (tester response) canonical fields"
+
+[[case]]
+id = "FD08"
+kind = "rq8_privacy"
+expected = "effects,operation,performed_at,session_ref,target,test_class"
+label_status = "proposed"
+note = "effect receipt (in-memory log record) fields; not a wire object"
+
+# --- observer -> artifacts actually received ---
+
+[[case]]
+id = "PO1"
+kind = "rq8_privacy"
+expected = "admin,grant,issuer"
+label_status = "proposed"
+note = "O1 bundle holder (e.g. tester / anyone shown a grant): the three chain objects"
+
+[[case]]
+id = "PO2"
+kind = "rq8_privacy"
+expected = "admin,challenge,grant,issuer,proof,status_response"
+label_status = "proposed"
+note = "O2 provider P: the bundle, the status response from R, and the session exchange"
+
+[[case]]
+id = "PO3"
+kind = "rq8_privacy"
+expected = "status_key"
+label_status = "proposed"
+note = "O3 responder R: only the StatusKey query; the model assumes R never gets P's now/ε"
+
+[[case]]
+id = "PO5"
+kind = "rq8_privacy"
+expected = "effect_receipt"
+label_status = "proposed"
+note = "O5 log/effect-sink reader: the effect receipts"
+
+# --- linkability: identical vs legitimately reissued grant ---
+
+[[case]]
+id = "PL01"
+kind = "rq8_privacy"
+expected = "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key=equal"
+label_status = "proposed"
+note = "the identical signed grant presented twice -> fully linkable"
+
+[[case]]
+id = "PL02"
+kind = "rq8_privacy"
+expected = "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key=differ"
+label_status = "proposed"
+note = "a reissued grant (new engagement_id, same parties): key ids still correlate, signed bytes and StatusKey do not"

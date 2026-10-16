@@ -174,6 +174,44 @@ and what does that cost? This is a process/cost question, not a latency question
 
 ---
 
+## Q1 measurement slice 1 — field disclosure and linkability (method)
+
+First implemented RQ8 slice (Q1 only; Q2 and Q3 stay design-only). Method and expected
+observations are fixed in `tests/cases/rq8_privacy_cases.toml` **before** the runner; the runner
+(`src/experiment/rq8_privacy.rs`, reported in `results/rq8_privacy.md`) extracts the *actual*
+field sets and comparisons and must match. All observations are `proposed` for owner review. No
+real-world privacy guarantee is inferred; synthetic only, no network, no real data.
+
+**Fixture.** The base synthetic fixture (experiment.md §2): org `org-acme-synthetic`, test-only
+keys, `.test` hosts. Artifacts inspected, each from its actual canonical signed bytes / wire
+form (the effect receipt from its struct fields, as it is an in-memory record, not a wire
+object): `C_A`, `D_U`, `G`; the R-signed status response and the `StatusKey` query; the session
+challenge and proof; one effect receipt from a real mediation Allow.
+
+**Field-disclosure inventory (FD01–FD08, PO1/PO2/PO3/PO5).** For each artifact, report the
+sorted canonical field names (what any receiver of that artifact learns). For each observer,
+report which artifacts it *actually receives*:
+- **O1** (bundle holder): `admin`, `issuer`, `grant`.
+- **O2** (provider P): the bundle plus the status response and the session exchange.
+- **O3** (responder R): only the `StatusKey` query (`org_id`, `object_type`, `id`, `version`,
+  `digest`); the model **assumes** R never receives P's `now`/`ε` (freshness.md §2) — an
+  assumption, not a measurement.
+- **O5** (log / effect-sink reader): the effect receipts.
+- **O4** (network/traffic metadata) remains **unmeasured** (no network here).
+
+**Linkability comparison (PL01, PL02).** Deterministic, no population sampling:
+- *PL01 — identical grant presented twice:* the same signed `G`. Report `signed_bytes`,
+  `issuer_key_id`, `tester_key_id` and exact `StatusKey` equality **separately**.
+- *PL02 — legitimately reissued grant:* the same parties re-issue `G` with a new `engagement_id`
+  (same issuer/tester keys), re-signed. Report the same four equalities separately.
+
+This distinguishes which fields correlate a tester/engagement across showings (key ids) from
+those that do not survive a reissue (signed bytes, `StatusKey`). It is an observation about this
+synthetic encoding, not a privacy guarantee.
+
+**Gate.** Exact matches are gated in `cargo test` (an integration test one-to-one with the
+runner) and `eval` exits nonzero on any mismatch. Labels stay `proposed`.
+
 ## Measurement-support summary
 
 Three support levels: **measured** = already produced by existing code; **extension** = feasible
@@ -193,12 +231,15 @@ real deployment and is out of scope here.
 | Q3 canonical artifact sizes | extension | byte sizes of the canonical artifacts, not implemented |
 | Q3 person-time / monetary / operating cost | deployment | human/operating cost under real conditions |
 
-## Non-goals and no-claim statement (this phase)
+## Non-goals and no-claim statement
 
-- No RQ8 implementation, benchmark run, or expected-case labels are produced here.
-- No privacy, latency, throughput, or cost **number** is asserted; the tables above are methods
-  and support statements, not results.
+- Only Q1 slice 1 (field disclosure + linkability) is implemented; Q2 (latency) and Q3
+  (onboarding/cost) remain design-only. No benchmark run or latency/cost number is produced.
+- The Q1 observations are structural facts about this synthetic encoding (field names present,
+  and which fields are byte-equal across showings). They are **not** a real-world privacy
+  guarantee, and no privacy *number* over a real population is asserted. O4 network metadata is
+  unmeasured.
 - Each of Q1/Q2/Q3 is reported on its own axis; they are not reduced to a single score.
-- When RQ8 is implemented, every reported number must cite the method fixed here, the exact
+- When Q2/Q3 are implemented, every reported number must cite the method fixed here, the exact
   commit, and the recorded environment (for CPU), and must distinguish synthetic from
   real-deployment measurement.
