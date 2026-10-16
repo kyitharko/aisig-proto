@@ -28,6 +28,7 @@ assets are in this repository.
 - [docs/session.md](docs/session.md) — RQ5 slice s1: challenge/response proof of possession bound to a provider session
 - [docs/enforcement.md](docs/enforcement.md) — RQ6 slice e2 (implemented, synthetic): provider-mediated synthetic tool adapter
 - [docs/freshness.md](docs/freshness.md) — RQ7 slice f2 (implemented; labels reviewed): status freshness and bounded revocation delay
+- [docs/rq8.md](docs/rq8.md) — RQ8 (design only): privacy leakage, CPU vs end-to-end latency, onboarding/operational cost — questions and methods, no claims
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
 ## Research questions

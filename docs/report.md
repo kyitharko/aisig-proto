@@ -16,7 +16,7 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ5 tester/session binding | **First slice (s1), reviewed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
 | RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 28/28 reviewed cases match. One clock snapshot per mediation; the effect-sink append is private. Only modeled synthetic effects; no live tool enforcement. |
 | RQ7 revocation freshness | **Slice f2 implemented (synthetic).** Whole-interval freshness over a signed responder statement (docs/freshness.md; `src/freshness.rs`): 34/34 cases match. Labels all owner-`reviewed`. The chain/session/enforcement runs keep the instant, always-current fixture. |
-| RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
+| RQ8 privacy / latency / onboarding | **Design only** — question set and measurement methods on three separate axes (privacy leakage, CPU vs end-to-end latency, onboarding/operational cost) in [rq8.md](rq8.md). Only single-machine CPU microbenchmarks exist so far (`bench.rs`); no RQ8 privacy/latency/cost result is claimed. |
 
 ## RQ5 session slice s1 (reviewed; separate from the chain results)
 
