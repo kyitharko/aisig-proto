@@ -198,15 +198,22 @@ report which artifacts it *actually receives*:
 - **O5** (log / effect-sink reader): the effect receipts.
 - **O4** (network/traffic metadata) remains **unmeasured** (no network here).
 
-**Linkability comparison (PL01, PL02).** Deterministic, no population sampling:
-- *PL01 — identical grant presented twice:* the same signed `G`. Report `signed_bytes`,
-  `issuer_key_id`, `tester_key_id` and exact `StatusKey` equality **separately**.
-- *PL02 — legitimately reissued grant:* the same parties re-issue `G` with a new `engagement_id`
-  (same issuer/tester keys), re-signed. Report the same four equalities separately.
+**Linkability comparison (PL01, PL02).** Deterministic, no population sampling. Each grant is
+**built and verified** (chain `Accept`); the comparison uses the exact payload bytes covered by
+the signature. `issuer_key_id` is the signed key id; `tester_key_id` is derived as
+`keyid(tester_key)` (SHA-256 of the raw public key, not the raw key value). The `StatusKey` is
+compared **component-by-component** (`org_id`, `object_type`, `id`, `version`, `digest`), so a
+`digest` difference is never mistaken for an absence of correlation.
+- *PL01 — identical grant presented twice:* the same signed `G`; everything equal.
+- *PL02 — legitimately reissued grant (spec §6 issuance rule):* the same parties re-issue `G`
+  under a **new `version`** (a new `version` or `id` is required; re-signing different content
+  under the same `(org, type, id, version)` is unsupported — spec §6). Report `signed_bytes`,
+  `issuer_key_id`, `tester_key_id` and each `StatusKey` component separately.
 
-This distinguishes which fields correlate a tester/engagement across showings (key ids) from
-those that do not survive a reissue (signed bytes, `StatusKey`). It is an observation about this
-synthetic encoding, not a privacy guarantee.
+This shows that across a legitimate reissue the signed bytes, the grant `version` and the
+`StatusKey` `digest` differ, while the stable correlators — `issuer_key_id`, `tester_key_id`,
+and the `StatusKey` `org_id`, `object_type` and `id` — remain equal. It is an observation about
+this synthetic encoding, not a privacy guarantee.
 
 **Gate.** Exact matches are gated in `cargo test` (an integration test one-to-one with the
 runner) and `eval` exits nonzero on any mismatch. Labels stay `proposed`.
