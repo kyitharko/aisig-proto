@@ -1,9 +1,9 @@
-# RQ6 slice — provider-mediated synthetic tool adapter (DRAFT e2, design only)
+# RQ6 slice — provider-mediated synthetic tool adapter (DRAFT e2, implemented synthetically)
 
-**Status:** DRAFT e2, 2026-10-16. **Design only — not implemented.** This document and the
-proposed labels in `tests/cases/enforcement_cases.toml` are committed for owner review of
-the action-to-TestClass mapping (§3) *before* any RQ6 code is written. The labels stay
-**proposed**. Builds on the chain decision (spec r3.1, [spec.md](spec.md)) and the RQ5
+**Status:** DRAFT e2, 2026-10-16. **Implemented synthetically** in `src/enforcement.rs`;
+the `aisig-tooltable/v0` mapping (§3) is owner-approved and all 28 enforcement labels are
+reviewed. Only modeled in-memory effects; no live tool enforcement (§1, §6). Builds on the
+chain decision (spec r3.1, [spec.md](spec.md)) and the RQ5
 session slice ([session.md](session.md)).
 
 ## 1. Question and scope

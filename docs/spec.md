@@ -521,11 +521,19 @@ obtained by strictly decoding the very payload bytes it then verifies and hashes
 - Secret keys are not compromised, except where a case says otherwise.
 - All organizations, hosts (`.test`, RFC 6761), databases and keys are synthetic.
 
-## 9. Unresolved (not implemented in v0)
+## 9. Beyond the chain v0 (this file)
 
-- **RQ5:** binding G to a presenting tester/session (proof of possession of K_T). `tester_key` is signed but not challenged.
-- **RQ6:** enforcing actual agent/tool effects, including how a TestClass maps to actions. `exact_node_lookup` and `subtree_lookup` are lookups, not mediation.
-- **RQ7:** status freshness and bounded revocation delay. Status is an in-memory fixture.
+This file specifies the chain decision (`ValidChain_P`) only. The later slices are
+specified and implemented separately and do not change the chain decision:
+
+- **RQ5:** binding G to a presenting tester/session (proof of possession of K_T) — a
+  separate `SessionAuth` decision (docs/session.md), implemented synthetically. The chain
+  verifier itself does not challenge `tester_key`.
+- **RQ6:** mediating actual agent/tool effects, including how a TestClass maps to actions —
+  a separate provider-side mediator (docs/enforcement.md), implemented synthetically.
+  `exact_node_lookup`/`subtree_lookup` here remain lookups, not mediation.
+- **RQ7:** status freshness and bounded revocation delay remain **unresolved**. Status is an
+  in-memory fixture.
 - RQ3 is partially exercised (fixed depth-3 chain, non-amplification); arbitrary depth and multi-admin policy are not.
 - RQ8 (privacy, onboarding cost) is out of scope; CPU latency is measured only for this prototype.
 - ProviderExec (P's own service policy) is separate from ValidChain and not modelled.

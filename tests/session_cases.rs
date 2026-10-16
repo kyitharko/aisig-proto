@@ -1,5 +1,5 @@
 //! RQ5 session-slice cases must match tests/cases/session_cases.toml exactly.
-//! Labels are literal data written before the implementation; all owner-reviewed.
+//! Labels are literal data; SS01-SS25 and SI01-SI08 owner-reviewed, SS26 proposed.
 
 use std::collections::BTreeSet;
 
@@ -13,20 +13,20 @@ fn every_session_label_has_a_runner_and_vice_versa() {
     let runnable: BTreeSet<String> = SESSION_CASE_IDS.iter().map(|s| s.to_string()).collect();
     assert_eq!(labelled, runnable);
     assert_eq!(labels.len(), 33);
-    // SS01-SS24 and SI01-SI05 reviewed (29); SI06, SI07, SI08, SS25 proposed (4).
+    // SS01-SS25 and SI01-SI08 reviewed (33); SS26 added later (D2).
     assert_eq!(
         labels
             .iter()
             .filter(|l| l.label_status == "reviewed")
             .count(),
-        29
+        33
     );
     assert_eq!(
         labels
             .iter()
             .filter(|l| l.label_status == "proposed")
             .count(),
-        4
+        0
     );
 }
 

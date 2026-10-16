@@ -542,7 +542,7 @@ kind = "chain"
 expected = "Indeterminate"
 stage = "T"
 reason = "InvalidClockReading"
-label_status = "proposed"
+label_status = "reviewed"
 note = "round 3: negative clock uncertainty must not Accept"
 
 [[case]]

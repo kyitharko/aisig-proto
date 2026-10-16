@@ -43,7 +43,7 @@ fn label_counts_match_experiment_doc() {
             .iter()
             .filter(|l| l.label_status == "proposed")
             .count(),
-        1
+        0
     );
     let kind = |k: &str| ls.iter().filter(|l| l.kind == k).count();
     assert_eq!(kind("exact_node_query"), 11);

@@ -14,7 +14,7 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ3 delegation non-amplification | **Partly exercised.** Fixed depth-3 chain only. |
 | RQ4 grant scope semantics | **Implemented and tested** against owner-reviewed labels (spec r3). |
 | RQ5 tester/session binding | **First slice (s1), reviewed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
-| RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 27/27 reviewed cases match. One clock snapshot per mediation; the effect-sink append is private. Only modeled synthetic effects; no live tool enforcement. |
+| RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 28/28 reviewed cases match. One clock snapshot per mediation; the effect-sink append is private. Only modeled synthetic effects; no live tool enforcement. |
 | RQ7 revocation freshness | **Unresolved.** Status is an instant, always-current in-memory fixture, now keyed by exact object (r3). |
 | RQ8 privacy / latency / onboarding | Only single-machine CPU latency measured. |
 
@@ -308,10 +308,11 @@ single snapshot and private sink are unchanged. New proposed labels T12, SS25, S
 (and SI06/SI07 from round 2). No previously-reviewed expected value changed (verified by
 diffing the label files against `b40ef85`).
 
-**Post-fix counts (reported separately):** chain 94/94 (93 reviewed + T12 proposed), lookup
-15/15, session 33/33 (29 reviewed + SS25/SI06/SI07/SI08 proposed), enforcement 28/28 (27
-reviewed + EE28 proposed). fmt/clippy clean; all tests incl. 6 doctests pass; both extra
-proptest seeds pass.
+**Post-fix counts (reported separately):** chain 94/94 (all reviewed), lookup 15/15,
+session 33/33 (all reviewed), enforcement 28/28 (all reviewed). T12, SI06, SI07, SI08, SS25
+and EE28 were owner-reviewed in the follow-up cleanup; SS26 (redemption-time guard,
+distinct from SS25) was added there and remains proposed. fmt/clippy clean; all tests incl.
+doctests pass; both extra proptest seeds pass.
 
 **Benchmark rerun** (`results/bench_20261015T201455Z.md`, git `21487fc`, same machine,
 `powersave` governor): medians p50 — full chain verify ≈243 µs, signature ×3 ≈132 µs, typed

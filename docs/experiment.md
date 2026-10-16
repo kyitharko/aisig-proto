@@ -186,7 +186,7 @@ mutation was approved in the owner's Stage 0–4 review. M20 covers the admissib
 | T09 | D_U.validity end = 2026-10-15T10:30:00Z (re-signed); G unchanged | R | P / WindowExceedsParent | Rv |
 | T10 | Clock unavailable | I | T / ClockUnavailable | Rv |
 | T11 | G.window.start = `2026-10-15T09:00:00.000Z` | R | F / NonCanonicalTime | Rv |
-| T12 | clock ε = −5 (negative uncertainty; spec §6 requires ε ≥ 0) | I | T / InvalidClockReading | Pr |
+| T12 | clock ε = −5 (negative uncertainty; spec §6 requires ε ≥ 0) | I | T / InvalidClockReading | Rv |
 
 ### X — status
 
@@ -256,7 +256,7 @@ Stage 0–4 review.
 Labels: 11 Accept (V01–V10, T03), 71 Reject, 12 Indeterminate (R04, T04, T05, T10, T12,
 X04, X05, X07, X08, X09, B01, B03). The 93 reviewed cases are unchanged; T12 (negative
 clock uncertainty) is **proposed** and added in this round.
-Review status: 93 Rv/Rv\* (88 Rv, 5 Rv\*), 1 Pr (T12); every label carries its status.
+Review status: 94 Rv/Rv\* (89 Rv, 5 Rv\*), 0 Pr; every label carries its status.
 
 ### Documented non-case
 
@@ -378,7 +378,7 @@ After the fix:
 - the same alteration made in a raw bundle's grant payload, keeping the original
   signature, is `Reject / S / InvalidSignature{G}`.
 
-## 11. RQ5 session cases (slice s1; SS01–SS24, SI01–SI05 **Rv**; SS25, SI06–SI08 **Pr**)
+## 11. RQ5 session cases (slice s1; SS01–SS25, SI01–SI08 **Rv**; SS26 **Pr**)
 
 Spec: [session.md](session.md). Labels live in `tests/cases/session_cases.toml`, a separate
 file; the r3.1 chain and lookup labels file is not touched. They were written before the
@@ -422,7 +422,8 @@ outcome of each step in order, separated by ` ; `.
 | SS22 | 8 concurrent redemptions of the same valid proof (each on its own thread, released together by a barrier); the tally counts a loser only when it is specifically `SessionReject` with `ChallengeAlreadyConsumed` | `accepts=1 already_consumed=7 other=0` |
 | SS23 | G marked revoked after issuance, before redemption | `SessionReject / chain / ChainRejected(Reject / X / Revoked{G})` |
 | SS24 | clock unavailable at redemption | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / ClockUnavailable)` |
-| SS25 | redeem with clock ε = −5 (negative uncertainty), then a valid retry with the same proof | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / InvalidClockReading) ; SessionAccept` |
+| SS25 | redeem with clock ε = −5 (negative uncertainty) — caught at the **chain** re-verify (both reads negative), then a valid retry with the same proof | `SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / InvalidClockReading) ; SessionAccept` |
+| SS26 | redeem with a SequenceClock whose chain-verify read has valid ε but whose later redemption-**time** read has ε = −5, then a valid retry with the same proof; the first attempt must not consume the challenge | `SessionIndeterminate / time / InvalidClockReading ; SessionAccept` |
 
 ### Issuance (kind `issue`)
 
@@ -437,11 +438,11 @@ outcome of each step in order, separated by ` ; `.
 | SI07 | issuance reading with negative uncertainty ε | `IssueUnavailable / InvalidClockReading` |
 | SI08 | negative uncertainty on the **chain-check** (first) reading, valid issuance read second — the later read must not override the invalid first | `IssueRefused / Indeterminate / T / InvalidClockReading` |
 
-**Count:** 32 session-slice cases (25 redemption, 7 issuance): SS01–SS24 and SI01–SI05
-reviewed (29), and SS25, SI06, SI07, SI08 proposed (4). Reported separately from the chain
-and lookup labels. (SI05–SI07 reject an invalid issuance reading; SS25/SI08 and the chain
-T12 / enforcement EE28 cases cover negative uncertainty at verification, redemption,
-issuance's chain check, and mediation — see §12 and §4.)
+**Count:** 34 session-slice cases (26 redemption, 8 issuance): SS01–SS25 and SI01–SI08
+reviewed (33), and SS26 proposed (1). Reported separately from the chain and lookup labels.
+Negative uncertainty (ε < 0) is rejected, never clamped, at every time path: chain
+verification (T12; and redemption via the chain re-verify, SS25), issuance (SI07, and the
+chain-check read SI08), the session redemption-**time** stage (SS26), and mediation (EE28).
 
 **TTL is fixed at 120 s** (no public override). With any RFC 3339 clock (max year 9999 ≪
 `i64::MAX`) `issued_at + 120 s` never overflows, so `expires_at = min(issued_at + 120 s,
@@ -466,7 +467,7 @@ G.window.end`; and `expires_at > issued_at`. Cases, each with expected
 
 Their runners use a changing injected clock and are added with the clock-fix commit.
 
-## 12. RQ6 enforcement cases (slice e2; implemented; EE01–EE27 **Rv**; EE28 **Pr**)
+## 12. RQ6 enforcement cases (slice e2; implemented; EE01–EE28 **Rv**)
 
 Spec: [enforcement.md](enforcement.md) (DRAFT e2). Labels live in
 `tests/cases/enforcement_cases.toml`, a separate file. **Not implemented** — these are
@@ -521,7 +522,7 @@ Display: `Allow effects=1`, or `<Deny|Indeterminate> / <stage> / <Reason> effect
 Zero-effect property: every non-Allow label carries `effects=0`; a future runner must
 assert the effect sink length is unchanged for EE05–EE26.
 
-**Count:** 28 enforcement cases (4 allow, 20 deny, 4 indeterminate): EE01–EE27 reviewed,
-EE28 (negative clock uncertainty at mediation) proposed. EE27 demonstrates a `PartiallyAllowed` subtree arising with no explicit
-exclusion and that the scope stage precedes the class stage. Reported separately from the
+**Count:** 28 enforcement cases (4 allow, 20 deny, 4 indeterminate), all owner-reviewed
+(EE28 covers negative clock uncertainty at mediation). EE27 demonstrates a `PartiallyAllowed`
+subtree arising with no explicit exclusion and that the scope stage precedes the class stage. Reported separately from the
 93 chain, 15 lookup and 28 session labels, which are unchanged.

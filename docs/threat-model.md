@@ -111,7 +111,7 @@ Out of scope for e1, stated so none is read as defended:
 ## 4. Out of scope (non-goals for v0)
 
 - **Stolen-grant presentation** by someone other than T is addressed by RQ5 slice s1 (proof of possession, docs/session.md §8 limits): the chain-only v0 decision does **not** bind a presenter, while s1 adds a separate session proof of possession under its stated limits (no channel binding, no relay resistance).
-- **Agent actions outside scope** at runtime against *real* tools; confinement of unmanaged/opaque tools; completeness of the effect taxonomy (RQ6). A design-only synthetic mediator is drafted in [enforcement.md](enforcement.md) (§3b), not implemented.
+- **Agent actions outside scope** at runtime against *real* tools; confinement of unmanaged/opaque tools; completeness of the effect taxonomy (RQ6). The synthetic mediator in [enforcement.md](enforcement.md) (§3b) is implemented for modeled operations only; it does not enforce real tools.
 - **Revocation latency** and cache staleness in a real distributed status service (RQ7).
 - **Real organization identity proof** and first-admin authority (RQ1).
 - **Real asset ownership**, shared/third-party hosting, and legal testing rights (RQ2; legal).

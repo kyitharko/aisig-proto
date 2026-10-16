@@ -136,6 +136,11 @@ requires every stage positive.
 5. **time** — clock `(now, ε)`.
    - Clock unavailable → record `ClockUnavailable`.
    - `ε < 0` (invalid uncertainty) → record `InvalidClockReading` (rejected, not clamped).
+     This redemption-time guard is independent of the chain stage: even when the chain
+     re-verify saw a valid reading, a later redemption-time reading with `ε < 0` is caught
+     here as `time / InvalidClockReading` (case SS26), distinct from a negative reading at
+     the chain re-verify (`chain / ChainIndeterminate(... / T / InvalidClockReading)`,
+     SS25). Neither consumes the challenge, so a valid retry succeeds.
    - `now − ε ≥ expires_at` → `ChallengeExpired`.
    - `now + ε < expires_at` → ok.
    - Otherwise → record `ClockUncertainty` (half-open expiry; same rule as spec §6).

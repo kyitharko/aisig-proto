@@ -1,8 +1,7 @@
 # Expected outcomes for the RQ6 enforcement slice (docs/enforcement.md DRAFT e2),
-# transcribed from docs/experiment.md section 12. EE01-EE26 are owner-reviewed (the
-# aisig-tooltable/v0 mapping is approved, 2026-10-16); EE27 is proposed (a boundary case
-# added for PartiallyAllowed-without-exclusion). DESIGN label data; the RQ6 runner is
-# added with the implementation. Never edit to match implementation output.
+# transcribed from docs/experiment.md section 12. Implemented in src/enforcement.rs; all
+# EE labels are owner-reviewed (the aisig-tooltable/v0 mapping is approved). Never edit a
+# label to match implementation output.
 
 [[case]]
 id = "EE01"
@@ -170,4 +169,4 @@ label_status = "reviewed"
 id = "EE28"
 kind = "enforcement"
 expected = "Indeterminate / expiry / InvalidClockReading effects=0"
-label_status = "proposed"
+label_status = "reviewed"
