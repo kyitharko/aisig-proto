@@ -224,6 +224,51 @@ fn reissued_grant() -> Scenario {
 }
 
 // ---------------------------------------------------------------------------
+// Observer -> artifacts, from an executed synthetic flow (trace)
+// ---------------------------------------------------------------------------
+
+/// What an executed synthetic flow shows each observer receiving, with proof-of-execution flags
+/// so the derivation can be gated (a hard-coded list cannot set these honestly).
+struct FlowTrace {
+    o1: Vec<&'static str>,
+    o2: Vec<&'static str>,
+    o3: Vec<&'static str>,
+    o5: Vec<&'static str>,
+    #[allow(dead_code)] // read by the reproduction/regression tests
+    chain_accepted: bool,
+    #[allow(dead_code)]
+    r_signed_response_received: bool,
+    #[allow(dead_code)]
+    challenge_issued: bool,
+    #[allow(dead_code)]
+    proof_verified: bool,
+    #[allow(dead_code)]
+    receipt_recorded: bool,
+}
+
+fn observer_set(mut v: Vec<&'static str>) -> String {
+    v.sort_unstable();
+    v.join(",")
+}
+
+/// REPRODUCTION STUB (finding: hard-coded PO lists): returns fixed observer sets WITHOUT
+/// executing any flow. The proof-of-execution flags are all false. Replaced in the fix commit
+/// by a function that actually runs the freshness-aware flow and derives the sets from it.
+fn observe_flow() -> FlowTrace {
+    FlowTrace {
+        o1: vec!["admin", "grant", "issuer"],
+        o2: vec!["admin", "challenge", "grant", "issuer", "proof", "status_response"],
+        o3: vec!["status_key"],
+        o5: vec!["effect_receipt"],
+        chain_accepted: false,
+        r_signed_response_received: false,
+        challenge_issued: false,
+        proof_verified: false,
+        receipt_recorded: false,
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Cases
 // ---------------------------------------------------------------------------
 
@@ -240,11 +285,11 @@ pub fn run(id: &str) -> Option<String> {
         "FD06" => fields_of_bytes(&sample_challenge(&gk)),
         "FD07" => fields_of_bytes(&encode_proof("abc", &[0u8; 64])),
         "FD08" => receipt_fields(),
-        // Observer -> artifacts actually received (the protocol structure of docs/rq8.md Q1).
-        "PO1" => "admin,grant,issuer".to_owned(),
-        "PO2" => "admin,challenge,grant,issuer,proof,status_response".to_owned(),
-        "PO3" => "status_key".to_owned(),
-        "PO5" => "effect_receipt".to_owned(),
+        // Observer -> artifacts actually received, derived from an executed synthetic flow.
+        "PO1" => observer_set(observe_flow().o1),
+        "PO2" => observer_set(observe_flow().o2),
+        "PO3" => observer_set(observe_flow().o3),
+        "PO5" => observer_set(observe_flow().o5),
         // Linkability: identical presentation vs a legitimate reissue.
         "PL01" => linkability(&s, &Scenario::base()),
         "PL02" => linkability(&s, &reissued_grant()),
@@ -316,4 +361,50 @@ pub fn render_json(rows: &[PrivacyRow]) -> Value {
             "match": r.actual == r.label.expected,
         })).collect::<Vec<_>>(),
     })
+}
+
+#[cfg(test)]
+mod repro {
+    use super::*;
+
+    fn grant_u32(s: &Scenario, field: &str) -> u64 {
+        grant_payload(s)
+            .get(field)
+            .and_then(Value::as_u64)
+            .expect("numeric grant field")
+    }
+
+    // Finding 1 (RED): PL02 must be a legitimate reissue under a new `version` or `id`
+    // (spec §6: re-signing different content under the same (org,type,id,version) is
+    // unsupported). The current `reissued_grant` only changes `engagement_id`, keeping id and
+    // version, so this fails until the fix bumps the version.
+    #[test]
+    fn reissue_changes_grant_version_or_id() {
+        let base = Scenario::base();
+        let reissue = reissued_grant();
+        let version_changed = grant_u32(&base, "version") != grant_u32(&reissue, "version");
+        let id_changed = grant_field(&base, "id") != grant_field(&reissue, "id");
+        assert!(
+            version_changed || id_changed,
+            "a legitimate reissue must change grant version or id (spec §6); got same \
+             (id, version) with different content, which is an unsupported re-sign"
+        );
+    }
+
+    // Finding 3 (RED): the PO observer lists must be derived from an executed freshness-aware
+    // flow (chain Accept, an R-signed response actually returned to P, a challenge issued, a
+    // proof verified, a receipt recorded). The reproduction stub hard-codes the lists and sets
+    // every proof-of-execution flag false, so this fails until the flow is executed.
+    #[test]
+    fn po_observations_require_an_executed_flow() {
+        let t = observe_flow();
+        assert!(
+            t.chain_accepted
+                && t.r_signed_response_received
+                && t.challenge_issued
+                && t.proof_verified
+                && t.receipt_recorded,
+            "PO observations must come from an executed freshness-aware flow, not a hard-coded list"
+        );
+    }
 }
