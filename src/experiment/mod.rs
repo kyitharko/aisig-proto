@@ -4,6 +4,7 @@
 pub mod cases;
 pub mod enforcement_cases;
 pub mod fixture;
+pub mod freshness_cases;
 pub mod mutations;
 pub mod report;
 pub mod session_cases;

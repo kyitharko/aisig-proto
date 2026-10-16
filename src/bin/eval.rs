@@ -3,7 +3,7 @@
 
 use std::fs;
 
-use aisig_proto::experiment::{cases, enforcement_cases, report, session_cases};
+use aisig_proto::experiment::{cases, enforcement_cases, freshness_cases, report, session_cases};
 
 fn main() {
     let labels = cases::load_default().unwrap_or_else(|e| panic!("{e}"));
@@ -107,4 +107,32 @@ fn main() {
         );
     }
     println!("wrote results/enforcement_cases.md and results/enforcement_cases.json");
+
+    // RQ7 freshness slice: separate labels (all proposed; the oracle for the RQ7 code).
+    let fresh_labels =
+        cases::load(freshness_cases::FRESHNESS_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
+    let fresh_rows = freshness_cases::run_all(&fresh_labels);
+    fs::write(
+        "results/freshness_cases.md",
+        freshness_cases::render_markdown(&fresh_rows),
+    )
+    .expect("write freshness md");
+    let json =
+        serde_json::to_string_pretty(&freshness_cases::render_json(&fresh_rows)).expect("json");
+    fs::write("results/freshness_cases.json", json + "\n").expect("write freshness json");
+    let ok = fresh_rows
+        .iter()
+        .filter(|r| r.actual == r.label.expected)
+        .count();
+    println!(
+        "freshness slice: {ok}/{} match (all proposed)",
+        fresh_rows.len()
+    );
+    for r in fresh_rows.iter().filter(|r| r.actual != r.label.expected) {
+        println!(
+            "FRESHNESS MISMATCH {}: expected `{}`, got `{}`",
+            r.label.id, r.label.expected, r.actual
+        );
+    }
+    println!("wrote results/freshness_cases.md and results/freshness_cases.json");
 }

@@ -158,6 +158,13 @@ pub enum Reason {
     StatusUnknown(Obj),
     Revoked(Obj),
     Superseded(Obj),
+    // X — status freshness (RQ7, docs/freshness.md)
+    StatusStale,
+    StatusFreshnessUncertain,
+    StatusTimestampInFuture,
+    StatusRollback,
+    StatusEpochConflict,
+    StatusResponseInvalid,
 }
 
 impl Reason {

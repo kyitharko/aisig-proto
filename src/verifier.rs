@@ -150,13 +150,60 @@ pub fn decode_chain(bundle: &Bundle) -> Result<DecodedChain, Reason> {
     })
 }
 
+/// Per-object outcome of the status stage (spec §6, stage X). The verifier keeps the loop
+/// (short-circuit on Reject, note the first Indeterminate, stop on Unavailable); the oracle
+/// only classifies one object against the single decision-time clock snapshot.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum StatusStageOutcome {
+    /// Live: continue to the next object.
+    Ok,
+    /// Short-circuit the whole decision.
+    Reject(Reason),
+    /// Record as the first Indeterminate; evaluation continues.
+    Indeterminate(Reason),
+    /// Source/cache unavailable: note `StatusUnavailable` and stop checking further objects.
+    Unavailable,
+}
+
+/// The status stage, given the single decision-time clock snapshot (spec §6). The chain
+/// verifier reads the clock once and passes the same reading to the time stage and here, so
+/// freshness (RQ7) and the window checks share one instant.
+pub trait StatusOracle {
+    fn evaluate(
+        &self,
+        obj: Obj,
+        key: &StatusKey,
+        reading: Option<ClockReading>,
+    ) -> StatusStageOutcome;
+}
+
+/// The always-current status source (pre-RQ7 behavior) is a `StatusOracle` that ignores the
+/// clock: `Active` is live, `Revoked`/`Superseded` reject, `Unknown`/unavailable are
+/// Indeterminate exactly as before. This keeps every existing case's outcome unchanged.
+impl<T: StatusSource + ?Sized> StatusOracle for T {
+    fn evaluate(
+        &self,
+        obj: Obj,
+        key: &StatusKey,
+        _reading: Option<ClockReading>,
+    ) -> StatusStageOutcome {
+        match self.status(key) {
+            Err(_) => StatusStageOutcome::Unavailable,
+            Ok(ObjStatus::Active) => StatusStageOutcome::Ok,
+            Ok(ObjStatus::Revoked) => StatusStageOutcome::Reject(Reason::Revoked(obj)),
+            Ok(ObjStatus::Superseded) => StatusStageOutcome::Reject(Reason::Superseded(obj)),
+            Ok(ObjStatus::Unknown) => StatusStageOutcome::Indeterminate(Reason::StatusUnknown(obj)),
+        }
+    }
+}
+
 /// The evidence sources P consults. All are injected; all may be unavailable.
 #[derive(Clone, Copy)]
 pub struct Evidence<'a> {
     pub registry: &'a dyn RootRegistry,
     pub bindings: &'a dyn AssetBindings,
     pub clock: &'a dyn TrustedClock,
-    pub status: &'a dyn StatusSource,
+    pub status: &'a dyn StatusOracle,
 }
 
 pub struct ChainVerifier<'a> {
@@ -314,8 +361,12 @@ impl ChainVerifier<'_> {
             }
         }
 
+        // Single decision-time clock reading, shared by the time stage and the status stage
+        // (RQ7 freshness): one instant for the whole chain decision (spec §6).
+        let snapshot = ev.clock.now();
+
         // T — root record (only if the registry answered), then C_A, D_U, G.
-        match ev.clock.now() {
+        match snapshot {
             None => pending.note(Stage::Time, Reason::ClockUnavailable),
             Some(reading) if reading.epsilon < 0 => {
                 // Invalid uncertainty (spec §6 requires ε ≥ 0; ClockReading has public
@@ -344,17 +395,17 @@ impl ChainVerifier<'_> {
             }
         }
 
-        // X — status of the exact signed C_A, D_U, G (spec §6 StatusKey).
+        // X — status of the exact signed C_A, D_U, G (spec §6 StatusKey), evaluated against
+        // the same clock snapshot as the time stage (RQ7 freshness; docs/freshness.md).
         for (obj, key) in chain.status_keys() {
-            match ev.status.status(&key) {
-                Err(_) => {
+            match ev.status.evaluate(obj, &key, snapshot) {
+                StatusStageOutcome::Ok => {}
+                StatusStageOutcome::Reject(r) => reject!(Stage::Status, r),
+                StatusStageOutcome::Indeterminate(r) => pending.note(Stage::Status, r),
+                StatusStageOutcome::Unavailable => {
                     pending.note(Stage::Status, Reason::StatusUnavailable);
                     break;
                 }
-                Ok(ObjStatus::Active) => {}
-                Ok(ObjStatus::Revoked) => reject!(Stage::Status, Reason::Revoked(obj)),
-                Ok(ObjStatus::Superseded) => reject!(Stage::Status, Reason::Superseded(obj)),
-                Ok(ObjStatus::Unknown) => pending.note(Stage::Status, Reason::StatusUnknown(obj)),
             }
         }
 

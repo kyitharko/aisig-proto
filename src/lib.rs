@@ -15,6 +15,8 @@
 //!   (docs/enforcement.md). A ProviderExec decision, separate from chain and session.
 //! - [`session`]: RQ5 slice — tester proof of possession bound to a provider session
 //!   (docs/session.md). Separate from the chain decision.
+//! - [`freshness`]: RQ7 slice — synthetic status responder and whole-interval freshness
+//!   policy for the status stage (docs/freshness.md). Synthetic; no network.
 //! - [`experiment`]: synthetic fixture, case mutations, label loading and reporting.
 
 pub mod asset;
@@ -25,6 +27,7 @@ pub mod decision;
 pub mod enforcement;
 pub mod evidence;
 pub mod experiment;
+pub mod freshness;
 pub mod model;
 pub mod policy;
 pub mod session;
