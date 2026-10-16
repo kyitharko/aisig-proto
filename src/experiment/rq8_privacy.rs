@@ -11,9 +11,9 @@ use std::collections::HashMap;
 
 use serde_json::{json, Value};
 
-use crate::codec::{canonical_json, TypeTag};
+use crate::codec::{b64_decode, canonical_json, TypeTag};
 use crate::crypto;
-use crate::decision::Decision;
+use crate::decision::{Decision, Slot};
 use crate::enforcement::{
     EffectReceipt, EffectSink, InMemorySessionAuthStore, Mediate, MediationRequest, Mediator,
 };
@@ -25,7 +25,7 @@ use crate::session::{
     encode_proof, Challenge, InMemoryChallengeStore, IssueOutcome, OsRandom, SessionDecision,
     SessionService, RESPONSE_TAG,
 };
-use crate::verifier::{decode_chain, ChainVerifier, Evidence};
+use crate::verifier::{decode_chain, Bundle, ChainVerifier, Evidence};
 
 use super::cases::CaseLabel;
 use super::fixture::{asset, put, registration_key, secret, set, ts, Scenario, ACME, P_AUD};
@@ -41,8 +41,8 @@ const KNOWN: &str = "2026-10-15T09:59:00Z";
 const EXP: &str = "2026-10-15T11:00:00Z";
 
 pub const RQ8_PRIVACY_CASE_IDS: &[&str] = &[
-    "FD01", "FD02", "FD03", "FD04", "FD05", "FD06", "FD07", "FD08", "PO1", "PO2", "PO3", "PO5",
-    "PL01", "PL02",
+    "FD01", "FD02", "FD03", "FD04", "FD05", "FD06", "FD07", "FD08", "FD09", "FD10", "PO1", "PO2",
+    "PO3", "PO5", "PL01", "PL02",
 ];
 
 // ---------------------------------------------------------------------------
@@ -60,19 +60,83 @@ fn sorted_keys(v: &Value) -> String {
     keys.join(",")
 }
 
-/// Sorted top-level field names of a value's canonical signed bytes (re-parsed from the bytes).
-fn fields_of_canonical(v: &Value) -> String {
-    let bytes = canonical_json(v).expect("canonicalizable");
-    let parsed: Value = serde_json::from_slice(&bytes).expect("canonical json");
-    sorted_keys(&parsed)
-}
-
 /// Sorted top-level field names of a wire/canonical byte string.
 fn fields_of_bytes(b: &[u8]) -> String {
     let parsed: Value = serde_json::from_slice(b).expect("json");
     sorted_keys(&parsed)
 }
 
+/// Field names of a built bundle's slot, read from the DECODED signed payload bytes.
+fn decoded_payload_fields(slot: Slot) -> String {
+    let bundle = Scenario::base().build();
+    let chain = decode_chain(&bundle).expect("decode the base bundle");
+    let payload = match slot {
+        Slot::Admin => chain.admin().payload(),
+        Slot::Issuer => chain.issuer().payload(),
+        Slot::Grant => chain.grant().payload(),
+        Slot::Root => unreachable!("the root slot is not part of the decoded chain"),
+    };
+    fields_of_bytes(payload)
+}
+
+/// Field names of an envelope's signed payload (base64-decoded from the built bundle slot).
+fn envelope_payload_fields(envelope: &[u8]) -> String {
+    let v: Value = serde_json::from_slice(envelope).expect("envelope json");
+    let payload_b64 = v
+        .get("payload")
+        .and_then(Value::as_str)
+        .expect("payload b64");
+    let payload = b64_decode(payload_b64).expect("b64 payload");
+    fields_of_bytes(&payload)
+}
+
+/// FD09: the root slot (OrganizationRoot) signed payload field names — raw bundle data that a
+/// holder and P can see even though the verifier ignores the slot.
+fn root_payload_fields() -> String {
+    let bundle = Scenario::base().build();
+    let root = bundle.root.as_ref().expect("base bundle has a root slot");
+    envelope_payload_fields(root)
+}
+
+/// FD10: the in-memory `MediationRequest` struct P receives from the agent — its field names,
+/// distinct from the raw bundle bytes the `bundle` field carries.
+fn mediation_request_fields() -> String {
+    let req = MediationRequest {
+        bundle: Scenario::base().build(),
+        operation: "web.get".to_owned(),
+        target_wire: Vec::new(),
+        claimed_class: None,
+    };
+    // Tie the reported names to the actual struct fields.
+    let _ = (
+        &req.bundle,
+        &req.operation,
+        &req.target_wire,
+        &req.claimed_class,
+    );
+    observer_set(vec!["bundle", "claimed_class", "operation", "target_wire"])
+}
+
+/// Artifacts a bundle discloses: one per present slot (the verifier ignores `root`, but a
+/// holder and P still see its bytes).
+fn bundle_artifacts(b: &Bundle) -> Vec<&'static str> {
+    let mut v = Vec::new();
+    if b.root.is_some() {
+        v.push("root");
+    }
+    if b.admin.is_some() {
+        v.push("admin");
+    }
+    if b.issuer.is_some() {
+        v.push("issuer");
+    }
+    if b.grant.is_some() {
+        v.push("grant");
+    }
+    v
+}
+
+#[cfg(test)]
 fn grant_payload(s: &Scenario) -> &Value {
     &s.grant.as_ref().expect("grant").payload
 }
@@ -272,6 +336,8 @@ fn linkability(a: &Scenario, b: &Scenario) -> String {
 /// correlate while the signed bytes, `version` and `digest` change.
 fn reissued_grant() -> Scenario {
     let mut s = Scenario::base();
+    // A new engagement, reissued under a new version (spec §6 requires a new version or id).
+    put(s.grant(), "engagement_id", json!("eng-acme-2026-10-15-02"));
     put(s.grant(), "version", json!(2));
     s
 }
@@ -296,6 +362,8 @@ struct FlowTrace {
     #[allow(dead_code)]
     proof_verified: bool,
     #[allow(dead_code)]
+    request_received: bool,
+    #[allow(dead_code)]
     receipt_recorded: bool,
 }
 
@@ -304,11 +372,17 @@ fn observer_set(mut v: Vec<&'static str>) -> String {
     v.join(",")
 }
 
+/// The full observed flow (with mediation).
+fn observe_flow() -> FlowTrace {
+    run_flow(true)
+}
+
 /// Execute a synthetic freshness-aware flow and derive each observer's received-artifact set
 /// from what actually ran: a chain verification where P validates R-signed status responses
 /// (so O3 is queried and O2 receives a response), a session issue + redeem (challenge, proof),
-/// and a mediation (effect receipt). No network; all synthetic.
-fn observe_flow() -> FlowTrace {
+/// and, when `mediate` is set, a mediation (P receives the request; a receipt is produced on
+/// Allow). Bundle artifacts come from the built bundle's present slots. No network; synthetic.
+fn run_flow(mediate: bool) -> FlowTrace {
     let mut s = enf_scenario();
     s.set_clock("2026-10-15T10:00:00Z", 2);
     let ak = registration_key(TypeTag::AdminDelegation, s.admin.as_ref().expect("admin"))
@@ -377,42 +451,46 @@ fn observe_flow() -> FlowTrace {
     });
     let proof_verified = auth.is_some();
 
-    // Mediation at 10:30:00Z (same freshness oracle, a later snapshot) -> effect receipt.
-    let receipt_recorded = if let Some(auth) = auth {
-        let mut sm = s.clone();
-        sm.set_clock("2026-10-15T10:30:00Z", 2);
-        let ev2 = Evidence {
-            registry: &sm.registry,
-            bindings: &sm.bindings,
-            clock: &sm.clock,
-            status: &oracle,
-        };
-        let authstore = InMemorySessionAuthStore::default();
-        authstore.insert(SESSION, auth);
-        let sink = EffectSink::new();
-        let med = Mediator {
-            chain: ChainVerifier {
-                audience: P_AUD,
-                evidence: ev2,
-            },
-            sessions: &authstore,
-            sink: &sink,
-        };
-        let req = MediationRequest {
-            bundle: sm.build(),
-            operation: "web.get".to_owned(),
-            target_wire: canonical_json(&asset("web:https://app.acme.test:443/app/reports"))
-                .expect("canonicalizable"),
-            claimed_class: None,
-        };
-        matches!(med.mediate(SESSION, &req), Mediate::Allow(_))
-    } else {
-        false
+    // Mediation at 10:30:00Z (same freshness oracle, a later snapshot). P receives the request
+    // (whether or not it Allows); a receipt is produced on Allow.
+    let (request_received, receipt_recorded) = match auth {
+        Some(auth) if mediate => {
+            let mut sm = s.clone();
+            sm.set_clock("2026-10-15T10:30:00Z", 2);
+            let ev2 = Evidence {
+                registry: &sm.registry,
+                bindings: &sm.bindings,
+                clock: &sm.clock,
+                status: &oracle,
+            };
+            let authstore = InMemorySessionAuthStore::default();
+            authstore.insert(SESSION, auth);
+            let sink = EffectSink::new();
+            let med = Mediator {
+                chain: ChainVerifier {
+                    audience: P_AUD,
+                    evidence: ev2,
+                },
+                sessions: &authstore,
+                sink: &sink,
+            };
+            let req = MediationRequest {
+                bundle: sm.build(),
+                operation: "web.get".to_owned(),
+                target_wire: canonical_json(&asset("web:https://app.acme.test:443/app/reports"))
+                    .expect("canonicalizable"),
+                claimed_class: None,
+            };
+            let allowed = matches!(med.mediate(SESSION, &req), Mediate::Allow(_));
+            (true, allowed)
+        }
+        _ => (false, false),
     };
 
-    // Derive each observer's set from what actually executed.
-    let o1 = vec!["admin", "grant", "issuer"];
-    let mut o2 = vec!["admin", "grant", "issuer"];
+    // Derive each observer's set from what actually executed. Bundle artifacts (incl. the
+    // ignored-but-visible `root`) come from the built bundle's present slots.
+    let o1 = bundle_artifacts(&bundle);
+    let mut o2 = bundle_artifacts(&bundle);
     if r_signed_response_received {
         o2.push("status_response");
     }
@@ -421,6 +499,9 @@ fn observe_flow() -> FlowTrace {
     }
     if proof_verified {
         o2.push("proof");
+    }
+    if request_received {
+        o2.push("mediation_request");
     }
     let mut o3 = Vec::new();
     if r_signed_response_received {
@@ -439,6 +520,7 @@ fn observe_flow() -> FlowTrace {
         r_signed_response_received,
         challenge_issued,
         proof_verified,
+        request_received,
         receipt_recorded,
     }
 }
@@ -452,14 +534,18 @@ pub fn run(id: &str) -> Option<String> {
     let s = Scenario::base();
     let gk = grant_status_key(&s);
     let out = match id {
-        "FD01" => fields_of_canonical(&s.admin.as_ref().expect("admin").payload),
-        "FD02" => fields_of_canonical(&s.issuer.as_ref().expect("issuer").payload),
-        "FD03" => fields_of_canonical(grant_payload(&s)),
+        // FD01–FD03: top-level field names from the DECODED signed payload bytes of the built
+        // bundle (admin/issuer/grant). FD09: the root slot's signed payload (raw bundle data).
+        "FD01" => decoded_payload_fields(Slot::Admin),
+        "FD02" => decoded_payload_fields(Slot::Issuer),
+        "FD03" => decoded_payload_fields(Slot::Grant),
         "FD04" => fields_of_bytes(status_response(&gk).payload()),
         "FD05" => status_key_fields(&gk),
         "FD06" => fields_of_bytes(&issued_challenge().wire_bytes()),
         "FD07" => fields_of_bytes(&valid_proof()),
         "FD08" => receipt_fields(),
+        "FD09" => root_payload_fields(),
+        "FD10" => mediation_request_fields(),
         // Observer -> artifacts actually received, derived from an executed synthetic flow.
         "PO1" => observer_set(observe_flow().o1),
         "PO2" => observer_set(observe_flow().o2),
@@ -566,10 +652,9 @@ mod repro {
         );
     }
 
-    // Finding 3 (RED): the PO observer lists must be derived from an executed freshness-aware
-    // flow (chain Accept, an R-signed response actually returned to P, a challenge issued, a
-    // proof verified, a receipt recorded). The reproduction stub hard-codes the lists and sets
-    // every proof-of-execution flag false, so this fails until the flow is executed.
+    // The PO observer lists must be derived from an executed freshness-aware flow (chain Accept,
+    // an R-signed response actually returned to P, a challenge issued, a proof verified, the
+    // request received, a receipt recorded), not a hard-coded list.
     #[test]
     fn po_observations_require_an_executed_flow() {
         let t = observe_flow();
@@ -578,8 +663,36 @@ mod repro {
                 && t.r_signed_response_received
                 && t.challenge_issued
                 && t.proof_verified
+                && t.request_received
                 && t.receipt_recorded,
             "PO observations must come from an executed freshness-aware flow, not a hard-coded list"
         );
+    }
+
+    // Removing the optional root slot changes the observed bundle artifacts (root is ignored by
+    // the verifier but still visible to a holder and to P).
+    #[test]
+    fn removing_root_changes_observed_bundle_artifacts() {
+        let full = Scenario::base().build();
+        assert!(
+            bundle_artifacts(&full).contains(&"root"),
+            "base bundle has a root"
+        );
+        let mut s = Scenario::base();
+        s.root = None;
+        let without = s.build();
+        assert!(!bundle_artifacts(&without).contains(&"root"));
+        assert_eq!(bundle_artifacts(&without), vec!["admin", "issuer", "grant"]);
+    }
+
+    // Skipping mediation removes the request and receipt observations (and their flags).
+    #[test]
+    fn skipping_mediation_removes_request_and_receipt() {
+        let with = run_flow(true);
+        assert!(with.o2.contains(&"mediation_request") && with.o5.contains(&"effect_receipt"));
+        let without = run_flow(false);
+        assert!(!without.request_received && !without.receipt_recorded);
+        assert!(!without.o2.contains(&"mediation_request"));
+        assert!(without.o5.is_empty());
     }
 }
