@@ -1,152 +1,152 @@
-# Proposed RQ7 status-freshness labels (docs/freshness.md DRAFT f2). The RQ7 implementation
+# RQ7 status-freshness labels (docs/freshness.md DRAFT f2). The RQ7 implementation
 # (src/freshness.rs) matches every label here; the freshness-slice runner compares against
-# this file. Written before the code; all labels remain `proposed` pending owner review.
-# Separate from reviewed_cases/session_cases/enforcement_cases. Never edit a label to match
-# implementation output.
+# this file. Written before the code; all 34 expected outcomes were owner-reviewed and are now
+# `reviewed`. Separate from reviewed_cases/session_cases/enforcement_cases. Never edit a label
+# to match implementation output.
 
 [[case]]
 id = "FR01"
 kind = "freshness"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR02"
 kind = "freshness"
 expected = "Indeterminate / X / StatusStale"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR03"
 kind = "freshness"
 expected = "Indeterminate / X / StatusStale"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR04"
 kind = "freshness"
 expected = "Reject / X / Revoked{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR05"
 kind = "freshness"
 expected = "Reject / X / Revoked{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR06"
 kind = "freshness"
 expected = "Reject / X / Superseded{C_A}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR07"
 kind = "freshness"
 expected = "Indeterminate / X / StatusUnknown{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR08"
 kind = "freshness"
 expected = "Indeterminate / X / StatusUnavailable"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR09"
 kind = "freshness"
 expected = "Indeterminate / X / StatusTimestampInFuture"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR11"
 kind = "freshness"
 expected = "Indeterminate / X / StatusRollback"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR12"
 kind = "freshness"
 expected = "Indeterminate / X / StatusUnknown{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR13"
 kind = "freshness"
 expected = "Reject / X / Revoked{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR14"
 kind = "freshness"
 expected = "Indeterminate / X / StatusResponseInvalid"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR15"
 kind = "freshness"
 expected = "Indeterminate / X / StatusResponseInvalid"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR16"
 kind = "freshness"
 expected = "Reject / X / Revoked{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB01"
 kind = "freshness"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB02"
 kind = "freshness"
 expected = "Indeterminate / X / StatusFreshnessUncertain"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB03"
 kind = "freshness"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB04"
 kind = "freshness"
 expected = "Indeterminate / X / StatusFreshnessUncertain"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB05"
 kind = "freshness"
 expected = "Indeterminate / X / StatusStale"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB06"
 kind = "freshness"
 expected = "Indeterminate / X / StatusTimestampInFuture"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB07"
 kind = "freshness"
 expected = "Indeterminate / X / StatusTimestampInFuture"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB08"
 kind = "freshness"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FB09"
 kind = "freshness"
 expected = "Indeterminate / X / StatusEpochConflict"
-label_status = "proposed"
+label_status = "reviewed"
 
 # FB10: epoch 0 is a valid epoch; an identical epoch-0 Active response replayed against the
 # same high-water-mark must stay idempotently accepted (two steps, shared HWM).
@@ -154,7 +154,7 @@ label_status = "proposed"
 id = "FB10"
 kind = "freshness"
 expected = "Accept ; Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 # FB11: shared HWM, competing Active epochs: accept a newer epoch, then an older epoch must
 # roll back (an older response cannot win after a newer one).
@@ -162,7 +162,7 @@ label_status = "proposed"
 id = "FB11"
 kind = "freshness"
 expected = "Accept ; Indeterminate / X / StatusRollback"
-label_status = "proposed"
+label_status = "reviewed"
 
 # FB12: shared HWM, a validated Revoked then a newer Active: the Active must stay rejected by
 # the sticky flag (revocation is monotonic across the shared store).
@@ -170,46 +170,46 @@ label_status = "proposed"
 id = "FB12"
 kind = "freshness"
 expected = "Reject / X / Revoked{G} ; Reject / X / Revoked{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FS01"
 kind = "freshness"
 expected = "Issued expires_at=2026-10-15T10:02:00Z"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FS02"
 kind = "freshness"
 expected = "IssueRefused / Indeterminate / X / StatusStale"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FS03"
 kind = "freshness"
 expected = "IssueRefused / Reject / X / Revoked{G}"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FS04"
 kind = "freshness"
 expected = "IssueRefused / Indeterminate / X / StatusUnavailable"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR17"
 kind = "freshness"
 expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) ; SessionAccept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR18"
 kind = "freshness"
 expected = "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale) effects=0"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[case]]
 id = "FR19"
 kind = "freshness"
 expected = "Deny / chain / ChainRejected(Reject / X / Revoked{G}) effects=0"
-label_status = "proposed"
+label_status = "reviewed"
