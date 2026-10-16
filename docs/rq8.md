@@ -1,12 +1,14 @@
-# RQ8 — privacy, latency and onboarding cost (DESIGN ONLY)
+# RQ8 — privacy, latency and onboarding cost
 
-**Status:** DRAFT, 2026-10-17. **Design only — no implementation, no RQ8 expected-case labels,
-and no performance or privacy claim is made here.** This document defines *questions* and
-*measurement methods* so that any future RQ8 result is produced against a method fixed in
-advance. Where the existing synthetic prototype can support a method it is stated; where a real
-deployment is required it is stated. Every quantity below is a method, not a result: this
-prototype has produced no RQ8 numbers, and none may be quoted until measured against the method
-recorded here.
+**Status:** DRAFT, 2026-10-17. **Q1 slice 1 (privacy: field disclosure + linkability) is
+implemented synthetically with 14 `proposed` observations awaiting owner review; Q2 (latency)
+and Q3 (onboarding/cost) remain design only.** This document defines the *questions* and
+*measurement methods* so that any RQ8 result is produced against a method fixed in advance.
+Where the existing synthetic prototype can support a method it is stated; where a real
+deployment is required it is stated. **No performance, privacy or cost *number* is asserted:**
+the Q1 observations are structural facts about this synthetic encoding (which top-level field
+names appear, and which fields are byte-equal across showings), **not** a complete analysis of
+nested values or envelopes and **not** a real-world leakage or privacy guarantee.
 
 Scope note: RQ1 (organization identity) and RQ2 (asset binding) are assumed trusted fixtures;
 RQ4 (chain), RQ5 (session), RQ6 (mediation) and RQ7 (status freshness) are implemented
@@ -188,8 +190,12 @@ object): `C_A`, `D_U`, `G`; the R-signed status response and the `StatusKey` que
 challenge and proof; one effect receipt from a real mediation Allow.
 
 **Field-disclosure inventory (FD01–FD08, PO1/PO2/PO3/PO5).** For each artifact, report the
-sorted canonical field names (what any receiver of that artifact learns). For each observer,
-report which artifacts it *actually receives*:
+sorted **top-level** canonical field names (what any receiver of that artifact learns). This is
+deliberately a names-only inventory: it does **not** recurse into nested values (e.g. the
+contents of `bounds`, `envelope`, `targets`, `test_scope`, or the `status_key` sub-object beyond
+FD05), does not analyse the envelope around a signed payload, and is not a real-world leakage
+analysis. The PO observer→artifact sets are derived from an executed synthetic flow (below). For
+each observer, which artifacts it *actually receives*:
 - **O1** (bundle holder): `admin`, `issuer`, `grant`.
 - **O2** (provider P): the bundle plus the status response and the session exchange.
 - **O3** (responder R): only the `StatusKey` query (`org_id`, `object_type`, `id`, `version`,

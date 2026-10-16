@@ -97,20 +97,20 @@
       "note": "O5 log/effect-sink reader: the effect receipts"
     },
     {
-      "actual": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key=equal",
-      "expected": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key=equal",
+      "actual": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=equal status_key.digest=equal",
+      "expected": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=equal status_key.digest=equal",
       "id": "PL01",
       "label_status": "proposed",
       "match": true,
-      "note": "the identical signed grant presented twice -> fully linkable"
+      "note": "the identical built+verified grant presented twice -> fully linkable"
     },
     {
-      "actual": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key=differ",
-      "expected": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key=differ",
+      "actual": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=differ status_key.digest=differ",
+      "expected": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=differ status_key.digest=differ",
       "id": "PL02",
       "label_status": "proposed",
       "match": true,
-      "note": "a reissued grant (new engagement_id, same parties): key ids still correlate, signed bytes and StatusKey do not"
+      "note": "a legitimate reissue under a new grant version (spec §6): signed bytes / version / digest differ, but issuer_key_id, tester_key_id and StatusKey org_id/object_type/id still correlate"
     }
   ],
   "matched": 14,
