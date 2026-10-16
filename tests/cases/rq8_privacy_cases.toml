@@ -66,21 +66,35 @@ expected = "effects,operation,performed_at,session_ref,target,test_class"
 label_status = "proposed"
 note = "effect receipt (in-memory log record) fields; not a wire object"
 
+[[case]]
+id = "FD09"
+kind = "rq8_privacy"
+expected = "algorithm,format,key_id,org_id,root_key,usage,validity,version"
+label_status = "proposed"
+note = "root (OrganizationRoot) signed payload fields — raw bundle data; the verifier ignores the slot but a holder and P see its bytes"
+
+[[case]]
+id = "FD10"
+kind = "rq8_privacy"
+expected = "bundle,claimed_class,operation,target_wire"
+label_status = "proposed"
+note = "MediationRequest P receives — an in-memory request struct (its `bundle` field carries the raw bundle bytes), not a wire object"
+
 # --- observer -> artifacts actually received ---
 
 [[case]]
 id = "PO1"
 kind = "rq8_privacy"
-expected = "admin,grant,issuer"
+expected = "admin,grant,issuer,root"
 label_status = "proposed"
-note = "O1 bundle holder (e.g. tester / anyone shown a grant): the three chain objects"
+note = "O1 bundle holder (e.g. tester / anyone shown a grant): the four bundle slots, including the ignored-but-visible root"
 
 [[case]]
 id = "PO2"
 kind = "rq8_privacy"
-expected = "admin,challenge,grant,issuer,proof,status_response"
+expected = "admin,challenge,grant,issuer,mediation_request,proof,root,status_response"
 label_status = "proposed"
-note = "O2 provider P: the bundle, the status response from R, and the session exchange"
+note = "O2 provider P: the bundle (incl. root), the R-signed status response, the session exchange, and the mediation request it receives"
 
 [[case]]
 id = "PO3"
@@ -110,4 +124,4 @@ id = "PL02"
 kind = "rq8_privacy"
 expected = "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=differ status_key.digest=differ"
 label_status = "proposed"
-note = "a legitimate reissue under a new grant version (spec §6): signed bytes / version / digest differ, but issuer_key_id, tester_key_id and StatusKey org_id/object_type/id still correlate"
+note = "a new engagement reissued under a new grant version (changes engagement_id + version; spec §6 requires a new version/id): signed bytes / version / digest differ, but issuer_key_id, tester_key_id and StatusKey org_id/object_type/id still correlate"

@@ -1,7 +1,7 @@
 # RQ8 — privacy, latency and onboarding cost
 
 **Status:** DRAFT, 2026-10-17. **Q1 slice 1 (privacy: field disclosure + linkability) is
-implemented synthetically with 14 `proposed` observations awaiting owner review; Q2 (latency)
+implemented synthetically with 16 `proposed` observations awaiting owner review; Q2 (latency)
 and Q3 (onboarding/cost) remain design only.** This document defines the *questions* and
 *measurement methods* so that any RQ8 result is produced against a method fixed in advance.
 Where the existing synthetic prototype can support a method it is stated; where a real
@@ -184,24 +184,31 @@ field sets and comparisons and must match. All observations are `proposed` for o
 real-world privacy guarantee is inferred; synthetic only, no network, no real data.
 
 **Fixture.** The base synthetic fixture (experiment.md §2): org `org-acme-synthetic`, test-only
-keys, `.test` hosts. Artifacts inspected, each from its actual canonical signed bytes / wire
-form (the effect receipt from its struct fields, as it is an in-memory record, not a wire
-object): `C_A`, `D_U`, `G`; the R-signed status response and the `StatusKey` query; the session
-challenge and proof; one effect receipt from a real mediation Allow.
+keys, `.test` hosts. Artifacts inspected: the four built-bundle slots — `root`, `C_A`, `D_U`,
+`G` — read from their signed payload bytes (the three chain objects via the decoded chain; the
+ignored-but-present `root` slot by base64-decoding its envelope); the R-signed status response
+and the `StatusKey` query; the session challenge and proof; one effect receipt from a real
+mediation Allow; and the `MediationRequest` P receives (an in-memory struct, not a wire object).
 
-**Field-disclosure inventory (FD01–FD08, PO1/PO2/PO3/PO5).** For each artifact, report the
-sorted **top-level** canonical field names (what any receiver of that artifact learns). This is
+**Field-disclosure inventory (FD01–FD10, PO1/PO2/PO3/PO5).** For each artifact, report the
+sorted **top-level** field names (what any receiver of that artifact learns). This is
 deliberately a names-only inventory: it does **not** recurse into nested values (e.g. the
-contents of `bounds`, `envelope`, `targets`, `test_scope`, or the `status_key` sub-object beyond
-FD05), does not analyse the envelope around a signed payload, and is not a real-world leakage
-analysis. The PO observer→artifact sets are derived from an executed synthetic flow (below). For
-each observer, which artifacts it *actually receives*:
-- **O1** (bundle holder): `admin`, `issuer`, `grant`.
-- **O2** (provider P): the bundle plus the status response and the session exchange.
+contents of `bounds`, `envelope`, `targets`, `test_scope`, `validity`, or the `status_key`
+sub-object beyond FD05), does not analyse the envelope around a signed payload, and is not a
+real-world leakage analysis. FD01–FD03 (`C_A`/`D_U`/`G`) and FD09 (`root`) are raw signed
+bundle payloads; FD10 (`mediation_request`) is an in-memory request struct (its `bundle` field
+carries the raw bundle bytes already inventoried). The PO observer→artifact sets are derived
+from an executed synthetic flow (below). For each observer, which artifacts it *actually
+receives*:
+- **O1** (bundle holder): the bundle slots — `root`, `admin`, `issuer`, `grant` (the verifier
+  ignores `root`, but a holder sees its bytes).
+- **O2** (provider P): the bundle (incl. `root`), the R-signed status response, the session
+  exchange (challenge, proof), and the `mediation_request` it receives.
 - **O3** (responder R): only the `StatusKey` query (`org_id`, `object_type`, `id`, `version`,
   `digest`); the model **assumes** R never receives P's `now`/`ε` (freshness.md §2) — an
   assumption, not a measurement.
-- **O5** (log / effect-sink reader): the effect receipts.
+- **O5** (effect-sink reader): the effect receipts (modeled effect data only; decision logs are
+  not modeled or measured).
 - **O4** (network/traffic metadata) remains **unmeasured** (no network here).
 
 **Linkability comparison (PL01, PL02).** Deterministic, no population sampling. Each grant is
@@ -212,9 +219,11 @@ compared **component-by-component** (`org_id`, `object_type`, `id`, `version`, `
 `digest` difference is never mistaken for an absence of correlation.
 - *PL01 — identical grant presented twice:* the same signed `G`; everything equal.
 - *PL02 — legitimately reissued grant (spec §6 issuance rule):* the same parties re-issue `G`
-  under a **new `version`** (a new `version` or `id` is required; re-signing different content
-  under the same `(org, type, id, version)` is unsupported — spec §6). Report `signed_bytes`,
-  `issuer_key_id`, `tester_key_id` and each `StatusKey` component separately.
+  for a **new engagement** (`engagement_id`) under a **new `version`** (a new `version` or `id`
+  is required; re-signing different content under the same `(org, type, id, version)` is
+  unsupported — spec §6). Report `signed_bytes`, `issuer_key_id`, `tester_key_id` and each
+  `StatusKey` component separately. (`engagement_id` is signed content, not a `StatusKey`
+  component or key id, so the reported equalities are the same as a version-only reissue.)
 
 This shows that across a legitimate reissue the signed bytes, the grant `version` and the
 `StatusKey` `digest` differ, while the stable correlators — `issuer_key_id`, `tester_key_id`,
@@ -232,7 +241,7 @@ real deployment and is out of scope here.
 
 | Method | Support level | Where / note |
 | --- | --- | --- |
-| Q1 field-disclosure inventory (per observer) | measured | `rq8_privacy.rs` (`results/rq8_privacy.md`), FD01–FD08 + PO1/PO2/PO3/PO5 |
+| Q1 field-disclosure inventory (per observer) | measured | `rq8_privacy.rs` (`results/rq8_privacy.md`), FD01–FD10 + PO1/PO2/PO3/PO5 |
 | Q1 linkability comparison (identical vs reissued) | measured | `rq8_privacy.rs`, PL01/PL02 |
 | Q1 network/traffic metadata (O4) | deployment | no network modeled |
 | Q2 per-stage CPU (sig / policy / status), p50/p95/p99 | measured | `bench.rs`: `signature_x3`, `typed_policy`, `status_key_x3`, `status_lookup_x3` |
