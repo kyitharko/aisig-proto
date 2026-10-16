@@ -290,9 +290,11 @@ impl HwmStore {
         }
     }
 
-    /// Test/setup seam: pre-seed P's remembered high-water-mark for a key (models a response
-    /// P accepted earlier). Used by the RQ7 case runner for rollback/conflict/idempotent.
-    pub fn seed_epoch(&self, key: &StatusKey, epoch: u64, digest: [u8; 32]) {
+    /// Crate-internal setup seam: pre-seed P's remembered high-water-mark for a key (models a
+    /// response P accepted earlier). Used by the RQ7 case runner for rollback/conflict/
+    /// idempotent. **Not public:** it replaces the entry (clearing any sticky revocation), so
+    /// exposing it would let an external holder of a `&HwmStore` undo a recorded revocation.
+    pub(crate) fn seed_epoch(&self, key: &StatusKey, epoch: u64, digest: [u8; 32]) {
         let mut m = self.0.lock().expect("hwm lock");
         m.insert(
             key.clone(),
@@ -303,8 +305,9 @@ impl HwmStore {
         );
     }
 
-    /// Test/setup seam: mark a key as having already shown a validated Revoked/Superseded.
-    pub fn seed_sticky_revoked(&self, key: &StatusKey) {
+    /// Crate-internal setup seam: mark a key as having already shown a validated
+    /// Revoked/Superseded. Not public, for the same reason as [`HwmStore::seed_epoch`].
+    pub(crate) fn seed_sticky_revoked(&self, key: &StatusKey) {
         self.set_sticky(key, Sticky::Revoked);
     }
 
