@@ -199,3 +199,9 @@ id = "SS25"
 kind = "session"
 expected = "SessionIndeterminate / chain / ChainIndeterminate(Indeterminate / T / InvalidClockReading) ; SessionAccept"
 label_status = "reviewed"
+
+[[case]]
+id = "SS26"
+kind = "session"
+expected = "SessionIndeterminate / time / InvalidClockReading ; SessionAccept"
+label_status = "proposed"

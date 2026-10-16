@@ -25,7 +25,7 @@ pub const REDEEM_AT: &str = "2026-10-15T10:01:00Z";
 pub const SESSION_CASE_IDS: &[&str] = &[
     "SS01", "SS02", "SS03", "SS04", "SS05", "SS06", "SS07", "SS08", "SS09", "SS10", "SS11", "SS12",
     "SS13", "SS14", "SS15", "SS16", "SS17", "SS18", "SS19", "SS20", "SS21", "SS22", "SS23", "SS24",
-    "SI01", "SI02", "SI03", "SI04", "SI05", "SI06", "SI07", "SI08", "SS25",
+    "SI01", "SI02", "SI03", "SI04", "SI05", "SI06", "SI07", "SI08", "SS25", "SS26",
 ];
 
 fn issue_outcome(s: &Scenario, store: &dyn ChallengeStore, session: &str) -> IssueOutcome {
@@ -187,10 +187,44 @@ pub fn run(id: &str) -> Option<String> {
         }
         "SS25" => {
             // Negative uncertainty at redemption must not SessionAccept or consume; a
-            // later valid retry with the same proof then succeeds.
+            // later valid retry with the same proof then succeeds. (Both the chain re-verify
+            // read and the session time read see ε=-5, so this is caught at the chain stage.)
             s.set_clock(REDEEM_AT, -5);
             let a = one(&s, &store, SESSION, Some(&good));
             s.set_clock(REDEEM_AT, 2);
+            let b = one(&s, &store, SESSION, Some(&good));
+            format!("{a} ; {b}")
+        }
+        "SS26" => {
+            // Valid ε at the chain re-verify read, ε=-5 at the later redemption-time read:
+            // caught at the session time stage (not the chain stage). The invalid attempt
+            // must not consume; a valid retry with the same proof then succeeds.
+            let status = s.status_source();
+            let seq = SequenceClock::new(vec![
+                Some(ClockReading {
+                    now: ts(REDEEM_AT),
+                    epsilon: 2,
+                }),
+                Some(ClockReading {
+                    now: ts(REDEEM_AT),
+                    epsilon: -5,
+                }),
+            ]);
+            let ev = Evidence {
+                registry: &s.registry,
+                bindings: &s.bindings,
+                clock: &seq,
+                status: &status,
+            };
+            let svc = SessionService::new(
+                ChainVerifier {
+                    audience: P_AUD,
+                    evidence: ev,
+                },
+                &store,
+                &OsRandom,
+            );
+            let a = svc.redeem(&s.build(), SESSION, Some(&good)).to_string();
             let b = one(&s, &store, SESSION, Some(&good));
             format!("{a} ; {b}")
         }

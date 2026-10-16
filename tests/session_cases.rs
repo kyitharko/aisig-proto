@@ -12,8 +12,8 @@ fn every_session_label_has_a_runner_and_vice_versa() {
     let labelled: BTreeSet<String> = labels.iter().map(|l| l.id.clone()).collect();
     let runnable: BTreeSet<String> = SESSION_CASE_IDS.iter().map(|s| s.to_string()).collect();
     assert_eq!(labelled, runnable);
-    assert_eq!(labels.len(), 33);
-    // SS01-SS25 and SI01-SI08 reviewed (33); SS26 added later (D2).
+    assert_eq!(labels.len(), 34);
+    // SS01-SS25 and SI01-SI08 reviewed (33); SS26 proposed (1).
     assert_eq!(
         labels
             .iter()
@@ -26,7 +26,7 @@ fn every_session_label_has_a_runner_and_vice_versa() {
             .iter()
             .filter(|l| l.label_status == "proposed")
             .count(),
-        0
+        1
     );
 }
 
