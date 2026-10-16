@@ -11,7 +11,7 @@ Generated outputs. Do not edit by hand.
 | `bench_20261014T192333Z.md`, `.json` | `scripts/bench.sh`, git `526a3c6`, exact-object status keys | **historical (r3)** |
 | `bench_20261014T183348Z.md`, `.json` | `scripts/bench.sh`, git `9412502`, status keyed by (id, version) | **historical (r2)**; the status stage it measured no longer exists |
 
-RQ7 `tests/cases/freshness_cases.toml` (17 proposed) is design-only: no runner loads it and
+RQ7 `tests/cases/freshness_cases.toml` (30 proposed, f2) is design-only: no runner loads it and
 eval does not report it yet.
 
 Benchmark timestamps are UTC (the machine's local date was 2026-10-15).

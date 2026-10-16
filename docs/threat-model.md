@@ -108,7 +108,7 @@ Out of scope for e1, stated so none is read as defended:
 - completeness of the modeled effect taxonomy;
 - RQ7 status freshness during a session (the mediator trusts the session window).
 
-## 3c. RQ7 status-freshness threats (f1, design only; see [freshness.md](freshness.md))
+## 3c. RQ7 status-freshness threats (f2, design only; see [freshness.md](freshness.md))
 
 Proposed with the design; **no RQ7 code exists**. The status stage is shared by all three
 decision paths (chain, session redemption, mediation), so these apply everywhere status is
@@ -116,16 +116,16 @@ checked.
 
 | ID | Threat | Expected defence (status stage) | Cases |
 | --- | --- | --- | --- |
-| TH39 | Relying on a stale Active after a real revocation | Freshness bound F + response expiry; stale → Indeterminate, never Accept (X) | FR02, FR03, FR15, FR16 |
-| TH40 | Revocation hidden by an expired/stale responder answer | Revoked/Superseded is monotonic → Reject regardless of freshness; Reject dominates Indeterminate (X) | FR04, FR05, FR13, FR17 |
+| TH39 | Relying on a stale Active after a real revocation | Whole-interval freshness bound F + response expiry; any boundary overlap → Indeterminate, never Accept (X) | FR02, FR03, FR17, FR18, FB02, FB04, FB05 |
+| TH40 | Revocation hidden by an expired/stale responder answer | Revoked/Superseded is monotonic and sticky → Reject regardless of freshness; Reject dominates Indeterminate (X) | FR04, FR05, FR13, FR16, FR19 |
 | TH41 | Replay/rollback to an older Active response | Per-StatusKey monotonic high-water-mark (epoch/published_at); older Active → Indeterminate (X) | FR11 |
 | TH42 | Replaying another object's Active | Exact StatusKey (incl. digest) must match → else StatusUnknown (X) | FR12 |
-| TH43 | Future-dated or wrongly-signed responder statement | published_at/status_known_at ≤ now+ε; responder signature under a pinned key → else Indeterminate (X) | FR09, FR14 |
-| TH44 | Unavailable status source silently accepted | Unavailable/unknown → Indeterminate, never Accept (X) | FR07, FR08 |
+| TH43 | Future-dated, mis-ordered, or wrongly-signed responder statement | published_at/status_known_at ≤ now+ε; ordered timestamps; responder signature under a pinned key → else Indeterminate (X) | FR09, FB07, FR14, FR15 |
+| TH44 | Unavailable status source silently accepted | Unavailable/unknown → Indeterminate, never Accept (X) | FR07, FR08, FS04 |
 
-Out of scope for f1, stated so none is read as defended:
+Out of scope for f2, stated so none is read as defended:
 - a real responder protocol (OCSP/CRL/transparency log), real network or cache behavior;
-- a numeric revocation-detection bound without the U / Dd / ε assumptions (freshness.md §4);
+- a numeric revocation-detection bound: the U + Dd + ε figure is a conjecture conditional on unproved assumptions A1–A3 (freshness.md §6), withdrawn as a claim;
 - persisting the high-water-mark across restarts in a real, non-bottleneck way;
 - clock synchronization between the responder and P beyond the modeled ε.
 
