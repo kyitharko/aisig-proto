@@ -51,21 +51,25 @@ mediation records — beyond what the engagement already discloses? Privacy here
   mediation receipts record operation, target, class and time.
 
 **Measurable methods.**
-- *Field inventory (synthetic, supported now):* enumerate, per object type and per observer, the
-  fields disclosed, using the typed model and canonical encoding already in the prototype. This
-  is a structural audit, not a number — report it as a disclosure table.
-- *Linkability count (synthetic, supported now):* over a generated population of synthetic
-  chains, count how many objects are byte-identical / share a key id / share a `StatusKey`
-  across showings, to quantify correlation potential under O1–O3. Uses the existing fixture and
-  mutation machinery; no network.
-- *Query-pattern leakage (synthetic model, partial):* from the status-stage call sequence
-  (which `StatusKey`s, in what order) the prototype can report what R would observe in principle;
-  the *real* timing/size signal (O4) needs a deployment.
+- *Field inventory (synthetic; feasible as an extension):* enumerate, per observer, the artifacts
+  received and the fields each discloses, from the actual canonical signed bytes / wire forms
+  (and, for the effect receipt, its struct fields). A structural audit, not a number — reported
+  as a disclosure table. No network.
+- *Linkability comparison (synthetic; feasible as an extension):* a deterministic comparison of a
+  repeated identical signed grant versus a legitimately reissued grant, reporting equality of
+  signed bytes, key ids and exact `StatusKey` **separately** to show which fields correlate across
+  showings. Uses the existing fixture; no network.
+- *Query-pattern leakage (synthetic model; feasible as an extension):* from the status-stage call
+  sequence (which `StatusKey`s, in what order) the prototype could report what R observes in
+  principle; the *real* timing/size signal (O4) needs a deployment.
 
-**Synthetic vs real deployment.**
-- Supported now: field inventory, linkability counts, and the in-principle query pattern R sees.
-- Requires real deployment: O4 (network/traffic analysis — timing, size, endpoint correlation),
-  any claim about an actual responder protocol's metadata, and any adversary with side channels.
+**Support level.**
+- Measured now: none for Q1 yet.
+- Feasible as a synthetic extension (no network): the field inventory and the linkability
+  comparison.
+- Requires a real deployment: O4 (network/traffic analysis — timing, size, endpoint
+  correlation), any claim about an actual responder protocol's metadata, and any adversary with
+  side channels.
 
 **Open decisions (record; do not pre-judge).**
 - Whether to blind the status query (e.g. a privacy-preserving status check) vs the current
@@ -79,23 +83,28 @@ mediation records — beyond what the engagement already discloses? Privacy here
 ## Q2 — CPU cost vs end-to-end latency (including the status source)
 
 **Question.** Two different quantities must not be conflated: (a) the **CPU work** of a decision
-on one machine, and (b) the **end-to-end latency** a tester/provider experiences, which in a
-real deployment is dominated by the **status source** round-trip and by network, not by CPU.
+on one machine, and (b) the **end-to-end latency** a tester/provider experiences in a real
+deployment. An open question to *measure* (not assume): **what fraction of end-to-end latency
+is the status-source round-trip and network versus P's CPU decision, across cache hit/miss and
+across a stapled-token vs live-responder design?** This prototype has not measured end-to-end
+latency, so no claim is made about which component dominates.
 
 **What to measure.**
-- *CPU, per stage (supported now).* `src/bin/bench.rs` already times, separately and with
-  warmup + N iterations + R repeated runs, reporting p50/p95/p99: Ed25519 signature verification
-  (×3), typed policy evaluation, and a *simulated* status lookup. `scripts/bench.sh` records
-  rustc/cargo versions, CPU model (`/proc/cpuinfo`), kernel, build profile and seeds, so a CPU
-  result is reproducible. This measures (a) only, and only the synthetic, in-memory status path.
-- *Decision CPU for the whole `ValidChain_P` (supported now, as an extension of bench):* time
-  `verify(&Bundle)` end-of-CPU (format→status) against the in-memory fixtures. Still (a): the
-  status stage here is the always-current fixture (or the synthetic `FreshnessOracle` with an
-  in-memory responder), so there is **no** real responder latency.
-- *End-to-end latency (requires real deployment).* The real cost is: client→P, P→R status query
-  (network + R compute + R's own freshness/caching), P's CPU decision, and the session/mediation
-  round-trips. The prototype can model a *configurable* responder delay to show how end-to-end
-  latency decomposes, but any concrete end-to-end number needs a real responder and network.
+- *CPU, per stage (already measured by existing code).* `src/bin/bench.rs` already times,
+  separately and with warmup + N iterations + R repeated runs, reporting p50/p95/p99:
+  `signature_x3` (Ed25519 verify of C_A, D_U, G), `typed_policy` (linkage + policy),
+  `status_key_x3`, `status_lookup_x3` (simulated in-memory lookup), and `full_chain_verify`
+  (the whole `verify(&Bundle)`, format→status). `scripts/bench.sh` records rustc/cargo versions,
+  CPU model (`/proc/cpuinfo`), kernel, build profile and seeds, so a CPU result is reproducible.
+  This measures (a) only, and only the synthetic, in-memory status path.
+- *Responder-delay sensitivity (feasible after a synthetic extension).* A *configurable* modeled
+  responder delay, to show how a nonzero status-source latency would shift the decomposition.
+  **Not implemented yet;** when added it is clearly labeled modeled, not measured, and injects no
+  real network.
+- *End-to-end latency (requires a real deployment).* The real components are: client→P, P→R
+  status query (network + R compute + R's own freshness/caching), P's CPU decision, and the
+  session/mediation round-trips. Any concrete end-to-end number needs a real responder and
+  network and is out of scope for this synthetic prototype.
 
 **Method (fixed in advance).**
 - Separate the two axes explicitly in any report: "CPU per stage (this machine)" vs "end-to-end
@@ -103,15 +112,8 @@ real deployment is dominated by the **status source** round-trip and by network,
 - For CPU: warmup, fixed iteration/repeat counts, fixed RNG seed, recorded environment; report
   p50/p95/p99 per stage; attribute cost to signature verification vs policy vs status.
 - For end-to-end: define the components (client RTT, P→R RTT, R compute, cache hit/miss, P CPU,
-  session/mediation RTTs) and measure each in the real deployment; the synthetic prototype only
-  provides the P-CPU component and a *modeled* (not measured) responder delay for sensitivity
-  analysis.
-
-**Synthetic vs real deployment.**
-- Supported now: per-stage CPU, whole-`ValidChain_P` CPU, and a sensitivity analysis over a
-  modeled responder delay (clearly labeled as modeled, not measured).
-- Requires real deployment: every end-to-end latency number, real responder/network RTT, cache
-  behavior, and any throughput/contention figure under real load.
+  session/mediation RTTs) and measure each in the real deployment; the synthetic prototype can
+  at most provide the P-CPU component and a *modeled* (not measured) responder-delay sensitivity.
 
 **Open decisions (record).**
 - Whether the status source is stapled (owner-signed token carried in the bundle, no round-trip;
@@ -174,18 +176,22 @@ and what does that cost? This is a process/cost question, not a latency question
 
 ## Measurement-support summary
 
-| Method | Synthetic prototype | Needs real deployment |
+Three support levels: **measured** = already produced by existing code; **extension** = feasible
+after a synthetic (no-network) code extension, not implemented yet; **deployment** = requires a
+real deployment and is out of scope here.
+
+| Method | Support level | Where / note |
 | --- | --- | --- |
-| Q1 field-disclosure inventory (per observer) | yes | — |
-| Q1 linkability / correlation counts (O1–O3) | yes | — |
-| Q1 network/traffic metadata (O4) | — | yes |
-| Q2 per-stage CPU (sig / policy / status), p50/p95/p99 | yes (`bench.rs`) | — |
-| Q2 whole-`ValidChain_P` CPU | yes (bench extension) | — |
-| Q2 responder-delay sensitivity (modeled) | yes (modeled, not measured) | — |
-| Q2 end-to-end latency (real R + network) | — | yes |
-| Q3 onboarding step / critical-path map | yes (structural) | — |
-| Q3 canonical artifact sizes | yes | — |
-| Q3 person-time / monetary / operating cost | — | yes |
+| Q1 field-disclosure inventory (per observer) | extension | planned RQ8 privacy runner (not yet implemented) |
+| Q1 linkability / correlation counts (O1–O3) | extension | planned RQ8 privacy runner (not yet implemented) |
+| Q1 network/traffic metadata (O4) | deployment | no network modeled |
+| Q2 per-stage CPU (sig / policy / status), p50/p95/p99 | measured | `bench.rs`: `signature_x3`, `typed_policy`, `status_key_x3`, `status_lookup_x3` |
+| Q2 whole-`ValidChain_P` CPU | measured | `bench.rs`: `full_chain_verify` |
+| Q2 responder-delay sensitivity (modeled) | extension | configurable modeled delay, not implemented |
+| Q2 end-to-end latency (real R + network) | deployment | real responder + network RTT, cache, load |
+| Q3 onboarding step / critical-path map | extension | structural audit, not implemented |
+| Q3 canonical artifact sizes | extension | byte sizes of the canonical artifacts, not implemented |
+| Q3 person-time / monetary / operating cost | deployment | human/operating cost under real conditions |
 
 ## Non-goals and no-claim statement (this phase)
 

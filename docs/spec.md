@@ -535,7 +535,7 @@ specified and implemented separately and do not change the chain decision:
   `exact_node_lookup`/`subtree_lookup` here remain lookups, not mediation.
 - **RQ7:** status freshness and bounded revocation delay — a separate whole-interval
   freshness policy over a signed responder statement (docs/freshness.md f2, `src/freshness.rs`),
-  implemented synthetically behind its own runner; labels still `proposed`. The in-memory
+  implemented synthetically behind its own runner; all 34 labels owner-`reviewed`. The in-memory
   always-current status fixture remains the default for the chain/session/enforcement runs.
 - RQ3 is partially exercised (fixed depth-3 chain, non-amplification); arbitrary depth and multi-admin policy are not.
 - RQ8 (privacy, onboarding cost) is out of scope; CPU latency is measured only for this prototype.

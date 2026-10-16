@@ -7,7 +7,7 @@ pinned organization root → admin delegation → issuer delegation → tester g
 **Status:** spec draft r3.1 with owner decisions applied; Rust prototype, reviewed-case
 harness, property tests and CPU benchmark implemented; r3 added exact-object status
 identity, registry-record checks and named scope lookups; r3.1 removed the public
-pre-decoded decision API. All 93 chain and 15 lookup labels are owner-reviewed
+pre-decoded decision API. All 94 chain and 15 lookup labels are owner-reviewed
 (see [docs/experiment.md](docs/experiment.md)). RQ5 slice s1 adds a separate session
 proof-of-possession decision ([docs/session.md](docs/session.md); 34 reviewed session
 labels). RQ6 slice e2 adds a provider-mediated synthetic tool adapter

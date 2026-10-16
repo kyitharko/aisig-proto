@@ -313,8 +313,10 @@ diffing the label files against `b40ef85`).
 **Post-fix counts (reported separately):** chain 94/94 (all reviewed), lookup 15/15,
 session 33/33 (all reviewed), enforcement 28/28 (all reviewed). T12, SI06, SI07, SI08, SS25
 and EE28 were owner-reviewed in the follow-up cleanup; SS26 (redemption-time guard,
-distinct from SS25) was added there and remains proposed. fmt/clippy clean; all tests incl.
-doctests pass; both extra proptest seeds pass.
+distinct from SS25) was added there and was proposed at the time. fmt/clippy clean; all tests
+incl. doctests pass; both extra proptest seeds pass. *(Round-3 snapshot; superseded by the
+current counts in "Remaining open items" — session is now 34, and SS26 and all RQ5/RQ6 labels
+are reviewed.)*
 
 **Benchmark rerun** (`results/bench_20261015T201455Z.md`, git `21487fc`, same machine,
 `powersave` governor): medians p50 — full chain verify ≈243 µs, signature ×3 ≈132 µs, typed
@@ -327,8 +329,9 @@ runs are marked historical in results/README.md.
 - Q9–Q12 are decided (spec §10). Their follow-ups are future work:
   - an evidenced *conflict* result from an authoritative, complete status service (Q9);
   - root rotation with explicit record versions, validity and retirement (Q11).
-- As of the round-3 cleanup, no proposed labels remain: chain 94, lookup 15, session 34,
-  enforcement 28 are all owner-reviewed.
+- All decision-slice labels are owner-reviewed: chain 94, lookup 15, session 34,
+  enforcement 28 and RQ7 freshness 34. The only proposed labels are in new measurement slices
+  (RQ8; see below).
 - RQ5 s1 (34 labels) is owner-reviewed. RQ5 channel binding, relay resistance and
   per-request PoP remain open.
 - RQ6 e2 is implemented for synthetic operations; all 28 labels reviewed. Live tool
@@ -339,6 +342,7 @@ runs are marked historical in results/README.md.
   with a `cargo test` gate and a nonzero `eval` exit on any mismatch. The HWM seeding seams are
   crate-internal (`pub(crate)`), so an external holder of a `&HwmStore` cannot clear a sticky
   revocation. The bounded-revocation-delay figure stays a conjecture (§6, withdrawn as a claim).
-- RQ5 issuance now rejects inconsistent clock readings (SI05 reviewed; SI06/SI07 proposed).
-- Round 3: all time paths reject a negative ε (never clamp). New proposed labels T12,
-  SS25, SI08, EE28 await owner review.
+- RQ5 issuance rejects inconsistent clock readings; all time paths reject a negative ε (never
+  clamp). The labels those rounds introduced (SI05, SI06, SI07, SI08, SS25, SS26, T12, EE28)
+  are all owner-reviewed now and included in the counts above; the "proposed" notes in the
+  round-2/round-3 snapshots below are historical.
