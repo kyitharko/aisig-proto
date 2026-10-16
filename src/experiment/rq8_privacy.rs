@@ -7,21 +7,28 @@
 //! Synthetic only: synthetic org, test-only keys, `.test` hosts, in-memory fixtures. No network,
 //! no real data. This is a structural observation about the encoding, not a privacy guarantee.
 
+use std::collections::HashMap;
+
 use serde_json::{json, Value};
 
 use crate::codec::{canonical_json, TypeTag};
+use crate::crypto;
+use crate::decision::Decision;
 use crate::enforcement::{
     EffectReceipt, EffectSink, InMemorySessionAuthStore, Mediate, MediationRequest, Mediator,
 };
 use crate::evidence::StatusKey;
-use crate::freshness::{ResponderStatus, SignedResponse};
-use crate::session::{
-    encode_proof, Challenge, GrantRef, InMemoryChallengeStore, IssueOutcome, OsRandom,
-    SessionDecision, SessionService, RESPONSE_TAG, SESSION_FORMAT,
+use crate::freshness::{
+    FreshnessOracle, HwmStore, ResponderStatus, SignedResponse, StatusResponder, DEFAULT_F_SECONDS,
 };
+use crate::session::{
+    encode_proof, Challenge, InMemoryChallengeStore, IssueOutcome, OsRandom, SessionDecision,
+    SessionService, RESPONSE_TAG,
+};
+use crate::verifier::{decode_chain, ChainVerifier, Evidence};
 
 use super::cases::CaseLabel;
-use super::fixture::{asset, put, registration_key, secret, set, ts, Scenario, P_AUD};
+use super::fixture::{asset, put, registration_key, secret, set, ts, Scenario, ACME, P_AUD};
 
 pub const RQ8_PRIVACY_CASES_PATH: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -96,20 +103,26 @@ fn status_key_fields(key: &StatusKey) -> String {
     sorted_keys(parsed.get("status_key").expect("status_key object"))
 }
 
-/// A P-issued challenge, to inspect its wire fields (fixed non-secret values; only the field
-/// names are reported).
-fn sample_challenge(key: &StatusKey) -> Vec<u8> {
-    Challenge {
-        audience: P_AUD.to_owned(),
-        challenge_id: "0".repeat(32),
-        expires_at: ts("2026-10-15T10:02:00Z"),
-        format: SESSION_FORMAT.to_owned(),
-        grant: GrantRef::from(key),
-        issued_at: ts("2026-10-15T10:00:00Z"),
-        nonce: "nonce".to_owned(),
-        session_id: SESSION.to_owned(),
+/// A genuinely issued challenge (via `SessionService::issue`), to inspect its wire fields.
+fn issued_challenge() -> Challenge {
+    let mut s = Scenario::base();
+    s.set_clock("2026-10-15T10:00:00Z", 2);
+    let store = InMemoryChallengeStore::default();
+    let prepared = s.prepare();
+    let svc = SessionService::new(prepared.verifier(), &store, &OsRandom);
+    match svc.issue(&prepared.bundle, SESSION) {
+        IssueOutcome::Issued(c) => *c,
+        other => panic!("rq8 challenge fixture issuance must succeed, got {other}"),
     }
-    .wire_bytes()
+}
+
+/// A valid signed tester proof over an issued challenge, to inspect its wire fields.
+fn valid_proof() -> Vec<u8> {
+    let c = issued_challenge();
+    encode_proof(
+        &c.challenge_id,
+        &secret("tester-1").sign(RESPONSE_TAG, &c.wire_bytes()),
+    )
 }
 
 /// A genuine effect receipt from a real mediation Allow, to inventory the fields O5 logs. The
@@ -127,9 +140,10 @@ fn receipt_fields() -> String {
     sorted_keys(&obj)
 }
 
-fn sample_receipt() -> EffectReceipt {
+/// Base fixture plus read_only_data_access in the grant's test scope, so web.get is in class
+/// scope for the mediation step.
+fn enf_scenario() -> Scenario {
     let mut s = Scenario::base();
-    // read_only_data_access so web.get is in class scope.
     put(
         s.grant(),
         "test_scope",
@@ -138,6 +152,11 @@ fn sample_receipt() -> EffectReceipt {
             "kind": "classes"
         }),
     );
+    s
+}
+
+fn sample_receipt() -> EffectReceipt {
+    let mut s = enf_scenario();
     // Issue + redeem at 10:00:00Z to obtain a genuine SessionAuthorization.
     s.set_clock("2026-10-15T10:00:00Z", 2);
     let store = InMemoryChallengeStore::default();
@@ -193,6 +212,7 @@ fn eq(b: bool) -> &'static str {
     }
 }
 
+#[cfg(test)]
 fn grant_field<'a>(s: &'a Scenario, field: &str) -> &'a str {
     grant_payload(s)
         .get(field)
@@ -200,26 +220,59 @@ fn grant_field<'a>(s: &'a Scenario, field: &str) -> &'a str {
         .expect("string grant field")
 }
 
-/// Compare two grants on signed bytes, key ids and exact StatusKey, each reported separately.
+/// A grant, built and verified (chain `Accept`): the exact payload bytes covered by its
+/// signature, the signed `issuer_key_id`, the derived `keyid(tester_key)`, and its exact
+/// `StatusKey` — all read from the decoded, verified chain.
+struct GrantView {
+    signed_payload: Vec<u8>,
+    issuer_key_id: String,
+    tester_key_id: String,
+    status_key: StatusKey,
+}
+
+fn grant_view(s: &Scenario) -> GrantView {
+    let prepared = s.prepare();
+    assert_eq!(
+        prepared.run(),
+        Decision::Accept,
+        "a linkability grant must build and verify (chain Accept)"
+    );
+    let chain = decode_chain(&prepared.bundle).expect("decode the verified bundle");
+    let body = chain.grant().body();
+    GrantView {
+        signed_payload: chain.grant().payload().to_vec(),
+        issuer_key_id: body.issuer_key_id.clone(),
+        tester_key_id: crypto::key_id(body.tester_key.bytes()),
+        status_key: chain.status_keys()[2].1.clone(),
+    }
+}
+
+/// Compare two built+verified grants, reporting signed bytes, key ids, and each StatusKey
+/// component separately (so a `digest` difference is not read as an absence of correlation).
 fn linkability(a: &Scenario, b: &Scenario) -> String {
-    let signed_bytes = canonical_json(grant_payload(a)).expect("canon")
-        == canonical_json(grant_payload(b)).expect("canon");
-    let issuer_key_id = grant_field(a, "issuer_key_id") == grant_field(b, "issuer_key_id");
-    let tester_key_id = grant_field(a, "tester_key") == grant_field(b, "tester_key");
-    let status_key = grant_status_key(a) == grant_status_key(b);
+    let a = grant_view(a);
+    let b = grant_view(b);
     format!(
-        "signed_bytes={} issuer_key_id={} tester_key_id={} status_key={}",
-        eq(signed_bytes),
-        eq(issuer_key_id),
-        eq(tester_key_id),
-        eq(status_key),
+        "signed_bytes={} issuer_key_id={} tester_key_id={} status_key.org_id={} \
+         status_key.object_type={} status_key.id={} status_key.version={} status_key.digest={}",
+        eq(a.signed_payload == b.signed_payload),
+        eq(a.issuer_key_id == b.issuer_key_id),
+        eq(a.tester_key_id == b.tester_key_id),
+        eq(a.status_key.org_id == b.status_key.org_id),
+        eq(a.status_key.object_type == b.status_key.object_type),
+        eq(a.status_key.id == b.status_key.id),
+        eq(a.status_key.version == b.status_key.version),
+        eq(a.status_key.digest == b.status_key.digest),
     )
 }
 
-/// A legitimately reissued grant: same parties, new engagement id, re-signed.
+/// A legitimately reissued grant under a **new version** (spec §6: a new `version` or `id` is
+/// required; re-signing different content under the same `(org, type, id, version)` is
+/// unsupported). Same org, same grant `id`, same parties — so `org_id`/`id`/key ids still
+/// correlate while the signed bytes, `version` and `digest` change.
 fn reissued_grant() -> Scenario {
     let mut s = Scenario::base();
-    put(s.grant(), "engagement_id", json!("eng-acme-2026-10-15-02"));
+    put(s.grant(), "version", json!(2));
     s
 }
 
@@ -251,20 +304,142 @@ fn observer_set(mut v: Vec<&'static str>) -> String {
     v.join(",")
 }
 
-/// REPRODUCTION STUB (finding: hard-coded PO lists): returns fixed observer sets WITHOUT
-/// executing any flow. The proof-of-execution flags are all false. Replaced in the fix commit
-/// by a function that actually runs the freshness-aware flow and derives the sets from it.
+/// Execute a synthetic freshness-aware flow and derive each observer's received-artifact set
+/// from what actually ran: a chain verification where P validates R-signed status responses
+/// (so O3 is queried and O2 receives a response), a session issue + redeem (challenge, proof),
+/// and a mediation (effect receipt). No network; all synthetic.
 fn observe_flow() -> FlowTrace {
+    let mut s = enf_scenario();
+    s.set_clock("2026-10-15T10:00:00Z", 2);
+    let ak = registration_key(TypeTag::AdminDelegation, s.admin.as_ref().expect("admin"))
+        .expect("admin identity");
+    let dk = registration_key(
+        TypeTag::IssuerDelegation,
+        s.issuer.as_ref().expect("issuer"),
+    )
+    .expect("issuer identity");
+    let gk = grant_status_key(&s);
+    let mut responder = StatusResponder::new();
+    responder.insert(ak.clone(), status_response(&ak));
+    responder.insert(dk.clone(), status_response(&dk));
+    responder.insert(gk.clone(), status_response(&gk));
+    let mut pins = HashMap::new();
+    pins.insert(ACME.to_owned(), secret(RESPONDER).public_bytes());
+    let hwm = HwmStore::new();
+    let oracle = FreshnessOracle {
+        responder: &responder,
+        pinned: &pins,
+        f_seconds: DEFAULT_F_SECONDS,
+        hwm: &hwm,
+    };
+    let ev = Evidence {
+        registry: &s.registry,
+        bindings: &s.bindings,
+        clock: &s.clock,
+        status: &oracle,
+    };
+    let bundle = s.build();
+
+    // Chain verification against the freshness-aware oracle: Accept requires validating an
+    // R-signed response for each object, so P genuinely queried R (O3) and received a response.
+    let chain_accepted = ChainVerifier {
+        audience: P_AUD,
+        evidence: ev,
+    }
+    .verify(&bundle)
+        == Decision::Accept;
+    let r_signed_response_received = chain_accepted;
+
+    // Session issue + redeem.
+    let store = InMemoryChallengeStore::default();
+    let svc = SessionService::new(
+        ChainVerifier {
+            audience: P_AUD,
+            evidence: ev,
+        },
+        &store,
+        &OsRandom,
+    );
+    let challenge = match svc.issue(&bundle, SESSION) {
+        IssueOutcome::Issued(c) => Some(*c),
+        _ => None,
+    };
+    let challenge_issued = challenge.is_some();
+    let auth = challenge.as_ref().and_then(|c| {
+        let proof = encode_proof(
+            &c.challenge_id,
+            &secret("tester-1").sign(RESPONSE_TAG, &c.wire_bytes()),
+        );
+        match svc.redeem(&bundle, SESSION, Some(&proof)) {
+            SessionDecision::Accept(a) => Some(*a),
+            _ => None,
+        }
+    });
+    let proof_verified = auth.is_some();
+
+    // Mediation at 10:30:00Z (same freshness oracle, a later snapshot) -> effect receipt.
+    let receipt_recorded = if let Some(auth) = auth {
+        let mut sm = s.clone();
+        sm.set_clock("2026-10-15T10:30:00Z", 2);
+        let ev2 = Evidence {
+            registry: &sm.registry,
+            bindings: &sm.bindings,
+            clock: &sm.clock,
+            status: &oracle,
+        };
+        let authstore = InMemorySessionAuthStore::default();
+        authstore.insert(SESSION, auth);
+        let sink = EffectSink::new();
+        let med = Mediator {
+            chain: ChainVerifier {
+                audience: P_AUD,
+                evidence: ev2,
+            },
+            sessions: &authstore,
+            sink: &sink,
+        };
+        let req = MediationRequest {
+            bundle: sm.build(),
+            operation: "web.get".to_owned(),
+            target_wire: canonical_json(&asset("web:https://app.acme.test:443/app/reports"))
+                .expect("canonicalizable"),
+            claimed_class: None,
+        };
+        matches!(med.mediate(SESSION, &req), Mediate::Allow(_))
+    } else {
+        false
+    };
+
+    // Derive each observer's set from what actually executed.
+    let o1 = vec!["admin", "grant", "issuer"];
+    let mut o2 = vec!["admin", "grant", "issuer"];
+    if r_signed_response_received {
+        o2.push("status_response");
+    }
+    if challenge_issued {
+        o2.push("challenge");
+    }
+    if proof_verified {
+        o2.push("proof");
+    }
+    let mut o3 = Vec::new();
+    if r_signed_response_received {
+        o3.push("status_key");
+    }
+    let mut o5 = Vec::new();
+    if receipt_recorded {
+        o5.push("effect_receipt");
+    }
     FlowTrace {
-        o1: vec!["admin", "grant", "issuer"],
-        o2: vec!["admin", "challenge", "grant", "issuer", "proof", "status_response"],
-        o3: vec!["status_key"],
-        o5: vec!["effect_receipt"],
-        chain_accepted: false,
-        r_signed_response_received: false,
-        challenge_issued: false,
-        proof_verified: false,
-        receipt_recorded: false,
+        o1,
+        o2,
+        o3,
+        o5,
+        chain_accepted,
+        r_signed_response_received,
+        challenge_issued,
+        proof_verified,
+        receipt_recorded,
     }
 }
 
@@ -282,8 +457,8 @@ pub fn run(id: &str) -> Option<String> {
         "FD03" => fields_of_canonical(grant_payload(&s)),
         "FD04" => fields_of_bytes(status_response(&gk).payload()),
         "FD05" => status_key_fields(&gk),
-        "FD06" => fields_of_bytes(&sample_challenge(&gk)),
-        "FD07" => fields_of_bytes(&encode_proof("abc", &[0u8; 64])),
+        "FD06" => fields_of_bytes(&issued_challenge().wire_bytes()),
+        "FD07" => fields_of_bytes(&valid_proof()),
         "FD08" => receipt_fields(),
         // Observer -> artifacts actually received, derived from an executed synthetic flow.
         "PO1" => observer_set(observe_flow().o1),
