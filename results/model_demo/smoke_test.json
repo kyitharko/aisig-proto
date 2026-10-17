@@ -1,0 +1,39 @@
+{
+  "phase": 1,
+  "kind": "connectivity_smoke_test",
+  "authorization_result": false,
+  "note": "Proves n8n can reach a local model API; exercises NO verifier. No real scan/fetch/DB/shell.",
+  "date_utc": "2026-10-18",
+  "host": "Intel Core i7-6700 (4c/8t), CPU-only",
+  "env": {
+    "docker": "29.8.2",
+    "docker_compose": "v5.6.0",
+    "n8n_image": "n8nio/n8n:2.43.7",
+    "n8n_image_digest": "sha256:3db21366be1d3c77c1708963129c051948573019659e8873e0294be035ffc1b2",
+    "n8n_version": "2.43.7",
+    "ollama_image": "ollama/ollama:latest",
+    "ollama_image_digest": "sha256:265409e1d931028a8f7d5a32bcbafddd7bffbc6cc629d77efe9560adf692a5e7",
+    "ollama_version": "0.40.6"
+  },
+  "models": {
+    "qwen3:0.6b": {"id": "7df6b6e09427", "size": "522 MB", "manifest_sha256": "6f76d4346c34ba89df6e137fb661b4bb4daf322c1151b6ef0dfda981070a851f"},
+    "qwen3:1.7b": {"id": "8f68893c685c", "size": "1.4 GB", "manifest_sha256": "0f45bae8cd2fec097cf09b400b078cf42388a1f5702f4058d2d6d641a09db46d"}
+  },
+  "port_exposure": {"n8n": "127.0.0.1:5678->5678/tcp", "ollama": "private compose network, no host port"},
+  "call": {
+    "from": "n8n container",
+    "url": "http://ollama:11434/api/chat",
+    "model": "qwen3:0.6b",
+    "stream": false,
+    "request_content": "Reply with one short sentence about this synthetic demo."
+  },
+  "response": {
+    "model": "qwen3:0.6b",
+    "done": true,
+    "done_reason": "stop",
+    "content": "Synthetic demos simulate real-world scenarios to test new technologies effectively.",
+    "eval_count": 94,
+    "total_duration_ns": 3547322747,
+    "wall_clock_ms": 3626
+  }
+}
