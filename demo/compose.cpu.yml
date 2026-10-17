@@ -1,0 +1,28 @@
+# Local infrastructure smoke test only. The Rust provider controller and n8n
+# authorization workflow are not implemented by this file.
+services:
+  n8n:
+    image: n8nio/n8n:2.43.7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      TZ: Etc/UTC
+      GENERIC_TIMEZONE: Etc/UTC
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_VULKAN: "0"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  n8n_data:
+  ollama_data:

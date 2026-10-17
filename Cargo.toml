@@ -3,8 +3,8 @@ name = "aisig-proto"
 version = "0.1.0"
 edition = "2021"
 publish = false
+license = "Apache-2.0"
 description = "Research prototype: provider-verified authorization chains for AI-agent security testing (synthetic data only)"
-# No license chosen yet; see README.
 
 [dependencies]
 base64 = "0.23"

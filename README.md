@@ -1,6 +1,6 @@
 # aisig-proto — provider-verified authorization chains (research prototype)
 
-Private research prototype. It asks whether an AI-agent provider P can check that an
+Research prototype. It asks whether an AI-agent provider P can check that an
 engagement grant for security testing is backed by a non-amplifying chain of authority:
 pinned organization root → admin delegation → issuer delegation → tester grant.
 
@@ -19,6 +19,14 @@ Everything here is synthetic: organizations, keys, `.test` hosts and databases. 
 scans, connects to, or tests any real target. No real credentials, client data or live
 assets are in this repository.
 
+**AI-assisted development and production use:** This prototype was developed substantially
+with AI coding assistance (often called "vibe coding"). Its expected-case labels were reviewed
+by the project owner and its documented tests were run; the implementation has not undergone an
+independent security audit. It is a research demonstration, not a production authorization
+service. Before adapting it to protect real systems, commission independent design and code
+review, test with the intended environment and threat model, and reimplement any components
+that cannot be adequately validated. Never point the synthetic demo at a real target.
+
 ## Documents
 
 - [docs/spec.md](docs/spec.md) — glossary, data model, signed bytes, scope semantics, decision rule, owner decisions
@@ -30,6 +38,8 @@ assets are in this repository.
 - [docs/freshness.md](docs/freshness.md) — RQ7 slice f2 (implemented; labels reviewed): status freshness and bounded revocation delay
 - [docs/rq8.md](docs/rq8.md) — RQ8: privacy leakage (Q1 slice 1, 16 reviewed observations), CPU vs end-to-end latency (Q2 slice 1: measured CPU + 6 reviewed modeled responder-delay scenarios), onboarding/cost (Q3 slice 1: step inventory + measured artifact byte sizes, 17 reviewed; human/monetary/storage cost not inferred); no privacy/latency/cost number over a real deployment claimed
 - [docs/report.md](docs/report.md) — what was run and what it produced
+- [docs/model-demo.md](docs/model-demo.md) — design and CPU-only n8n/Ollama smoke-test instructions for a local small-model simulation (provider API and model-derived authorization results not implemented yet)
+- [docs/public-release.md](docs/public-release.md) — public repository preparation and outreach plan
 
 ## Status closeout
 
@@ -101,9 +111,14 @@ persistence is disabled, so a seed fully determines a run.
 
 ## Git
 
-This repository is local only. Work happens on `feature/chain-verifier-prototype`;
-nothing has been pushed and no remote is configured.
+At this snapshot, work is local on `feature/chain-verifier-prototype`; nothing has been pushed
+and no remote is configured. See [docs/public-release.md](docs/public-release.md) before
+publishing the local history.
 
 ## License
 
-Not chosen. The owner will decide separately. Until then, no license is granted.
+The code and repository documentation are licensed under [Apache-2.0](LICENSE), allowing free
+use, modification, and redistribution, including commercial use, under its conditions. This
+license does not cover model weights supplied separately for the planned demo; check the
+selected model's own terms. `publish = false` in `Cargo.toml` prevents accidental crates.io
+publication and does not restrict GitHub source distribution.

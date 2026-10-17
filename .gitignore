@@ -8,6 +8,11 @@ AI_Agent_*.md
 *.zip
 /zip/
 
+# Local demo runtime data and downloaded model weights (never commit)
+demo/data/
+*.gguf
+*.safetensors
+
 # Never commit real credentials, keys, or client material
 *.pem
 *.key
