@@ -24,6 +24,7 @@ pub mod baseline;
 pub mod codec;
 pub mod crypto;
 pub mod decision;
+pub mod demo;
 pub mod enforcement;
 pub mod evidence;
 pub mod experiment;
