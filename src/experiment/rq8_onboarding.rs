@@ -21,7 +21,7 @@ pub const RQ8_ONBOARDING_CASES_PATH: &str = concat!(
 
 pub const RQ8_ONBOARDING_CASE_IDS: &[&str] = &[
     "OB01", "OB02", "OB03", "OB04", "OB05", "OB06", "OB07", "OB08", "OB09", "OB10", "OB11", "OS-O",
-    "OS-P", "OS-T", "OS-R",
+    "OS-A", "OS-U", "OS-T", "OS-P", "OS-R",
 ];
 
 // ---------------------------------------------------------------------------
@@ -103,18 +103,23 @@ enum Tag {
 /// The step map of docs/rq8.md Q3 slice 1, as data: (party, tag).
 const STEPS: &[(&str, Tag)] = &[
     ("O", Tag::Implemented), // generate K_O
-    ("O", Tag::Implemented), // issue C_A
-    ("O", Tag::AssumedOob),  // pin K_O at P
-    ("O", Tag::DesignOnly),  // rotate/retire
-    ("P", Tag::AssumedOob),  // pin org root K_O
-    ("P", Tag::AssumedOob),  // pin responder K_R
+    ("O", Tag::Implemented), // issue C_A (sign K_O)
+    ("O", Tag::AssumedOob),  // pin K_O at P (RQ1)
+    ("O", Tag::DesignOnly),  // rotate/retire root
+    ("A", Tag::Implemented), // admin: hold K_admin
+    ("A", Tag::Implemented), // admin: issue D_U (sign K_admin)
+    ("U", Tag::Implemented), // issuer: hold K_authorizer
+    ("U", Tag::Implemented), // issuer: issue G (sign K_authorizer)
+    ("T", Tag::Implemented), // hold K_T
+    ("T", Tag::AssumedOob),  // receive G delivery
+    ("T", Tag::Implemented), // respond to challenge
+    ("P", Tag::AssumedOob),  // pin org root K_O (RQ1)
+    ("P", Tag::AssumedOob),  // pin responder K_R (RQ7)
+    ("P", Tag::AssumedOob),  // rely on asset-binding evidence (RQ2)
     ("P", Tag::Implemented), // verify chain
     ("P", Tag::Implemented), // query status/freshness
     ("P", Tag::Implemented), // issue+redeem session
     ("P", Tag::Implemented), // mediate action
-    ("T", Tag::Implemented), // hold K_T
-    ("T", Tag::AssumedOob),  // receive G delivery
-    ("T", Tag::Implemented), // respond to challenge
     ("R", Tag::AssumedOob),  // provisioned / hold K_R
     ("R", Tag::Implemented), // sign status responses
     ("R", Tag::Implemented), // epoch/known-at/expiry discipline
@@ -158,13 +163,16 @@ pub fn run(id: &str) -> Option<String> {
         "OB08" => format!("root_envelope_bytes={}", s.root_envelope),
         "OB09" => format!("signature_bytes={}", s.signature),
         "OB10" => format!("bundle_total_envelope_bytes={}", s.bundle_total),
+        // In-memory bundle-slot bytes only; no transmission-cost claim (no wire encoding here).
         "OB11" => format!(
-            "mediation_request_bundle_bytes={} independent_transmission_cost=false",
+            "mediation_request_bundle_slot_bytes={}",
             request_bundle_bytes()
         ),
         "OS-O" => party_observation("O"),
-        "OS-P" => party_observation("P"),
+        "OS-A" => party_observation("A"),
+        "OS-U" => party_observation("U"),
         "OS-T" => party_observation("T"),
+        "OS-P" => party_observation("P"),
         "OS-R" => party_observation("R"),
         _ => return None,
     };
