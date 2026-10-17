@@ -252,7 +252,7 @@ modeled explicitly: `A` = admin (`K_admin`, issues `D_U`), `U` = issuer/authoriz
 | P | mediate an action | implemented | per-action |
 | R | be provisioned / hold `K_R` | assumed-oob | one-time/org |
 | R | sign status responses | implemented | per-publication/update |
-| R | keep epoch/known-at/expiry discipline | implemented | per-action |
+| R | keep epoch/known-at/expiry discipline | implemented | per-publication/update |
 
 Per-party counts gated (`implemented` / `assumed-oob` / `design-only`): O = 2/1/1, A = 2/0/0,
 U = 2/0/0, T = 2/1/0, P = 4/3/0, R = 2/1/0.

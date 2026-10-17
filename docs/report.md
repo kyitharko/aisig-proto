@@ -390,16 +390,18 @@ as fixture-specific synthetic observations.
   behavior, O4 network/traffic metadata, and human/monetary/storage/operational cost are
   unmeasured and need a real deployment.
 - **The RQ8 numbers are synthetic, not real:** the Q2 modeled responder-delay (`rtt_ms`) is an
-  assumed value, not a measured RTT, and the Q3 step counts and byte sizes are a fixture-specific
-  inventory — neither is a real latency or operational-cost figure. The only measured numbers are
-  the local CPU benchmark (wall-clock on one machine, not process CPU time).
+  assumed value, not a measured RTT, and the Q3 step-inventory counts are not an operational-cost
+  figure. Two quantities *are* measured: the local CPU benchmark (wall-clock on one machine, not
+  process CPU time) and the Q3 canonical artifact byte sizes (measured from the synthetic
+  fixture). Byte sizes are a size measurement only — they do **not** measure transport framing,
+  retransmission, or operational cost.
 
 **Reproducibility.**
 ```
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
-cargo test --all-targets            # unit + integration gates + doctests
-cargo test --doc
+cargo test                          # full suite: unit + integration gates + doctests
+cargo test --doc                    # doctests alone (compile_fail API-boundary guards)
 cargo run --release --bin eval      # writes results/*.{md,json}; nonzero exit on any label mismatch
 scripts/bench.sh                    # N=10000 R=10; writes results/bench_<UTC>.{md,json} with environment
 git log --oneline ; git diff main...HEAD --stat

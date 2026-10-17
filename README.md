@@ -38,9 +38,11 @@ Reviewed label counts: **chain 94, lookup 15, session 34, enforcement 28, freshn
 Plainly: **RQ1/RQ2 are trusted assumptions** (unverified in-memory fixtures); **RQ3 is only
 partly exercised** (fixed depth-3 chain, non-amplification); **real tool enforcement and real
 deployment measurements remain open** (RQ6 mediates only modeled effects; real latency, network/
-O4 metadata and human/monetary/storage cost are unmeasured). The **Q2 modeled RTT and the Q3
-step counts/byte sizes are not real latency or operational cost** — the only measured numbers are
-the local CPU benchmark (wall-clock, one machine). See [docs/report.md](docs/report.md) "Final
+O4 metadata and human/monetary/storage cost are unmeasured). The **Q2 modeled RTT is not a real
+latency and the Q3 step counts are not an operational cost.** Two things *are* measured: the
+local CPU benchmark (wall-clock on one machine, not process CPU time) and the Q3 canonical
+artifact byte sizes (from the synthetic fixture) — but byte sizes are a size measurement only,
+not a measure of transport or operational cost. See [docs/report.md](docs/report.md) "Final
 synthetic-prototype closeout" for the reproducibility commands and the exact benchmark
 environment/commit.
 
