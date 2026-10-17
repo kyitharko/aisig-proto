@@ -3,48 +3,49 @@
 # inputs (query count, cache hit/miss, serial/parallel, an assumed per-query rtt_ms). They are
 # MODELED, not measured: rtt_ms is a placeholder, not a real RTT, and no timing or network is
 # involved. The measured CPU per-call elapsed is reported separately in the bench results; real
-# end-to-end network latency is unmeasured. All `proposed` (owner review pending). Never edit a
-# label to match implementation output. `expected` holds the full observation string the runner
-# emits: "queries=<q> misses=<m> mode=<serial|parallel|none> rtt_ms=<r> responder_delay_ms=<d>".
+# end-to-end network latency is unmeasured. All 6 (QL01-QL06) were owner-reviewed as modeled
+# arithmetic (not measured latency) and are now `reviewed`. Never edit a label to match
+# implementation output. `expected` holds the full observation string the runner emits:
+# "queries=<q> misses=<m> mode=<serial|parallel|none> rtt_ms=<r> responder_delay_ms=<d>".
 
 [[case]]
 id = "QL01"
 kind = "rq8_latency"
 expected = "queries=3 misses=3 mode=serial rtt_ms=50 responder_delay_ms=150"
-label_status = "proposed"
+label_status = "reviewed"
 note = "3 status queries, all cache miss, serial: 3 x 50 ms"
 
 [[case]]
 id = "QL02"
 kind = "rq8_latency"
 expected = "queries=3 misses=3 mode=parallel rtt_ms=50 responder_delay_ms=50"
-label_status = "proposed"
+label_status = "reviewed"
 note = "3 status queries, all cache miss, parallel: bounded by one round-trip"
 
 [[case]]
 id = "QL03"
 kind = "rq8_latency"
 expected = "queries=3 misses=0 mode=serial rtt_ms=50 responder_delay_ms=0"
-label_status = "proposed"
+label_status = "reviewed"
 note = "3 status queries, all cache hit: no responder round-trip"
 
 [[case]]
 id = "QL04"
 kind = "rq8_latency"
 expected = "queries=3 misses=1 mode=serial rtt_ms=50 responder_delay_ms=50"
-label_status = "proposed"
+label_status = "reviewed"
 note = "3 status queries, one cache miss, serial: 1 x 50 ms"
 
 [[case]]
 id = "QL05"
 kind = "rq8_latency"
 expected = "queries=3 misses=1 mode=parallel rtt_ms=50 responder_delay_ms=50"
-label_status = "proposed"
+label_status = "reviewed"
 note = "3 status queries, one cache miss, parallel: one round-trip (same as serial for a single miss)"
 
 [[case]]
 id = "QL06"
 kind = "rq8_latency"
 expected = "queries=0 misses=0 mode=none rtt_ms=50 responder_delay_ms=0"
-label_status = "proposed"
+label_status = "reviewed"
 note = "stapled owner-signed freshness token in the bundle: no responder query"

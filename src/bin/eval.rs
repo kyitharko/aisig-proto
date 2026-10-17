@@ -174,7 +174,7 @@ fn main() {
     }
     println!("wrote results/rq8_privacy.md and results/rq8_privacy.json");
 
-    // RQ8 Q2 latency slice: modeled responder-delay scenarios (proposed).
+    // RQ8 Q2 latency slice: modeled responder-delay scenarios (owner-reviewed).
     let latency_labels =
         cases::load(rq8_latency::RQ8_LATENCY_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
     let latency_rows = rq8_latency::run_all(&latency_labels);
@@ -191,7 +191,7 @@ fn main() {
         .filter(|r| r.actual == r.label.expected)
         .count();
     println!(
-        "rq8 latency slice: {ok}/{} match (all proposed, modeled)",
+        "rq8 latency slice: {ok}/{} match (all reviewed, modeled)",
         latency_rows.len()
     );
     let latency_mismatches = latency_rows

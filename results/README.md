@@ -9,7 +9,7 @@ Generated outputs. Do not edit by hand.
 | `enforcement_cases.md`, `.json` | same run, RQ6 enforcement labels (28 reviewed) | current (e2) |
 | `freshness_cases.md`, `.json` | same run, RQ7 freshness-slice labels (34 reviewed) | current (f2) |
 | `rq8_privacy.md`, `.json` | same run, RQ8 Q1 privacy slice: field disclosure + linkability (16 reviewed) | current |
-| `rq8_latency.md`, `.json` | same run, RQ8 Q2 latency slice: modeled responder-delay scenarios (6 proposed) | current |
+| `rq8_latency.md`, `.json` | same run, RQ8 Q2 latency slice: modeled responder-delay scenarios (6 reviewed) | current |
 | `bench_20261017T025341Z.md`, `.json` | `scripts/bench.sh`, git `8309871`, HEAD rerun for the RQ8 Q2 slice (same machine) | current (RQ8 Q2) |
 | `bench_20261015T201455Z.md`, `.json` | `scripts/bench.sh`, git `21487fc`, after the negative-ε rejection in the time paths | **historical (round 3)** |
 | `bench_20261014T192333Z.md`, `.json` | `scripts/bench.sh`, git `526a3c6`, exact-object status keys | **historical (r3)** |
@@ -18,4 +18,4 @@ Generated outputs. Do not edit by hand.
 RQ7 `tests/cases/freshness_cases.toml` (34 reviewed, f2) is matched by the RQ7 implementation
 and reported in `freshness_cases.md`/`.json`; the owner has approved all 34 expected outcomes.
 
-Benchmark timestamps are UTC (the machine's local date was 2026-10-15).
+Benchmark file timestamps are UTC; the current run is `bench_20261017T025341Z` (2026-10-17 UTC).

@@ -16,7 +16,7 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ5 tester/session binding | **First slice (s1), reviewed labels.** Challenge/response proof of possession bound to a P-held session and the exact G (docs/session.md); no channel binding, relay resistance or per-request proof. |
 | RQ6 enforcement of agent actions | **Slice e2 implemented (synthetic).** Provider-mediated tool adapter (docs/enforcement.md): 28/28 reviewed cases match. One clock snapshot per mediation; the effect-sink append is private. Only modeled synthetic effects; no live tool enforcement. |
 | RQ7 revocation freshness | **Slice f2 implemented (synthetic).** Whole-interval freshness over a signed responder statement (docs/freshness.md; `src/freshness.rs`): 34/34 cases match. Labels all owner-`reviewed`. The chain/session/enforcement runs keep the instant, always-current fixture. |
-| RQ8 privacy / latency / onboarding | **Q1 + Q2 slice 1 implemented (synthetic); Q3 design only.** Q1: field-disclosure inventory + identical-vs-reissued linkability (`rq8_privacy.rs`, `results/rq8_privacy.md`): 16/16 **reviewed**. Q2: a rerun CPU benchmark (`results/bench_20261017T025341Z.md`, wall-clock, not process CPU time) plus 6 **proposed** modeled responder-delay scenarios (`rq8_latency.rs`, `results/rq8_latency.md`) kept separate from the measured CPU and from the unmeasured real end-to-end latency. A structural/modeled observation, not a privacy or latency guarantee; O4 network metadata unmeasured. No RQ8 privacy/latency/cost number over a real deployment is claimed. |
+| RQ8 privacy / latency / onboarding | **Q1 + Q2 slice 1 implemented (synthetic); Q3 design only.** Q1: field-disclosure inventory + identical-vs-reissued linkability (`rq8_privacy.rs`, `results/rq8_privacy.md`): 16/16 **reviewed**. Q2: a rerun CPU benchmark (`results/bench_20261017T025341Z.md`, wall-clock, not process CPU time) plus 6 **reviewed** modeled responder-delay scenarios (`rq8_latency.rs`, `results/rq8_latency.md`) kept separate from the measured CPU and from the unmeasured real end-to-end latency. A structural/modeled observation, not a privacy or latency guarantee; O4 network metadata unmeasured. No RQ8 privacy/latency/cost number over a real deployment is claimed. |
 
 ## RQ5 session slice s1 (reviewed; separate from the chain results)
 
@@ -188,7 +188,12 @@ it, 76 vs 75 before, because it ignores the clock entirely.)
   - Unit tests: exact-key status (other type, other content, other org → Unknown) and the
     `/app` vs `/app/admin` lookup pair.
 
-## E3 — CPU benchmark (current: `results/bench_20261015T201455Z.md`; earlier runs historical)
+## E3 — CPU benchmark (**historical snapshot**; current run: `results/bench_20261017T025341Z.md`)
+
+**The table below is a historical snapshot (git `526a3c6`).** The current benchmark is the RQ8
+Q2 rerun `results/bench_20261017T025341Z.md` (same machine, git `8309871`); all earlier runs are
+listed historical in `results/README.md`. These are wall-clock elapsed per call (CPU-focused,
+not process CPU time).
 
 Intel Core i7-6700 @ 3.40 GHz, 8 logical cores, Linux 7.0.0-31-generic, governor
 `powersave`, rustc 1.98.0, release profile, single-threaded, git `526a3c6`.
@@ -347,7 +352,7 @@ runs are marked historical in results/README.md.
   (`src/experiment/rq8_privacy.rs`, `results/rq8_privacy.md`; 16 **reviewed** observations, gated
   in `cargo test` and `eval`). It is a structural observation, not a privacy guarantee; O4
   network metadata is unmeasured. Q2 slice 1 adds a rerun CPU benchmark
-  (`results/bench_20261017T025341Z.md`) and 6 **proposed** modeled responder-delay scenarios
+  (`results/bench_20261017T025341Z.md`) and 6 **reviewed** modeled responder-delay scenarios
   (`src/experiment/rq8_latency.rs`, `results/rq8_latency.md`, gated), keeping measured CPU,
   modeled delay, and unmeasured real end-to-end latency separate. Q3 onboarding remains
   design-only.

@@ -4,7 +4,7 @@
       "actual": "queries=3 misses=3 mode=serial rtt_ms=50 responder_delay_ms=150",
       "expected": "queries=3 misses=3 mode=serial rtt_ms=50 responder_delay_ms=150",
       "id": "QL01",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "3 status queries, all cache miss, serial: 3 x 50 ms"
     },
@@ -12,7 +12,7 @@
       "actual": "queries=3 misses=3 mode=parallel rtt_ms=50 responder_delay_ms=50",
       "expected": "queries=3 misses=3 mode=parallel rtt_ms=50 responder_delay_ms=50",
       "id": "QL02",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "3 status queries, all cache miss, parallel: bounded by one round-trip"
     },
@@ -20,7 +20,7 @@
       "actual": "queries=3 misses=0 mode=serial rtt_ms=50 responder_delay_ms=0",
       "expected": "queries=3 misses=0 mode=serial rtt_ms=50 responder_delay_ms=0",
       "id": "QL03",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "3 status queries, all cache hit: no responder round-trip"
     },
@@ -28,7 +28,7 @@
       "actual": "queries=3 misses=1 mode=serial rtt_ms=50 responder_delay_ms=50",
       "expected": "queries=3 misses=1 mode=serial rtt_ms=50 responder_delay_ms=50",
       "id": "QL04",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "3 status queries, one cache miss, serial: 1 x 50 ms"
     },
@@ -36,7 +36,7 @@
       "actual": "queries=3 misses=1 mode=parallel rtt_ms=50 responder_delay_ms=50",
       "expected": "queries=3 misses=1 mode=parallel rtt_ms=50 responder_delay_ms=50",
       "id": "QL05",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "3 status queries, one cache miss, parallel: one round-trip (same as serial for a single miss)"
     },
@@ -44,7 +44,7 @@
       "actual": "queries=0 misses=0 mode=none rtt_ms=50 responder_delay_ms=0",
       "expected": "queries=0 misses=0 mode=none rtt_ms=50 responder_delay_ms=0",
       "id": "QL06",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "stapled owner-signed freshness token in the bundle: no responder query"
     }

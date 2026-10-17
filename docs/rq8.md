@@ -2,7 +2,7 @@
 
 **Status:** DRAFT, 2026-10-17. **Q1 slice 1 (privacy: field disclosure + linkability) is
 implemented synthetically with 16 owner-`reviewed` observations; Q2 slice 1 (latency) adds a
-rerun CPU benchmark plus 6 `proposed` modeled responder-delay scenarios (real end-to-end
+rerun CPU benchmark plus 6 `reviewed` modeled responder-delay scenarios (real end-to-end
 latency stays unmeasured); Q3 (onboarding/cost) remains design only.** This document defines
 the *questions* and
 *measurement methods* so that any RQ8 result is produced against a method fixed in advance.
@@ -144,11 +144,17 @@ responder_delay_ms = 0                         if queries == 0            (stapl
                    = misses * rtt_ms           if mode == serial
                    = (misses > 0 ? rtt_ms : 0) if mode == parallel
 ```
-An *illustrative* end-to-end total would be `measured_cpu (quantity 1) + responder_delay
-(quantity 2) + real_network (quantity 3, unmeasured)`; only `responder_delay` is gated. The
-measured CPU is reported separately in the bench results and is **not** baked into a gated
-label (it is machine- and run-dependent). Scenarios QL01–QL06 are in
-`tests/cases/rq8_latency_cases.toml` (proposed), gated in `cargo test` and `eval`.
+The three quantities are **not added into a single total**: the modeled responder delay
+(quantity 2) and the real network latency (quantity 3) overlap — a real RTT already includes
+network time — so summing them would double-count, and neither is a measured RTT. Only the
+modeled `responder_delay` is gated; the measured CPU is reported separately in the bench results
+(it is machine- and run-dependent and is not baked into a gated label). **Parallel status
+queries and the stapled-token variant are hypothetical scenarios, not implemented verifier
+paths:** the verifier issues its status checks serially over an in-memory fixture and v0 has no
+stapled-token path. Scenarios QL01–QL06 are in `tests/cases/rq8_latency_cases.toml` (gated in
+`cargo test` and `eval`). **`QL06 = 0` means zero modeled responder-query delay (no round-trip),
+not zero token-verification cost** — verifying a stapled token would still cost CPU (quantity 1),
+unmeasured here.
 
 **Open decisions (record).**
 - Whether the status source is stapled (owner-signed token carried in the bundle, no round-trip;
