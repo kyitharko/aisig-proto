@@ -1,8 +1,8 @@
 # RQ8 — privacy, latency and onboarding cost
 
 **Status:** DRAFT, 2026-10-17. **Q1 slice 1 (privacy: field disclosure + linkability) is
-implemented synthetically with 16 `proposed` observations awaiting owner review; Q2 (latency)
-and Q3 (onboarding/cost) remain design only.** This document defines the *questions* and
+implemented synthetically with 16 owner-`reviewed` observations; Q2 (latency) and Q3
+(onboarding/cost) remain design only.** This document defines the *questions* and
 *measurement methods* so that any RQ8 result is produced against a method fixed in advance.
 Where the existing synthetic prototype can support a method it is stated; where a real
 deployment is required it is stated. **No performance, privacy or cost *number* is asserted:**
@@ -38,7 +38,8 @@ mediation records — beyond what the engagement already discloses? Privacy here
   not P's `now`/`ε` (R never receives them; freshness.md §2).
 - **O4 — a network/path observer** of a *real* deployment: sees timing, size and endpoint
   metadata of status queries and session/mediation traffic. **Not modeled** (no network here).
-- **O5 — a reader of P's logs / effect sink:** sees `EffectReceipt`s and decision findings.
+- **O5 — a reader of P's effect sink:** sees the modeled `EffectReceipt`s. (Decision logs /
+  findings are not modeled or measured in this slice; O5 covers the effect-receipt data only.)
 
 **What to characterize (leakage surfaces), per observer.**
 - Field-level disclosure in `C_A`/`D_U`/`G`: org id, admin/issuer/tester key ids, asset scope
@@ -180,7 +181,7 @@ and what does that cost? This is a process/cost question, not a latency question
 First implemented RQ8 slice (Q1 only; Q2 and Q3 stay design-only). Method and expected
 observations are fixed in `tests/cases/rq8_privacy_cases.toml` **before** the runner; the runner
 (`src/experiment/rq8_privacy.rs`, reported in `results/rq8_privacy.md`) extracts the *actual*
-field sets and comparisons and must match. All observations are `proposed` for owner review. No
+field sets and comparisons and must match. All 16 observations are owner-`reviewed`. No
 real-world privacy guarantee is inferred; synthetic only, no network, no real data.
 
 **Fixture.** The base synthetic fixture (experiment.md §2): org `org-acme-synthetic`, test-only
@@ -231,7 +232,7 @@ and the `StatusKey` `org_id`, `object_type` and `id` — remain equal. It is an 
 this synthetic encoding, not a privacy guarantee.
 
 **Gate.** Exact matches are gated in `cargo test` (an integration test one-to-one with the
-runner) and `eval` exits nonzero on any mismatch. Labels stay `proposed`.
+runner) and `eval` exits nonzero on any mismatch. The 16 observations are owner-`reviewed`.
 
 ## Measurement-support summary
 

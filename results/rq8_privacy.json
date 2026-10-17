@@ -4,7 +4,7 @@
       "actual": "audience,bounds,format,id,issuer_key_id,org_id,rights,subject_key,validity,version",
       "expected": "audience,bounds,format,id,issuer_key_id,org_id,rights,subject_key,validity,version",
       "id": "FD01",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "C_A (AdminDelegation) canonical signed payload fields"
     },
@@ -12,7 +12,7 @@
       "actual": "audience,envelope,format,id,issuer_key_id,org_id,parent,right,subject_key,validity,version",
       "expected": "audience,envelope,format,id,issuer_key_id,org_id,parent,right,subject_key,validity,version",
       "id": "FD02",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "D_U (IssuerDelegation) canonical signed payload fields"
     },
@@ -20,7 +20,7 @@
       "actual": "audience,engagement_id,exclusions,format,id,issuer_key_id,org_id,parent,targets,test_scope,tester_key,version,window",
       "expected": "audience,engagement_id,exclusions,format,id,issuer_key_id,org_id,parent,targets,test_scope,tester_key,version,window",
       "id": "FD03",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "G (EngagementGrant) canonical signed payload fields"
     },
@@ -28,7 +28,7 @@
       "actual": "published_at,response_expires_at,status,status_epoch,status_key,status_known_at",
       "expected": "published_at,response_expires_at,status,status_epoch,status_key,status_known_at",
       "id": "FD04",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "status response (R-signed) canonical fields"
     },
@@ -36,7 +36,7 @@
       "actual": "digest,id,object_type,org_id,version",
       "expected": "digest,id,object_type,org_id,version",
       "id": "FD05",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "status_key — exactly what O3 (responder R) receives as a query"
     },
@@ -44,7 +44,7 @@
       "actual": "audience,challenge_id,expires_at,format,grant,issued_at,nonce,session_id",
       "expected": "audience,challenge_id,expires_at,format,grant,issued_at,nonce,session_id",
       "id": "FD06",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "session challenge (P-issued) canonical fields"
     },
@@ -52,7 +52,7 @@
       "actual": "challenge_id,format,sig",
       "expected": "challenge_id,format,sig",
       "id": "FD07",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "session proof (tester response) canonical fields"
     },
@@ -60,7 +60,7 @@
       "actual": "effects,operation,performed_at,session_ref,target,test_class",
       "expected": "effects,operation,performed_at,session_ref,target,test_class",
       "id": "FD08",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "effect receipt (in-memory log record) fields; not a wire object"
     },
@@ -68,7 +68,7 @@
       "actual": "algorithm,format,key_id,org_id,root_key,usage,validity,version",
       "expected": "algorithm,format,key_id,org_id,root_key,usage,validity,version",
       "id": "FD09",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "root (OrganizationRoot) signed payload fields — raw bundle data; the verifier ignores the slot but a holder and P see its bytes"
     },
@@ -76,7 +76,7 @@
       "actual": "bundle,claimed_class,operation,target_wire",
       "expected": "bundle,claimed_class,operation,target_wire",
       "id": "FD10",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "MediationRequest P receives — an in-memory request struct (its `bundle` field carries the raw bundle bytes), not a wire object"
     },
@@ -84,7 +84,7 @@
       "actual": "admin,grant,issuer,root",
       "expected": "admin,grant,issuer,root",
       "id": "PO1",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "O1 bundle holder (e.g. tester / anyone shown a grant): the four bundle slots, including the ignored-but-visible root"
     },
@@ -92,7 +92,7 @@
       "actual": "admin,challenge,grant,issuer,mediation_request,proof,root,status_response",
       "expected": "admin,challenge,grant,issuer,mediation_request,proof,root,status_response",
       "id": "PO2",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "O2 provider P: the bundle (incl. root), the R-signed status response, the session exchange, and the mediation request it receives"
     },
@@ -100,7 +100,7 @@
       "actual": "status_key",
       "expected": "status_key",
       "id": "PO3",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "O3 responder R: only the StatusKey query; the model assumes R never gets P's now/ε"
     },
@@ -108,7 +108,7 @@
       "actual": "effect_receipt",
       "expected": "effect_receipt",
       "id": "PO5",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "O5 log/effect-sink reader: the effect receipts"
     },
@@ -116,7 +116,7 @@
       "actual": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=equal status_key.digest=equal",
       "expected": "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=equal status_key.digest=equal",
       "id": "PL01",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "the identical built+verified grant presented twice -> fully linkable"
     },
@@ -124,7 +124,7 @@
       "actual": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=differ status_key.digest=differ",
       "expected": "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=differ status_key.digest=differ",
       "id": "PL02",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "a new engagement reissued under a new grant version (changes engagement_id + version; spec §6 requires a new version/id): signed bytes / version / digest differ, but issuer_key_id, tester_key_id and StatusKey org_id/object_type/id still correlate"
     }

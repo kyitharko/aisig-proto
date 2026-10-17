@@ -1,8 +1,9 @@
-# RQ8 Q1 (privacy) proposed observations — docs/rq8.md "Q1 measurement slice 1".
+# RQ8 Q1 (privacy) observations — docs/rq8.md "Q1 measurement slice 1".
 # Written BEFORE the runner; the runner extracts the ACTUAL field sets / comparisons and must
-# match these. Never edit a label to match implementation output. All `proposed` (owner review
-# pending). Synthetic only; no network, no real data. `expected` holds the full observation
-# string the runner emits.
+# match these. Never edit a label to match implementation output. All 16 observations
+# (FD01-FD10, PO1/PO2/PO3/PO5, PL01/PL02) were owner-reviewed and are now `reviewed`.
+# Synthetic only; no network, no real data. `expected` holds the full observation string the
+# runner emits.
 #
 # FD* = field-disclosure inventory per artifact (sorted canonical field names, comma-joined).
 # PO* = which artifacts each observer actually receives (sorted, comma-joined).
@@ -14,70 +15,70 @@
 id = "FD01"
 kind = "rq8_privacy"
 expected = "audience,bounds,format,id,issuer_key_id,org_id,rights,subject_key,validity,version"
-label_status = "proposed"
+label_status = "reviewed"
 note = "C_A (AdminDelegation) canonical signed payload fields"
 
 [[case]]
 id = "FD02"
 kind = "rq8_privacy"
 expected = "audience,envelope,format,id,issuer_key_id,org_id,parent,right,subject_key,validity,version"
-label_status = "proposed"
+label_status = "reviewed"
 note = "D_U (IssuerDelegation) canonical signed payload fields"
 
 [[case]]
 id = "FD03"
 kind = "rq8_privacy"
 expected = "audience,engagement_id,exclusions,format,id,issuer_key_id,org_id,parent,targets,test_scope,tester_key,version,window"
-label_status = "proposed"
+label_status = "reviewed"
 note = "G (EngagementGrant) canonical signed payload fields"
 
 [[case]]
 id = "FD04"
 kind = "rq8_privacy"
 expected = "published_at,response_expires_at,status,status_epoch,status_key,status_known_at"
-label_status = "proposed"
+label_status = "reviewed"
 note = "status response (R-signed) canonical fields"
 
 [[case]]
 id = "FD05"
 kind = "rq8_privacy"
 expected = "digest,id,object_type,org_id,version"
-label_status = "proposed"
+label_status = "reviewed"
 note = "status_key — exactly what O3 (responder R) receives as a query"
 
 [[case]]
 id = "FD06"
 kind = "rq8_privacy"
 expected = "audience,challenge_id,expires_at,format,grant,issued_at,nonce,session_id"
-label_status = "proposed"
+label_status = "reviewed"
 note = "session challenge (P-issued) canonical fields"
 
 [[case]]
 id = "FD07"
 kind = "rq8_privacy"
 expected = "challenge_id,format,sig"
-label_status = "proposed"
+label_status = "reviewed"
 note = "session proof (tester response) canonical fields"
 
 [[case]]
 id = "FD08"
 kind = "rq8_privacy"
 expected = "effects,operation,performed_at,session_ref,target,test_class"
-label_status = "proposed"
+label_status = "reviewed"
 note = "effect receipt (in-memory log record) fields; not a wire object"
 
 [[case]]
 id = "FD09"
 kind = "rq8_privacy"
 expected = "algorithm,format,key_id,org_id,root_key,usage,validity,version"
-label_status = "proposed"
+label_status = "reviewed"
 note = "root (OrganizationRoot) signed payload fields — raw bundle data; the verifier ignores the slot but a holder and P see its bytes"
 
 [[case]]
 id = "FD10"
 kind = "rq8_privacy"
 expected = "bundle,claimed_class,operation,target_wire"
-label_status = "proposed"
+label_status = "reviewed"
 note = "MediationRequest P receives — an in-memory request struct (its `bundle` field carries the raw bundle bytes), not a wire object"
 
 # --- observer -> artifacts actually received ---
@@ -86,28 +87,28 @@ note = "MediationRequest P receives — an in-memory request struct (its `bundle
 id = "PO1"
 kind = "rq8_privacy"
 expected = "admin,grant,issuer,root"
-label_status = "proposed"
+label_status = "reviewed"
 note = "O1 bundle holder (e.g. tester / anyone shown a grant): the four bundle slots, including the ignored-but-visible root"
 
 [[case]]
 id = "PO2"
 kind = "rq8_privacy"
 expected = "admin,challenge,grant,issuer,mediation_request,proof,root,status_response"
-label_status = "proposed"
+label_status = "reviewed"
 note = "O2 provider P: the bundle (incl. root), the R-signed status response, the session exchange, and the mediation request it receives"
 
 [[case]]
 id = "PO3"
 kind = "rq8_privacy"
 expected = "status_key"
-label_status = "proposed"
+label_status = "reviewed"
 note = "O3 responder R: only the StatusKey query; the model assumes R never gets P's now/ε"
 
 [[case]]
 id = "PO5"
 kind = "rq8_privacy"
 expected = "effect_receipt"
-label_status = "proposed"
+label_status = "reviewed"
 note = "O5 log/effect-sink reader: the effect receipts"
 
 # --- linkability: identical vs legitimately reissued grant ---
@@ -116,12 +117,12 @@ note = "O5 log/effect-sink reader: the effect receipts"
 id = "PL01"
 kind = "rq8_privacy"
 expected = "signed_bytes=equal issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=equal status_key.digest=equal"
-label_status = "proposed"
+label_status = "reviewed"
 note = "the identical built+verified grant presented twice -> fully linkable"
 
 [[case]]
 id = "PL02"
 kind = "rq8_privacy"
 expected = "signed_bytes=differ issuer_key_id=equal tester_key_id=equal status_key.org_id=equal status_key.object_type=equal status_key.id=equal status_key.version=differ status_key.digest=differ"
-label_status = "proposed"
+label_status = "reviewed"
 note = "a new engagement reissued under a new grant version (changes engagement_id + version; spec §6 requires a new version/id): signed bytes / version / digest differ, but issuer_key_id, tester_key_id and StatusKey org_id/object_type/id still correlate"

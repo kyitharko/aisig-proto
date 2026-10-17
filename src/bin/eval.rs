@@ -142,7 +142,7 @@ fn main() {
     }
     println!("wrote results/freshness_cases.md and results/freshness_cases.json");
 
-    // RQ8 Q1 privacy slice: separate labels (proposed; owner review pending).
+    // RQ8 Q1 privacy slice: separate labels (owner-reviewed).
     let privacy_labels =
         cases::load(rq8_privacy::RQ8_PRIVACY_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
     let privacy_rows = rq8_privacy::run_all(&privacy_labels);
@@ -159,7 +159,7 @@ fn main() {
         .filter(|r| r.actual == r.label.expected)
         .count();
     println!(
-        "rq8 privacy slice: {ok}/{} match (all proposed)",
+        "rq8 privacy slice: {ok}/{} match (all reviewed)",
         privacy_rows.len()
     );
     let privacy_mismatches = privacy_rows
