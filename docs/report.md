@@ -362,3 +362,52 @@ runs are marked historical in results/README.md.
   clamp). The labels those rounds introduced (SI05, SI06, SI07, SI08, SS25, SS26, T12, EE28)
   are all owner-reviewed now and included in the counts above; the "proposed" notes in the
   round-2/round-3 snapshots below are historical.
+
+## Final synthetic-prototype closeout
+
+All decision-slice labels are owner-reviewed; the RQ8 measurement-slice labels are owner-reviewed
+as fixture-specific synthetic observations.
+
+| Slice | Labels | Status |
+| --- | --- | --- |
+| Chain (RQ4) | 94 | reviewed |
+| Scope lookups | 15 | reviewed |
+| Session (RQ5) | 34 | reviewed |
+| Enforcement (RQ6) | 28 | reviewed |
+| Freshness (RQ7) | 34 | reviewed |
+| RQ8 Q1 privacy | 16 | reviewed |
+| RQ8 Q2 latency (modeled) | 6 | reviewed |
+| RQ8 Q3 onboarding | 17 | reviewed |
+
+**What this prototype does and does not establish (plainly):**
+- **RQ1 (organization identity) and RQ2 (asset binding) are trusted assumptions** — in-memory
+  fixtures the prototype does not verify against real evidence; the registry/binding pinning is
+  assumed out-of-band.
+- **RQ3 is only partly exercised:** a fixed depth-3 chain (root → admin → issuer → grant) with
+  non-amplification; arbitrary depth and multi-admin policy are not modeled.
+- **Real tool enforcement and real deployment measurements remain open:** RQ6 mediates only
+  modeled synthetic effects (no live tools); real end-to-end latency, real responder/network
+  behavior, O4 network/traffic metadata, and human/monetary/storage/operational cost are
+  unmeasured and need a real deployment.
+- **The RQ8 numbers are synthetic, not real:** the Q2 modeled responder-delay (`rtt_ms`) is an
+  assumed value, not a measured RTT, and the Q3 step counts and byte sizes are a fixture-specific
+  inventory — neither is a real latency or operational-cost figure. The only measured numbers are
+  the local CPU benchmark (wall-clock on one machine, not process CPU time).
+
+**Reproducibility.**
+```
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test --all-targets            # unit + integration gates + doctests
+cargo test --doc
+cargo run --release --bin eval      # writes results/*.{md,json}; nonzero exit on any label mismatch
+scripts/bench.sh                    # N=10000 R=10; writes results/bench_<UTC>.{md,json} with environment
+git log --oneline ; git diff main...HEAD --stat
+```
+
+**Benchmark environment (current run `results/bench_20261017T025341Z.{md,json}`, git `8309871`):**
+Intel Core i7-6700 @ 3.40 GHz, Linux 7.0.0-31-generic, governor `powersave`,
+rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0, release profile, single-threaded,
+N = 10000 timed calls per run, R = 10 runs, UTC timestamp 2026-10-17T02:53:41Z. Wall-clock
+per-call elapsed via `std::time::Instant` (not process CPU time). Earlier benchmark runs are
+listed historical in `results/README.md`.

@@ -31,6 +31,19 @@ assets are in this repository.
 - [docs/rq8.md](docs/rq8.md) — RQ8: privacy leakage (Q1 slice 1, 16 reviewed observations), CPU vs end-to-end latency (Q2 slice 1: measured CPU + 6 reviewed modeled responder-delay scenarios), onboarding/cost (Q3 slice 1: step inventory + measured artifact byte sizes, 17 reviewed; human/monetary/storage cost not inferred); no privacy/latency/cost number over a real deployment claimed
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
+## Status closeout
+
+Reviewed label counts: **chain 94, lookup 15, session 34, enforcement 28, freshness 34, RQ8 Q1
+16, RQ8 Q2 6, RQ8 Q3 17** — all owner-reviewed (RQ8 as fixture-specific synthetic observations).
+Plainly: **RQ1/RQ2 are trusted assumptions** (unverified in-memory fixtures); **RQ3 is only
+partly exercised** (fixed depth-3 chain, non-amplification); **real tool enforcement and real
+deployment measurements remain open** (RQ6 mediates only modeled effects; real latency, network/
+O4 metadata and human/monetary/storage cost are unmeasured). The **Q2 modeled RTT and the Q3
+step counts/byte sizes are not real latency or operational cost** — the only measured numbers are
+the local CPU benchmark (wall-clock, one machine). See [docs/report.md](docs/report.md) "Final
+synthetic-prototype closeout" for the reproducibility commands and the exact benchmark
+environment/commit.
+
 ## Research questions
 
 - RQ1 (organization identity) and RQ2 (asset binding): **assumed**, as trusted in-memory fixtures.
