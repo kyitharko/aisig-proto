@@ -3,13 +3,16 @@
 **Status:** DRAFT, 2026-10-17. **Q1 slice 1 (privacy: field disclosure + linkability) is
 implemented synthetically with 16 owner-`reviewed` observations; Q2 slice 1 (latency) adds a
 rerun CPU benchmark plus 6 `reviewed` modeled responder-delay scenarios (real end-to-end
-latency stays unmeasured); Q3 slice 1 adds a step/critical-path map and measured artifact byte
-sizes (15 `proposed`), with human/monetary/storage cost left to a real deployment.** This
+latency stays unmeasured); Q3 slice 1 adds a per-party step inventory (critical path open) and
+measured bundle-slot artifact byte sizes (17 `proposed`), with human/monetary/storage cost left
+to a real deployment.** This
 document defines the *questions* and
 *measurement methods* so that any RQ8 result is produced against a method fixed in advance.
 Where the existing synthetic prototype can support a method it is stated; where a real
-deployment is required it is stated. **No performance, privacy or cost *number* is asserted:**
-the Q1 observations are structural facts about this synthetic encoding (which top-level field
+deployment is required it is stated. **The only numbers asserted are a local CPU benchmark
+(wall-clock, this machine) and deterministic synthetic/modeled byte-size and scenario values;
+no real-deployment latency, privacy, or cost number is asserted.** The Q1 observations are
+structural facts about this synthetic encoding (which top-level field
 names appear, and which fields are byte-equal across showings), **not** a complete analysis of
 nested values or envelopes and **not** a real-world leakage or privacy guarantee.
 
@@ -193,66 +196,86 @@ and what does that cost? This is a process/cost question, not a latency question
   revocation handling, restart of the in-memory high-water-mark (freshness.md §4 limitation).
 
 **Measurable methods.**
-- *Step count / critical-path audit (supported now, structurally):* from the implemented flows,
-  enumerate the mandatory steps and the out-of-band (assumed) steps per party, and mark which are
-  one-time vs recurring. This is a process map, not a cost figure.
-- *Artifact-size cost (supported now):* measure the byte sizes of `C_A`/`D_U`/`G`/status
-  responses/challenges as a proxy for storage/transmission cost, using the canonical encoding.
-- *Operational cost (requires real deployment):* human time for out-of-band pinning and review,
-  responder provisioning/running cost, revocation SLAs, and retention cost are all deployment
-  facts; the prototype cannot measure them.
+- *Per-party step inventory (supported now, structurally):* enumerate each party's steps,
+  tagging **fixture-generated** (implemented), **assumed out-of-band** provisioning/pinning, or
+  **design-only**, and the cadence. This is a per-party inventory, not a cost figure and **not a
+  critical-path analysis** — dependency ordering and durations are left open.
+- *Artifact byte sizes (supported now):* measure the canonical byte sizes of the **bundle slot**
+  artifacts (`root`, `C_A`, `D_U`, `G`) from actual fixture bytes. Status-response and
+  challenge/proof sizes are **not** measured in slice 1 (see below).
+- *Operational cost (requires real deployment):* human time, responder running cost, revocation
+  SLAs, retention/storage cost — deployment facts, not inferred here.
 
 **Synthetic vs real deployment.**
-- Supported now: the step/critical-path map and canonical artifact sizes.
-- Requires real deployment: any monetary or person-time cost, pinning/review effort, responder
-  operating cost, and revocation-propagation cost under real conditions.
+- Supported now: the per-party step inventory and the bundle-slot canonical byte sizes.
+- Requires real deployment: monetary/person-time cost, pinning/review effort, operating cost,
+  transport framing, retransmission, and the critical-path durations.
 
-### Q3 measurement slice 1 — step map and artifact byte sizes (method)
+### Q3 measurement slice 1 — step inventory and artifact byte sizes (method)
 
 Two kinds of observation, kept distinct and gated in `tests/cases/rq8_onboarding_cases.toml`
 (proposed). **No human time, monetary cost, storage bill, or operational effort is inferred
 from byte sizes or step counts** — those are deployment facts (above).
 
-**Step / critical-path map (structural model, not a measurement).** Each step is tagged
-`implemented` (exercised by the prototype), `assumed-oob` (the RQ1/RQ2 out-of-band pinning this
-prototype assumes), or `design-only` (described, not implemented), and by cadence. The runner
-holds this map as data and emits per-party counts (`OS-O/P/T/R`), so the gate catches drift
-between the code's map and this table; the counts are a model, not a measured quantity.
+**Per-party step inventory (structural model, not a measurement; not yet a critical path).**
+Each step is tagged `implemented` (**fixture-generated / synthetic** — the prototype derives keys
+and signs; this is *not* real provisioning), `assumed-oob` (real out-of-band provisioning or
+RQ1/RQ2 pinning the prototype assumes), or `design-only` (described, not implemented), and by
+cadence. The runner holds this inventory as data and emits per-party counts (`OS-O/A/U/T/P/R`),
+so the gate catches drift between the code's inventory and this table; the counts are a model,
+not a measured quantity. **Dependency ordering and step durations (the actual critical path) are
+left open; no duration is inferred from step counts.** The delegation chain's issuing roles are
+modeled explicitly: `A` = admin (`K_admin`, issues `D_U`), `U` = issuer/authorizer
+(`K_authorizer`, issues `G`).
 
 | Party | Step | Tag | Cadence |
 | --- | --- | --- | --- |
 | O | generate root key `K_O` | implemented | one-time |
-| O | issue admin delegation `C_A` | implemented | one-time |
+| O | issue admin delegation `C_A` (sign `K_O`) | implemented | one-time |
 | O | get `K_O` pinned at P | assumed-oob (RQ1) | one-time |
-| O | rotate / retire root or admin | design-only | lifecycle |
+| O | rotate / retire root | design-only | lifecycle |
+| A | hold admin key `K_admin` | implemented | one-time |
+| A | issue issuer delegation `D_U` (sign `K_admin`) | implemented | one-time |
+| U | hold issuer key `K_authorizer` | implemented | one-time |
+| U | issue grant `G` (sign `K_authorizer`) | implemented | per-engagement |
+| T | hold tester key `K_T` | implemented | one-time |
+| T | receive grant `G` (delivery) | assumed-oob | per-engagement |
+| T | respond to the session challenge | implemented | per-session |
 | P | pin org root `K_O` (trust decision) | assumed-oob (RQ1) | one-time/org |
 | P | pin responder key `K_R` | assumed-oob (RQ7) | one-time/org |
+| P | rely on asset-binding evidence | assumed-oob (RQ2) | one-time/asset |
 | P | verify the chain (`ValidChain_P`) | implemented | per-action |
 | P | query status / freshness | implemented | per-action |
 | P | issue + redeem a session | implemented | per-session |
 | P | mediate an action | implemented | per-action |
-| T | hold tester key `K_T` | implemented | one-time |
-| T | receive grant `G` (delivery) | assumed-oob | per-engagement |
-| T | respond to the session challenge | implemented | per-session |
 | R | be provisioned / hold `K_R` | assumed-oob | one-time/org |
 | R | sign status responses | implemented | per-action |
 | R | keep epoch/known-at/expiry discipline | implemented | per-action |
 
-Per-party counts gated (`implemented` / `assumed-oob` / `design-only`): O = 2/1/1, P = 4/2/0,
-T = 2/1/0, R = 2/1/0.
+Per-party counts gated (`implemented` / `assumed-oob` / `design-only`): O = 2/1/1, A = 2/0/0,
+U = 2/0/0, T = 2/1/0, P = 4/3/0, R = 2/1/0.
 
-**Artifact byte sizes (measured from actual fixture bytes).** Each `OB*` label states exactly
-which byte count it is, so nested/duplicated bytes are not mistaken for independent cost:
-- *signed payload* = the canonical JSON bytes the signature covers (`chain.X().payload()`).
+**Artifact byte sizes (measured from actual fixture bytes; bundle slots only).** Each `OB*`
+states exactly which count it is:
+- *signed payload* = the canonical JSON bytes carried in the signature's input
+  (`chain.X().payload()`). The signature actually covers the **domain-separated bytes**
+  `"aisig-v0" ‖ 0x00 ‖ TypeTag ‖ 0x00 ‖ payload`, which contain but are larger than the payload.
 - *signature* = the raw Ed25519 signature, always 64 bytes.
-- *full envelope* = the canonical `EnvelopeWire` (base64 payload + base64 sig + type + key_id),
-  i.e. the on-the-wire object. An envelope is larger than its signed payload (base64 + wrapper).
-- *in-memory* = a Rust struct that is not itself a wire object. The `MediationRequest`'s `bundle`
-  field **re-carries the whole bundle**; `OB11` records that its bundle bytes equal the bundle
-  total — a **duplication, not an independent transmission cost**.
-The transmitted bundle cost is the **sum of the four slot envelopes** (`OB10`), not the sum of
-the signed payloads; the signed payloads are a subset of the envelope bytes, so payload and
-envelope sizes are **not** added together.
+- *full envelope* = the canonical `EnvelopeWire` for one slot (base64 payload + base64 sig +
+  type + key_id) — the on-the-wire object. Larger than its signed payload (base64 + wrapper).
+- *in-memory* = a Rust struct, not a wire object. **`OB11` reports only the in-memory
+  bundle-slot byte size** carried inside a `MediationRequest` (the sum of its four slot
+  envelopes). It makes **no transmission-cost claim**: there is no request wire encoding or
+  transport here, and a repeated request could incur those bytes again.
+- **`OB10`** is the sum of the **four slot envelopes of this fixture, including the optional
+  `root` slot** (the verifier ignores `root`, but a holder/P still receive its bytes). It
+  **excludes** any enclosing request format, transport framing, and retransmissions, and is
+  **not** the sum of the signed payloads (payloads are a subset of envelope bytes; payload and
+  envelope sizes are never added).
+
+**Not measured in slice 1:** status-response, challenge and proof byte sizes (Q1 FD covers their
+field *names*, not sizes; sizes are future work), transport/wire framing, retransmission cost,
+and all human/monetary/storage/operational cost.
 
 **Open decisions (record).**
 - Degree of automation vs manual review for RQ1 pinning (the `evidence_ref` process) and its
@@ -265,7 +288,7 @@ envelope sizes are **not** added together.
 
 ## Q1 measurement slice 1 — field disclosure and linkability (method)
 
-First implemented RQ8 slice (Q1 only; Q2 and Q3 stay design-only). Method and expected
+The first implemented RQ8 slice. Method and expected
 observations are fixed in `tests/cases/rq8_privacy_cases.toml` **before** the runner; the runner
 (`src/experiment/rq8_privacy.rs`, reported in `results/rq8_privacy.md`) extracts the *actual*
 field sets and comparisons and must match. All 16 observations are owner-`reviewed`. No
@@ -337,8 +360,8 @@ implemented yet; **deployment** = requires a real deployment and is out of scope
 | Q2 whole-`ValidChain_P` CPU | measured | `bench.rs`: `full_chain_verify` (same rerun) |
 | Q2 responder-delay scenarios (modeled) | modeled (implemented) | `rq8_latency.rs`, QL01–QL06: deterministic over an **assumed** rtt, not a measured RTT |
 | Q2 end-to-end latency (real R + network) | deployment | real responder + network RTT, cache, load |
-| Q3 onboarding step / critical-path map | modeled (implemented) | `rq8_onboarding.rs`, OS-O/P/T/R: per-party step counts from the map held as data |
-| Q3 canonical artifact byte sizes | measured | `rq8_onboarding.rs`, OB01–OB11: from the actual fixture bytes |
+| Q3 per-party step inventory (critical path open) | modeled (implemented) | `rq8_onboarding.rs`, OS-O/A/U/T/P/R: per-party step counts from the inventory held as data |
+| Q3 canonical artifact byte sizes (bundle slots) | measured | `rq8_onboarding.rs`, OB01–OB11: from the actual fixture bytes |
 | Q3 person-time / monetary / operating / storage cost | deployment | not inferred from bytes or step counts |
 
 ## Non-goals and no-claim statement
@@ -357,5 +380,6 @@ implemented yet; **deployment** = requires a real deployment and is out of scope
   end-to-end or latency number over a real deployment is asserted, and the modeled delay is
   never presented as a measured RTT.
 - Each of Q1/Q2/Q3 is reported on its own axis; they are not reduced to a single score.
-- Every reported CPU number cites the recorded environment and exact commit; Q3, when
-  implemented, must distinguish synthetic from real-deployment measurement the same way.
+- Every reported CPU number cites the recorded environment and exact commit; every synthetic
+  byte-size or modeled value distinguishes what is measured here from what a real deployment
+  would add (transport framing, retransmissions, real RTT, human/monetary/storage cost).

@@ -1,13 +1,16 @@
 # RQ8 Q3 (onboarding / cost) observations — docs/rq8.md "Q3 measurement slice 1".
 # Written BEFORE the runner. Two kinds, kept distinct:
-#  OB* = canonical artifact BYTE SIZES, measured from the actual fixture bytes. Each states
-#        exactly which count it is (signed payload / signature / full envelope / in-memory).
-#        Signed payloads are a subset of envelope bytes and are NOT added to them; the
-#        MediationRequest re-carries the bundle (OB11), a duplication, not an independent cost.
-#  OS-* = per-party step / critical-path map COUNTS (a structural model, not a measurement):
-#        implemented / assumed-oob / design-only.
-# No human time, monetary cost, storage bill, or operational effort is inferred from these.
-# All `proposed` (owner review pending). Never edit a label to match implementation output.
+#  OB* = canonical artifact BYTE SIZES (bundle slots only), measured from the actual fixture
+#        bytes. Each states exactly which count it is (signed payload / signature / full envelope
+#        / in-memory). Signed payloads are a subset of envelope bytes and are NOT added to them.
+#        OB11 reports only the in-memory bundle-slot size inside a MediationRequest; it makes no
+#        transmission-cost claim (transport framing and repeated-request cost are unmeasured).
+#  OS-* = per-party step INVENTORY COUNTS (a structural model, not a measurement; the critical
+#        path — dependency ordering and durations — is left open): implemented / assumed-oob /
+#        design-only. Parties: O, A=admin(K_admin, issues D_U), U=issuer(K_authorizer, issues G),
+#        T, P, R.
+# No human time, monetary cost, storage bill, duration, or operational effort is inferred from
+# these. All `proposed` (owner review pending). Never edit a label to match implementation output.
 
 # --- artifact byte sizes (measured) ---
 
@@ -84,25 +87,32 @@ note = "transmitted bundle cost = sum of the four slot envelopes (root+C_A+D_U+G
 [[case]]
 id = "OB11"
 kind = "rq8_onboarding"
-expected = "mediation_request_bundle_bytes=4468 independent_transmission_cost=false"
+expected = "mediation_request_bundle_slot_bytes=4468"
 label_status = "proposed"
-note = "the MediationRequest re-carries the whole bundle (in-memory struct); a duplication, not an independent transmission cost"
+note = "in-memory bundle-slot bytes carried inside a MediationRequest (sum of its 4 slot envelopes); no transmission-cost claim — there is no request wire encoding/transport, and transport framing and repeated-request cost are unmeasured"
 
-# --- step / critical-path map counts (structural model, not a measurement) ---
+# --- per-party step inventory counts (structural model, not a measurement; critical path open) ---
 
 [[case]]
 id = "OS-O"
 kind = "rq8_onboarding"
 expected = "party=O implemented=2 assumed_oob=1 design_only=1"
 label_status = "proposed"
-note = "O: K_O gen + C_A issue (impl); pin K_O at P (oob); rotate/retire (design-only)"
+note = "O: K_O gen + C_A issue (fixture-impl); pin K_O at P (oob RQ1); rotate/retire (design-only)"
 
 [[case]]
-id = "OS-P"
+id = "OS-A"
 kind = "rq8_onboarding"
-expected = "party=P implemented=4 assumed_oob=2 design_only=0"
+expected = "party=A implemented=2 assumed_oob=0 design_only=0"
 label_status = "proposed"
-note = "P: verify + status query + session + mediate (impl); pin K_O + pin K_R (oob)"
+note = "A = admin (K_admin): hold K_admin + issue D_U (fixture-generated signatures)"
+
+[[case]]
+id = "OS-U"
+kind = "rq8_onboarding"
+expected = "party=U implemented=2 assumed_oob=0 design_only=0"
+label_status = "proposed"
+note = "U = issuer/authorizer (K_authorizer): hold K_authorizer + issue G (fixture-generated signatures)"
 
 [[case]]
 id = "OS-T"
@@ -110,6 +120,13 @@ kind = "rq8_onboarding"
 expected = "party=T implemented=2 assumed_oob=1 design_only=0"
 label_status = "proposed"
 note = "T: hold K_T + session PoP response (impl); receive G delivery (oob)"
+
+[[case]]
+id = "OS-P"
+kind = "rq8_onboarding"
+expected = "party=P implemented=4 assumed_oob=3 design_only=0"
+label_status = "proposed"
+note = "P: verify + status query + session + mediate (impl); pin K_O (oob RQ1) + pin K_R (oob RQ7) + rely on asset-binding evidence (oob RQ2)"
 
 [[case]]
 id = "OS-R"
