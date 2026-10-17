@@ -206,6 +206,53 @@ and what does that cost? This is a process/cost question, not a latency question
 - Requires real deployment: any monetary or person-time cost, pinning/review effort, responder
   operating cost, and revocation-propagation cost under real conditions.
 
+### Q3 measurement slice 1 — step map and artifact byte sizes (method)
+
+Two kinds of observation, kept distinct and gated in `tests/cases/rq8_onboarding_cases.toml`
+(proposed). **No human time, monetary cost, storage bill, or operational effort is inferred
+from byte sizes or step counts** — those are deployment facts (above).
+
+**Step / critical-path map (structural model, not a measurement).** Each step is tagged
+`implemented` (exercised by the prototype), `assumed-oob` (the RQ1/RQ2 out-of-band pinning this
+prototype assumes), or `design-only` (described, not implemented), and by cadence. The runner
+holds this map as data and emits per-party counts (`OS-O/P/T/R`), so the gate catches drift
+between the code's map and this table; the counts are a model, not a measured quantity.
+
+| Party | Step | Tag | Cadence |
+| --- | --- | --- | --- |
+| O | generate root key `K_O` | implemented | one-time |
+| O | issue admin delegation `C_A` | implemented | one-time |
+| O | get `K_O` pinned at P | assumed-oob (RQ1) | one-time |
+| O | rotate / retire root or admin | design-only | lifecycle |
+| P | pin org root `K_O` (trust decision) | assumed-oob (RQ1) | one-time/org |
+| P | pin responder key `K_R` | assumed-oob (RQ7) | one-time/org |
+| P | verify the chain (`ValidChain_P`) | implemented | per-action |
+| P | query status / freshness | implemented | per-action |
+| P | issue + redeem a session | implemented | per-session |
+| P | mediate an action | implemented | per-action |
+| T | hold tester key `K_T` | implemented | one-time |
+| T | receive grant `G` (delivery) | assumed-oob | per-engagement |
+| T | respond to the session challenge | implemented | per-session |
+| R | be provisioned / hold `K_R` | assumed-oob | one-time/org |
+| R | sign status responses | implemented | per-action |
+| R | keep epoch/known-at/expiry discipline | implemented | per-action |
+
+Per-party counts gated (`implemented` / `assumed-oob` / `design-only`): O = 2/1/1, P = 4/2/0,
+T = 2/1/0, R = 2/1/0.
+
+**Artifact byte sizes (measured from actual fixture bytes).** Each `OB*` label states exactly
+which byte count it is, so nested/duplicated bytes are not mistaken for independent cost:
+- *signed payload* = the canonical JSON bytes the signature covers (`chain.X().payload()`).
+- *signature* = the raw Ed25519 signature, always 64 bytes.
+- *full envelope* = the canonical `EnvelopeWire` (base64 payload + base64 sig + type + key_id),
+  i.e. the on-the-wire object. An envelope is larger than its signed payload (base64 + wrapper).
+- *in-memory* = a Rust struct that is not itself a wire object. The `MediationRequest`'s `bundle`
+  field **re-carries the whole bundle**; `OB11` records that its bundle bytes equal the bundle
+  total — a **duplication, not an independent transmission cost**.
+The transmitted bundle cost is the **sum of the four slot envelopes** (`OB10`), not the sum of
+the signed payloads; the signed payloads are a subset of the envelope bytes, so payload and
+envelope sizes are **not** added together.
+
 **Open decisions (record).**
 - Degree of automation vs manual review for RQ1 pinning (the `evidence_ref` process) and its
   effect on onboarding cost and trust.

@@ -1,0 +1,119 @@
+# RQ8 Q3 (onboarding / cost) observations — docs/rq8.md "Q3 measurement slice 1".
+# Written BEFORE the runner. Two kinds, kept distinct:
+#  OB* = canonical artifact BYTE SIZES, measured from the actual fixture bytes. Each states
+#        exactly which count it is (signed payload / signature / full envelope / in-memory).
+#        Signed payloads are a subset of envelope bytes and are NOT added to them; the
+#        MediationRequest re-carries the bundle (OB11), a duplication, not an independent cost.
+#  OS-* = per-party step / critical-path map COUNTS (a structural model, not a measurement):
+#        implemented / assumed-oob / design-only.
+# No human time, monetary cost, storage bill, or operational effort is inferred from these.
+# All `proposed` (owner review pending). Never edit a label to match implementation output.
+
+# --- artifact byte sizes (measured) ---
+
+[[case]]
+id = "OB01"
+kind = "rq8_onboarding"
+expected = "cA_signed_payload_bytes=654"
+label_status = "proposed"
+note = "C_A canonical signed payload (bytes the signature covers)"
+
+[[case]]
+id = "OB02"
+kind = "rq8_onboarding"
+expected = "cA_envelope_bytes=1108"
+label_status = "proposed"
+note = "C_A full on-the-wire envelope (base64 payload + base64 sig + type + key_id)"
+
+[[case]]
+id = "OB03"
+kind = "rq8_onboarding"
+expected = "dU_signed_payload_bytes=820"
+label_status = "proposed"
+note = "D_U canonical signed payload"
+
+[[case]]
+id = "OB04"
+kind = "rq8_onboarding"
+expected = "dU_envelope_bytes=1331"
+label_status = "proposed"
+note = "D_U full envelope"
+
+[[case]]
+id = "OB05"
+kind = "rq8_onboarding"
+expected = "g_signed_payload_bytes=846"
+label_status = "proposed"
+note = "G canonical signed payload"
+
+[[case]]
+id = "OB06"
+kind = "rq8_onboarding"
+expected = "g_envelope_bytes=1364"
+label_status = "proposed"
+note = "G full envelope"
+
+[[case]]
+id = "OB07"
+kind = "rq8_onboarding"
+expected = "root_signed_payload_bytes=321"
+label_status = "proposed"
+note = "root (OrganizationRoot) canonical signed payload"
+
+[[case]]
+id = "OB08"
+kind = "rq8_onboarding"
+expected = "root_envelope_bytes=665"
+label_status = "proposed"
+note = "root full envelope"
+
+[[case]]
+id = "OB09"
+kind = "rq8_onboarding"
+expected = "signature_bytes=64"
+label_status = "proposed"
+note = "raw Ed25519 signature, constant for every object"
+
+[[case]]
+id = "OB10"
+kind = "rq8_onboarding"
+expected = "bundle_total_envelope_bytes=4468"
+label_status = "proposed"
+note = "transmitted bundle cost = sum of the four slot envelopes (root+C_A+D_U+G); NOT the sum of signed payloads"
+
+[[case]]
+id = "OB11"
+kind = "rq8_onboarding"
+expected = "mediation_request_bundle_bytes=4468 independent_transmission_cost=false"
+label_status = "proposed"
+note = "the MediationRequest re-carries the whole bundle (in-memory struct); a duplication, not an independent transmission cost"
+
+# --- step / critical-path map counts (structural model, not a measurement) ---
+
+[[case]]
+id = "OS-O"
+kind = "rq8_onboarding"
+expected = "party=O implemented=2 assumed_oob=1 design_only=1"
+label_status = "proposed"
+note = "O: K_O gen + C_A issue (impl); pin K_O at P (oob); rotate/retire (design-only)"
+
+[[case]]
+id = "OS-P"
+kind = "rq8_onboarding"
+expected = "party=P implemented=4 assumed_oob=2 design_only=0"
+label_status = "proposed"
+note = "P: verify + status query + session + mediate (impl); pin K_O + pin K_R (oob)"
+
+[[case]]
+id = "OS-T"
+kind = "rq8_onboarding"
+expected = "party=T implemented=2 assumed_oob=1 design_only=0"
+label_status = "proposed"
+note = "T: hold K_T + session PoP response (impl); receive G delivery (oob)"
+
+[[case]]
+id = "OS-R"
+kind = "rq8_onboarding"
+expected = "party=R implemented=2 assumed_oob=1 design_only=0"
+label_status = "proposed"
+note = "R: sign responses + epoch/expiry discipline (impl); provisioned/hold K_R (oob)"
