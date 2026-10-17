@@ -9,7 +9,9 @@ Generated outputs. Do not edit by hand.
 | `enforcement_cases.md`, `.json` | same run, RQ6 enforcement labels (28 reviewed) | current (e2) |
 | `freshness_cases.md`, `.json` | same run, RQ7 freshness-slice labels (34 reviewed) | current (f2) |
 | `rq8_privacy.md`, `.json` | same run, RQ8 Q1 privacy slice: field disclosure + linkability (16 reviewed) | current |
-| `bench_20261015T201455Z.md`, `.json` | `scripts/bench.sh`, git `21487fc`, after the negative-ε rejection in the time paths | current (round 3) |
+| `rq8_latency.md`, `.json` | same run, RQ8 Q2 latency slice: modeled responder-delay scenarios (6 proposed) | current |
+| `bench_20261017T025341Z.md`, `.json` | `scripts/bench.sh`, git `8309871`, HEAD rerun for the RQ8 Q2 slice (same machine) | current (RQ8 Q2) |
+| `bench_20261015T201455Z.md`, `.json` | `scripts/bench.sh`, git `21487fc`, after the negative-ε rejection in the time paths | **historical (round 3)** |
 | `bench_20261014T192333Z.md`, `.json` | `scripts/bench.sh`, git `526a3c6`, exact-object status keys | **historical (r3)** |
 | `bench_20261014T183348Z.md`, `.json` | `scripts/bench.sh`, git `9412502`, status keyed by (id, version) | **historical (r2)**; the status stage it measured no longer exists |
 

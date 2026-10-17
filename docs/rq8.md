@@ -1,8 +1,10 @@
 # RQ8 — privacy, latency and onboarding cost
 
 **Status:** DRAFT, 2026-10-17. **Q1 slice 1 (privacy: field disclosure + linkability) is
-implemented synthetically with 16 owner-`reviewed` observations; Q2 (latency) and Q3
-(onboarding/cost) remain design only.** This document defines the *questions* and
+implemented synthetically with 16 owner-`reviewed` observations; Q2 slice 1 (latency) adds a
+rerun CPU benchmark plus 6 `proposed` modeled responder-delay scenarios (real end-to-end
+latency stays unmeasured); Q3 (onboarding/cost) remains design only.** This document defines
+the *questions* and
 *measurement methods* so that any RQ8 result is produced against a method fixed in advance.
 Where the existing synthetic prototype can support a method it is stated; where a real
 deployment is required it is stated. **No performance, privacy or cost *number* is asserted:**
@@ -97,8 +99,11 @@ latency, so no claim is made about which component dominates.
   `signature_x3` (Ed25519 verify of C_A, D_U, G), `typed_policy` (linkage + policy),
   `status_key_x3`, `status_lookup_x3` (simulated in-memory lookup), and `full_chain_verify`
   (the whole `verify(&Bundle)`, format→status). `scripts/bench.sh` records rustc/cargo versions,
-  CPU model (`/proc/cpuinfo`), kernel, build profile and seeds, so a CPU result is reproducible.
-  This measures (a) only, and only the synthetic, in-memory status path.
+  CPU model (`/proc/cpuinfo`), kernel, build profile and seeds, so a CPU result is reproducible;
+  the HEAD rerun for this slice is `results/bench_20261017T025341Z.{md,json}` (prior runs are
+  marked historical in `results/README.md`). This is **wall-clock elapsed of a tight loop** —
+  CPU-focused, but not process CPU time (`getrusage`); it measures (a) only, and only the
+  synthetic, in-memory status path.
 - *Responder-delay scenarios (modeled; implemented as Q2 slice 1).* Deterministic responder-delay
   values computed from **explicitly assumed** inputs (query count, cache hit/miss, serial vs
   parallel, an assumed per-query RTT). No `sleep`, no timing, no network — pure arithmetic over
@@ -264,18 +269,19 @@ runner) and `eval` exits nonzero on any mismatch. The 16 observations are owner-
 
 ## Measurement-support summary
 
-Three support levels: **measured** = already produced by existing code; **extension** = feasible
-after a synthetic (no-network) code extension, not implemented yet; **deployment** = requires a
-real deployment and is out of scope here.
+Support levels: **measured** = produced by code from real observation (e.g. the `Instant`
+benchmark); **modeled** = produced by code from explicitly assumed inputs, deterministic and not
+a measurement; **extension** = feasible after a synthetic (no-network) code extension, not
+implemented yet; **deployment** = requires a real deployment and is out of scope here.
 
 | Method | Support level | Where / note |
 | --- | --- | --- |
 | Q1 field-disclosure inventory (per observer) | measured | `rq8_privacy.rs` (`results/rq8_privacy.md`), FD01–FD10 + PO1/PO2/PO3/PO5 |
 | Q1 linkability comparison (identical vs reissued) | measured | `rq8_privacy.rs`, PL01/PL02 |
 | Q1 network/traffic metadata (O4) | deployment | no network modeled |
-| Q2 per-stage CPU (sig / policy / status), p50/p95/p99 | measured | `bench.rs`: `signature_x3`, `typed_policy`, `status_key_x3`, `status_lookup_x3` |
-| Q2 whole-`ValidChain_P` CPU | measured | `bench.rs`: `full_chain_verify` |
-| Q2 responder-delay sensitivity (modeled) | extension | configurable modeled delay, not implemented |
+| Q2 per-stage CPU (sig / policy / status), p50/p95/p99 | measured | `bench.rs`: `signature_x3`, `typed_policy`, `status_key_x3`, `status_lookup_x3` (HEAD rerun `results/bench_20261017T025341Z.md`) |
+| Q2 whole-`ValidChain_P` CPU | measured | `bench.rs`: `full_chain_verify` (same rerun) |
+| Q2 responder-delay scenarios (modeled) | modeled (implemented) | `rq8_latency.rs`, QL01–QL06: deterministic over an **assumed** rtt, not a measured RTT |
 | Q2 end-to-end latency (real R + network) | deployment | real responder + network RTT, cache, load |
 | Q3 onboarding step / critical-path map | extension | structural audit, not implemented |
 | Q3 canonical artifact sizes | extension | byte sizes of the canonical artifacts, not implemented |
@@ -283,13 +289,17 @@ real deployment and is out of scope here.
 
 ## Non-goals and no-claim statement
 
-- Only Q1 slice 1 (field disclosure + linkability) is implemented; Q2 (latency) and Q3
-  (onboarding/cost) remain design-only. No benchmark run or latency/cost number is produced.
+- Q1 slice 1 (field disclosure + linkability) and Q2 slice 1 (CPU benchmark + modeled
+  responder-delay scenarios) are implemented; Q3 (onboarding/cost) remains design-only.
 - The Q1 observations are structural facts about this synthetic encoding (field names present,
   and which fields are byte-equal across showings). They are **not** a real-world privacy
   guarantee, and no privacy *number* over a real population is asserted. O4 network metadata is
   unmeasured.
+- Q2 keeps three quantities separate: the **measured** CPU elapsed (bench, wall-clock, not
+  process CPU time), the **modeled** responder-delay scenarios (deterministic over an assumed
+  rtt, never a measured RTT), and the **unmeasured** real end-to-end network latency. No
+  end-to-end or latency number over a real deployment is asserted, and the modeled delay is
+  never presented as a measured RTT.
 - Each of Q1/Q2/Q3 is reported on its own axis; they are not reduced to a single score.
-- When Q2/Q3 are implemented, every reported number must cite the method fixed here, the exact
-  commit, and the recorded environment (for CPU), and must distinguish synthetic from
-  real-deployment measurement.
+- Every reported CPU number cites the recorded environment and exact commit; Q3, when
+  implemented, must distinguish synthetic from real-deployment measurement the same way.
