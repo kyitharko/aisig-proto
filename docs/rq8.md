@@ -4,7 +4,7 @@
 implemented synthetically with 16 owner-`reviewed` observations; Q2 slice 1 (latency) adds a
 rerun CPU benchmark plus 6 `reviewed` modeled responder-delay scenarios (real end-to-end
 latency stays unmeasured); Q3 slice 1 adds a per-party step inventory (critical path open) and
-measured bundle-slot artifact byte sizes (17 `proposed`), with human/monetary/storage cost left
+measured bundle-slot artifact byte sizes (17 `reviewed`), with human/monetary/storage cost left
 to a real deployment.** This
 document defines the *questions* and
 *measurement methods* so that any RQ8 result is produced against a method fixed in advance.
@@ -124,7 +124,7 @@ latency, so no claim is made about which component dominates.
      (`getrusage`); it includes scheduler/measurement overhead. Reported as p50/p95/p99 per
      stage in `results/bench_<UTC>.{md,json}` with recorded environment.
   2. **Modeled** responder-delay scenarios — deterministic, from assumed inputs (below). Modeled,
-     not measured; gated as proposed observations.
+     not measured; gated observations (owner-reviewed).
   3. **Unmeasured** real end-to-end network latency — stated, never computed here.
 - Never present a CPU microbenchmark as an end-to-end latency, and never present a modeled delay
   as a measured RTT.
@@ -184,8 +184,10 @@ and what does that cost? This is a process/cost question, not a latency question
   `K_R` per org (RQ7); operate the session and mediation services; retain logs/effect receipts.
 - **Tester T:** hold `K_T`; receive a grant `G` from the issuer `D_U`; perform the session
   challenge/response (RQ5) to bind possession.
-- **Status responder R:** be provisioned per org; sign status responses with `K_R`; maintain the
-  epoch/known-at/expiry discipline (RQ7).
+- **Status responder R:** be provisioned per org; sign status responses with `K_R` (**on
+  publication/update of a status, not necessarily once per verifier action** — P may reuse a
+  cached response within its freshness window); maintain the epoch/known-at/expiry discipline
+  (RQ7).
 
 **Cost dimensions (define before pricing).**
 - One-time: key generation, out-of-band pinning exchanges (O↔P, R-key↔P), initial delegation
@@ -214,8 +216,8 @@ and what does that cost? This is a process/cost question, not a latency question
 ### Q3 measurement slice 1 — step inventory and artifact byte sizes (method)
 
 Two kinds of observation, kept distinct and gated in `tests/cases/rq8_onboarding_cases.toml`
-(proposed). **No human time, monetary cost, storage bill, or operational effort is inferred
-from byte sizes or step counts** — those are deployment facts (above).
+(owner-reviewed). **No human time, monetary cost, storage bill, or operational effort is
+inferred from byte sizes or step counts** — those are deployment facts (above).
 
 **Per-party step inventory (structural model, not a measurement; not yet a critical path).**
 Each step is tagged `implemented` (**fixture-generated / synthetic** — the prototype derives keys
@@ -249,7 +251,7 @@ modeled explicitly: `A` = admin (`K_admin`, issues `D_U`), `U` = issuer/authoriz
 | P | issue + redeem a session | implemented | per-session |
 | P | mediate an action | implemented | per-action |
 | R | be provisioned / hold `K_R` | assumed-oob | one-time/org |
-| R | sign status responses | implemented | per-action |
+| R | sign status responses | implemented | per-publication/update |
 | R | keep epoch/known-at/expiry discipline | implemented | per-action |
 
 Per-party counts gated (`implemented` / `assumed-oob` / `design-only`): O = 2/1/1, A = 2/0/0,
@@ -367,9 +369,10 @@ implemented yet; **deployment** = requires a real deployment and is out of scope
 ## Non-goals and no-claim statement
 
 - Q1 slice 1 (field disclosure + linkability), Q2 slice 1 (CPU benchmark + modeled
-  responder-delay scenarios) and Q3 slice 1 (step map + measured artifact byte sizes) are
-  implemented. No human time, monetary cost, storage bill, or operational effort is inferred
-  from bytes or step counts — those remain real-deployment facts.
+  responder-delay scenarios) and Q3 slice 1 (per-party step inventory + measured bundle-slot
+  byte sizes) are implemented, all owner-reviewed. No human time, monetary cost, storage bill,
+  or operational effort is inferred from bytes or step counts — those remain real-deployment
+  facts.
 - The Q1 observations are structural facts about this synthetic encoding (field names present,
   and which fields are byte-equal across showings). They are **not** a real-world privacy
   guarantee, and no privacy *number* over a real population is asserted. O4 network metadata is

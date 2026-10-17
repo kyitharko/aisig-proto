@@ -10,7 +10,8 @@
 #        design-only. Parties: O, A=admin(K_admin, issues D_U), U=issuer(K_authorizer, issues G),
 #        T, P, R.
 # No human time, monetary cost, storage bill, duration, or operational effort is inferred from
-# these. All `proposed` (owner review pending). Never edit a label to match implementation output.
+# these. All 17 (OB01-OB11, OS-O/A/U/T/P/R) were owner-reviewed and are now `reviewed`. Never
+# edit a label to match implementation output.
 
 # --- artifact byte sizes (measured) ---
 
@@ -18,77 +19,77 @@
 id = "OB01"
 kind = "rq8_onboarding"
 expected = "cA_signed_payload_bytes=654"
-label_status = "proposed"
-note = "C_A canonical signed payload (bytes the signature covers)"
+label_status = "reviewed"
+note = "C_A canonical signed payload — the payload PORTION of the domain-separated signature input (the signature covers aisig-v0 0x00 TypeTag 0x00 payload, which is larger)"
 
 [[case]]
 id = "OB02"
 kind = "rq8_onboarding"
 expected = "cA_envelope_bytes=1108"
-label_status = "proposed"
+label_status = "reviewed"
 note = "C_A full on-the-wire envelope (base64 payload + base64 sig + type + key_id)"
 
 [[case]]
 id = "OB03"
 kind = "rq8_onboarding"
 expected = "dU_signed_payload_bytes=820"
-label_status = "proposed"
+label_status = "reviewed"
 note = "D_U canonical signed payload"
 
 [[case]]
 id = "OB04"
 kind = "rq8_onboarding"
 expected = "dU_envelope_bytes=1331"
-label_status = "proposed"
+label_status = "reviewed"
 note = "D_U full envelope"
 
 [[case]]
 id = "OB05"
 kind = "rq8_onboarding"
 expected = "g_signed_payload_bytes=846"
-label_status = "proposed"
+label_status = "reviewed"
 note = "G canonical signed payload"
 
 [[case]]
 id = "OB06"
 kind = "rq8_onboarding"
 expected = "g_envelope_bytes=1364"
-label_status = "proposed"
+label_status = "reviewed"
 note = "G full envelope"
 
 [[case]]
 id = "OB07"
 kind = "rq8_onboarding"
 expected = "root_signed_payload_bytes=321"
-label_status = "proposed"
+label_status = "reviewed"
 note = "root (OrganizationRoot) canonical signed payload"
 
 [[case]]
 id = "OB08"
 kind = "rq8_onboarding"
 expected = "root_envelope_bytes=665"
-label_status = "proposed"
+label_status = "reviewed"
 note = "root full envelope"
 
 [[case]]
 id = "OB09"
 kind = "rq8_onboarding"
 expected = "signature_bytes=64"
-label_status = "proposed"
+label_status = "reviewed"
 note = "raw Ed25519 signature, constant for every object"
 
 [[case]]
 id = "OB10"
 kind = "rq8_onboarding"
 expected = "bundle_total_envelope_bytes=4468"
-label_status = "proposed"
-note = "transmitted bundle cost = sum of the four slot envelopes (root+C_A+D_U+G); NOT the sum of signed payloads"
+label_status = "reviewed"
+note = "sum of this fixture's four slot envelopes (root+C_A+D_U+G), including the optional root; NOT a measured transport cost and NOT the sum of signed payloads"
 
 [[case]]
 id = "OB11"
 kind = "rq8_onboarding"
 expected = "mediation_request_bundle_slot_bytes=4468"
-label_status = "proposed"
+label_status = "reviewed"
 note = "in-memory bundle-slot bytes carried inside a MediationRequest (sum of its 4 slot envelopes); no transmission-cost claim — there is no request wire encoding/transport, and transport framing and repeated-request cost are unmeasured"
 
 # --- per-party step inventory counts (structural model, not a measurement; critical path open) ---
@@ -97,40 +98,40 @@ note = "in-memory bundle-slot bytes carried inside a MediationRequest (sum of it
 id = "OS-O"
 kind = "rq8_onboarding"
 expected = "party=O implemented=2 assumed_oob=1 design_only=1"
-label_status = "proposed"
+label_status = "reviewed"
 note = "O: K_O gen + C_A issue (fixture-impl); pin K_O at P (oob RQ1); rotate/retire (design-only)"
 
 [[case]]
 id = "OS-A"
 kind = "rq8_onboarding"
 expected = "party=A implemented=2 assumed_oob=0 design_only=0"
-label_status = "proposed"
+label_status = "reviewed"
 note = "A = admin (K_admin): hold K_admin + issue D_U (fixture-generated signatures)"
 
 [[case]]
 id = "OS-U"
 kind = "rq8_onboarding"
 expected = "party=U implemented=2 assumed_oob=0 design_only=0"
-label_status = "proposed"
+label_status = "reviewed"
 note = "U = issuer/authorizer (K_authorizer): hold K_authorizer + issue G (fixture-generated signatures)"
 
 [[case]]
 id = "OS-T"
 kind = "rq8_onboarding"
 expected = "party=T implemented=2 assumed_oob=1 design_only=0"
-label_status = "proposed"
+label_status = "reviewed"
 note = "T: hold K_T + session PoP response (impl); receive G delivery (oob)"
 
 [[case]]
 id = "OS-P"
 kind = "rq8_onboarding"
 expected = "party=P implemented=4 assumed_oob=3 design_only=0"
-label_status = "proposed"
+label_status = "reviewed"
 note = "P: verify + status query + session + mediate (impl); pin K_O (oob RQ1) + pin K_R (oob RQ7) + rely on asset-binding evidence (oob RQ2)"
 
 [[case]]
 id = "OS-R"
 kind = "rq8_onboarding"
 expected = "party=R implemented=2 assumed_oob=1 design_only=0"
-label_status = "proposed"
+label_status = "reviewed"
 note = "R: sign responses + epoch/expiry discipline (impl); provisioned/hold K_R (oob)"

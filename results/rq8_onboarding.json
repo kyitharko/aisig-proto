@@ -4,15 +4,15 @@
       "actual": "cA_signed_payload_bytes=654",
       "expected": "cA_signed_payload_bytes=654",
       "id": "OB01",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
-      "note": "C_A canonical signed payload (bytes the signature covers)"
+      "note": "C_A canonical signed payload — the payload PORTION of the domain-separated signature input (the signature covers aisig-v0 0x00 TypeTag 0x00 payload, which is larger)"
     },
     {
       "actual": "cA_envelope_bytes=1108",
       "expected": "cA_envelope_bytes=1108",
       "id": "OB02",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "C_A full on-the-wire envelope (base64 payload + base64 sig + type + key_id)"
     },
@@ -20,7 +20,7 @@
       "actual": "dU_signed_payload_bytes=820",
       "expected": "dU_signed_payload_bytes=820",
       "id": "OB03",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "D_U canonical signed payload"
     },
@@ -28,7 +28,7 @@
       "actual": "dU_envelope_bytes=1331",
       "expected": "dU_envelope_bytes=1331",
       "id": "OB04",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "D_U full envelope"
     },
@@ -36,7 +36,7 @@
       "actual": "g_signed_payload_bytes=846",
       "expected": "g_signed_payload_bytes=846",
       "id": "OB05",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "G canonical signed payload"
     },
@@ -44,7 +44,7 @@
       "actual": "g_envelope_bytes=1364",
       "expected": "g_envelope_bytes=1364",
       "id": "OB06",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "G full envelope"
     },
@@ -52,7 +52,7 @@
       "actual": "root_signed_payload_bytes=321",
       "expected": "root_signed_payload_bytes=321",
       "id": "OB07",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "root (OrganizationRoot) canonical signed payload"
     },
@@ -60,7 +60,7 @@
       "actual": "root_envelope_bytes=665",
       "expected": "root_envelope_bytes=665",
       "id": "OB08",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "root full envelope"
     },
@@ -68,7 +68,7 @@
       "actual": "signature_bytes=64",
       "expected": "signature_bytes=64",
       "id": "OB09",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "raw Ed25519 signature, constant for every object"
     },
@@ -76,15 +76,15 @@
       "actual": "bundle_total_envelope_bytes=4468",
       "expected": "bundle_total_envelope_bytes=4468",
       "id": "OB10",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
-      "note": "transmitted bundle cost = sum of the four slot envelopes (root+C_A+D_U+G); NOT the sum of signed payloads"
+      "note": "sum of this fixture's four slot envelopes (root+C_A+D_U+G), including the optional root; NOT a measured transport cost and NOT the sum of signed payloads"
     },
     {
       "actual": "mediation_request_bundle_slot_bytes=4468",
       "expected": "mediation_request_bundle_slot_bytes=4468",
       "id": "OB11",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "in-memory bundle-slot bytes carried inside a MediationRequest (sum of its 4 slot envelopes); no transmission-cost claim — there is no request wire encoding/transport, and transport framing and repeated-request cost are unmeasured"
     },
@@ -92,7 +92,7 @@
       "actual": "party=O implemented=2 assumed_oob=1 design_only=1",
       "expected": "party=O implemented=2 assumed_oob=1 design_only=1",
       "id": "OS-O",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "O: K_O gen + C_A issue (fixture-impl); pin K_O at P (oob RQ1); rotate/retire (design-only)"
     },
@@ -100,7 +100,7 @@
       "actual": "party=A implemented=2 assumed_oob=0 design_only=0",
       "expected": "party=A implemented=2 assumed_oob=0 design_only=0",
       "id": "OS-A",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "A = admin (K_admin): hold K_admin + issue D_U (fixture-generated signatures)"
     },
@@ -108,7 +108,7 @@
       "actual": "party=U implemented=2 assumed_oob=0 design_only=0",
       "expected": "party=U implemented=2 assumed_oob=0 design_only=0",
       "id": "OS-U",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "U = issuer/authorizer (K_authorizer): hold K_authorizer + issue G (fixture-generated signatures)"
     },
@@ -116,7 +116,7 @@
       "actual": "party=T implemented=2 assumed_oob=1 design_only=0",
       "expected": "party=T implemented=2 assumed_oob=1 design_only=0",
       "id": "OS-T",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "T: hold K_T + session PoP response (impl); receive G delivery (oob)"
     },
@@ -124,7 +124,7 @@
       "actual": "party=P implemented=4 assumed_oob=3 design_only=0",
       "expected": "party=P implemented=4 assumed_oob=3 design_only=0",
       "id": "OS-P",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "P: verify + status query + session + mediate (impl); pin K_O (oob RQ1) + pin K_R (oob RQ7) + rely on asset-binding evidence (oob RQ2)"
     },
@@ -132,7 +132,7 @@
       "actual": "party=R implemented=2 assumed_oob=1 design_only=0",
       "expected": "party=R implemented=2 assumed_oob=1 design_only=0",
       "id": "OS-R",
-      "label_status": "proposed",
+      "label_status": "reviewed",
       "match": true,
       "note": "R: sign responses + epoch/expiry discipline (impl); provisioned/hold K_R (oob)"
     }

@@ -207,7 +207,7 @@ fn main() {
     }
     println!("wrote results/rq8_latency.md and results/rq8_latency.json");
 
-    // RQ8 Q3 onboarding/cost slice: artifact byte sizes + step-map counts (proposed).
+    // RQ8 Q3 onboarding/cost slice: artifact byte sizes + step-inventory counts (owner-reviewed).
     let onboarding_labels =
         cases::load(rq8_onboarding::RQ8_ONBOARDING_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
     let onboarding_rows = rq8_onboarding::run_all(&onboarding_labels);
@@ -224,7 +224,7 @@ fn main() {
         .filter(|r| r.actual == r.label.expected)
         .count();
     println!(
-        "rq8 onboarding slice: {ok}/{} match (all proposed)",
+        "rq8 onboarding slice: {ok}/{} match (all reviewed)",
         onboarding_rows.len()
     );
     let onboarding_mismatches = onboarding_rows
