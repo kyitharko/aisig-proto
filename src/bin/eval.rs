@@ -4,7 +4,8 @@
 use std::fs;
 
 use aisig_proto::experiment::{
-    cases, enforcement_cases, freshness_cases, report, rq8_latency, rq8_privacy, session_cases,
+    cases, enforcement_cases, freshness_cases, report, rq8_latency, rq8_onboarding, rq8_privacy,
+    session_cases,
 };
 
 fn main() {
@@ -206,8 +207,43 @@ fn main() {
     }
     println!("wrote results/rq8_latency.md and results/rq8_latency.json");
 
+    // RQ8 Q3 onboarding/cost slice: artifact byte sizes + step-map counts (proposed).
+    let onboarding_labels =
+        cases::load(rq8_onboarding::RQ8_ONBOARDING_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
+    let onboarding_rows = rq8_onboarding::run_all(&onboarding_labels);
+    fs::write(
+        "results/rq8_onboarding.md",
+        rq8_onboarding::render_markdown(&onboarding_rows),
+    )
+    .expect("write rq8 onboarding md");
+    let json =
+        serde_json::to_string_pretty(&rq8_onboarding::render_json(&onboarding_rows)).expect("json");
+    fs::write("results/rq8_onboarding.json", json + "\n").expect("write rq8 onboarding json");
+    let ok = onboarding_rows
+        .iter()
+        .filter(|r| r.actual == r.label.expected)
+        .count();
+    println!(
+        "rq8 onboarding slice: {ok}/{} match (all proposed)",
+        onboarding_rows.len()
+    );
+    let onboarding_mismatches = onboarding_rows
+        .iter()
+        .filter(|r| r.actual != r.label.expected)
+        .count();
+    for r in onboarding_rows
+        .iter()
+        .filter(|r| r.actual != r.label.expected)
+    {
+        println!(
+            "RQ8 ONBOARDING MISMATCH {}: expected `{}`, got `{}`",
+            r.label.id, r.label.expected, r.actual
+        );
+    }
+    println!("wrote results/rq8_onboarding.md and results/rq8_onboarding.json");
+
     // Fail the run (nonzero exit) on any label mismatch, so eval gates the labels in CI as
-    // well as in `cargo test`. Freshness and RQ8 privacy/latency mismatches are included.
+    // well as in `cargo test`. Freshness and RQ8 privacy/latency/onboarding mismatches included.
     let session_bad = session_rows
         .iter()
         .filter(|r| r.actual != r.label.expected)
@@ -222,10 +258,11 @@ fn main() {
         + enf_bad
         + fresh_mismatches
         + privacy_mismatches
-        + latency_mismatches;
+        + latency_mismatches
+        + onboarding_mismatches;
     if total_bad > 0 {
         eprintln!(
-            "eval: {total_bad} mismatch(es) (chain={}, scope={q_bad}, session={session_bad}, enforcement={enf_bad}, freshness={fresh_mismatches}, rq8_privacy={privacy_mismatches}, rq8_latency={latency_mismatches})",
+            "eval: {total_bad} mismatch(es) (chain={}, scope={q_bad}, session={session_bad}, enforcement={enf_bad}, freshness={fresh_mismatches}, rq8_privacy={privacy_mismatches}, rq8_latency={latency_mismatches}, rq8_onboarding={onboarding_mismatches})",
             mismatches.len()
         );
         std::process::exit(1);
