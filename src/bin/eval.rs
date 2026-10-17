@@ -4,7 +4,7 @@
 use std::fs;
 
 use aisig_proto::experiment::{
-    cases, enforcement_cases, freshness_cases, report, rq8_privacy, session_cases,
+    cases, enforcement_cases, freshness_cases, report, rq8_latency, rq8_privacy, session_cases,
 };
 
 fn main() {
@@ -174,8 +174,40 @@ fn main() {
     }
     println!("wrote results/rq8_privacy.md and results/rq8_privacy.json");
 
+    // RQ8 Q2 latency slice: modeled responder-delay scenarios (proposed).
+    let latency_labels =
+        cases::load(rq8_latency::RQ8_LATENCY_CASES_PATH).unwrap_or_else(|e| panic!("{e}"));
+    let latency_rows = rq8_latency::run_all(&latency_labels);
+    fs::write(
+        "results/rq8_latency.md",
+        rq8_latency::render_markdown(&latency_rows),
+    )
+    .expect("write rq8 latency md");
+    let json =
+        serde_json::to_string_pretty(&rq8_latency::render_json(&latency_rows)).expect("json");
+    fs::write("results/rq8_latency.json", json + "\n").expect("write rq8 latency json");
+    let ok = latency_rows
+        .iter()
+        .filter(|r| r.actual == r.label.expected)
+        .count();
+    println!(
+        "rq8 latency slice: {ok}/{} match (all proposed, modeled)",
+        latency_rows.len()
+    );
+    let latency_mismatches = latency_rows
+        .iter()
+        .filter(|r| r.actual != r.label.expected)
+        .count();
+    for r in latency_rows.iter().filter(|r| r.actual != r.label.expected) {
+        println!(
+            "RQ8 LATENCY MISMATCH {}: expected `{}`, got `{}`",
+            r.label.id, r.label.expected, r.actual
+        );
+    }
+    println!("wrote results/rq8_latency.md and results/rq8_latency.json");
+
     // Fail the run (nonzero exit) on any label mismatch, so eval gates the labels in CI as
-    // well as in `cargo test`. Freshness and RQ8 privacy mismatches are included.
+    // well as in `cargo test`. Freshness and RQ8 privacy/latency mismatches are included.
     let session_bad = session_rows
         .iter()
         .filter(|r| r.actual != r.label.expected)
@@ -184,11 +216,16 @@ fn main() {
         .iter()
         .filter(|r| r.actual != r.label.expected)
         .count();
-    let total_bad =
-        mismatches.len() + q_bad + session_bad + enf_bad + fresh_mismatches + privacy_mismatches;
+    let total_bad = mismatches.len()
+        + q_bad
+        + session_bad
+        + enf_bad
+        + fresh_mismatches
+        + privacy_mismatches
+        + latency_mismatches;
     if total_bad > 0 {
         eprintln!(
-            "eval: {total_bad} mismatch(es) (chain={}, scope={q_bad}, session={session_bad}, enforcement={enf_bad}, freshness={fresh_mismatches}, rq8_privacy={privacy_mismatches})",
+            "eval: {total_bad} mismatch(es) (chain={}, scope={q_bad}, session={session_bad}, enforcement={enf_bad}, freshness={fresh_mismatches}, rq8_privacy={privacy_mismatches}, rq8_latency={latency_mismatches})",
             mismatches.len()
         );
         std::process::exit(1);
