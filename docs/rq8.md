@@ -99,23 +99,51 @@ latency, so no claim is made about which component dominates.
   (the whole `verify(&Bundle)`, format→status). `scripts/bench.sh` records rustc/cargo versions,
   CPU model (`/proc/cpuinfo`), kernel, build profile and seeds, so a CPU result is reproducible.
   This measures (a) only, and only the synthetic, in-memory status path.
-- *Responder-delay sensitivity (feasible after a synthetic extension).* A *configurable* modeled
-  responder delay, to show how a nonzero status-source latency would shift the decomposition.
-  **Not implemented yet;** when added it is clearly labeled modeled, not measured, and injects no
-  real network.
+- *Responder-delay scenarios (modeled; implemented as Q2 slice 1).* Deterministic responder-delay
+  values computed from **explicitly assumed** inputs (query count, cache hit/miss, serial vs
+  parallel, an assumed per-query RTT). No `sleep`, no timing, no network — pure arithmetic over
+  the assumptions, clearly labeled modeled, never a measured RTT.
 - *End-to-end latency (requires a real deployment).* The real components are: client→P, P→R
   status query (network + R compute + R's own freshness/caching), P's CPU decision, and the
   session/mediation round-trips. Any concrete end-to-end number needs a real responder and
   network and is out of scope for this synthetic prototype.
 
 **Method (fixed in advance).**
-- Separate the two axes explicitly in any report: "CPU per stage (this machine)" vs "end-to-end
-  (deployment)". Never present a CPU microbenchmark as an end-to-end latency.
-- For CPU: warmup, fixed iteration/repeat counts, fixed RNG seed, recorded environment; report
-  p50/p95/p99 per stage; attribute cost to signature verification vs policy vs status.
-- For end-to-end: define the components (client RTT, P→R RTT, R compute, cache hit/miss, P CPU,
-  session/mediation RTTs) and measure each in the real deployment; the synthetic prototype can
-  at most provide the P-CPU component and a *modeled* (not measured) responder-delay sensitivity.
+- Keep **three quantities visibly separate** and never conflate them:
+  1. **Measured** local per-call elapsed time from the `Instant` benchmark (`bench.rs`). This is
+     wall-clock elapsed of a tight loop — CPU-focused, but **not** process CPU time
+     (`getrusage`); it includes scheduler/measurement overhead. Reported as p50/p95/p99 per
+     stage in `results/bench_<UTC>.{md,json}` with recorded environment.
+  2. **Modeled** responder-delay scenarios — deterministic, from assumed inputs (below). Modeled,
+     not measured; gated as proposed observations.
+  3. **Unmeasured** real end-to-end network latency — stated, never computed here.
+- Never present a CPU microbenchmark as an end-to-end latency, and never present a modeled delay
+  as a measured RTT.
+- `full_chain_verify` is the measured whole-decision time; the per-stage times (`signature_x3`,
+  `typed_policy`, `status_*`) are **not** summed as though they equal it (measurement overhead
+  and non-additivity make the sum only a rough decomposition).
+
+### Q2 measurement slice 1 — modeled responder-delay scenarios (method)
+
+Assumptions, fixed before computing (all **assumed**, not measured):
+- **Query count `Q = 3`:** one status query per chain object (C_A, D_U, G).
+- **Cache hit/miss:** a cache hit is served locally (0 RTT); a miss costs one responder
+  round-trip of an **assumed** latency `rtt_ms` (default `50`, a placeholder, not a measurement).
+- **Serial vs parallel:** serial issues misses one after another; parallel issues them at once.
+- **Stapled variant:** an owner-signed freshness token carried in the bundle (freshness.md §10
+  Q1) makes `Q = 0` — no responder round-trip.
+
+Formula (the gated observation, deterministic):
+```
+responder_delay_ms = 0                         if queries == 0            (stapled)
+                   = misses * rtt_ms           if mode == serial
+                   = (misses > 0 ? rtt_ms : 0) if mode == parallel
+```
+An *illustrative* end-to-end total would be `measured_cpu (quantity 1) + responder_delay
+(quantity 2) + real_network (quantity 3, unmeasured)`; only `responder_delay` is gated. The
+measured CPU is reported separately in the bench results and is **not** baked into a gated
+label (it is machine- and run-dependent). Scenarios QL01–QL06 are in
+`tests/cases/rq8_latency_cases.toml` (proposed), gated in `cargo test` and `eval`.
 
 **Open decisions (record).**
 - Whether the status source is stapled (owner-signed token carried in the bundle, no round-trip;
