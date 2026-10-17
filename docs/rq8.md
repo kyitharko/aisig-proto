@@ -3,8 +3,9 @@
 **Status:** DRAFT, 2026-10-17. **Q1 slice 1 (privacy: field disclosure + linkability) is
 implemented synthetically with 16 owner-`reviewed` observations; Q2 slice 1 (latency) adds a
 rerun CPU benchmark plus 6 `reviewed` modeled responder-delay scenarios (real end-to-end
-latency stays unmeasured); Q3 (onboarding/cost) remains design only.** This document defines
-the *questions* and
+latency stays unmeasured); Q3 slice 1 adds a step/critical-path map and measured artifact byte
+sizes (15 `proposed`), with human/monetary/storage cost left to a real deployment.** This
+document defines the *questions* and
 *measurement methods* so that any RQ8 result is produced against a method fixed in advance.
 Where the existing synthetic prototype can support a method it is stated; where a real
 deployment is required it is stated. **No performance, privacy or cost *number* is asserted:**
@@ -336,14 +337,16 @@ implemented yet; **deployment** = requires a real deployment and is out of scope
 | Q2 whole-`ValidChain_P` CPU | measured | `bench.rs`: `full_chain_verify` (same rerun) |
 | Q2 responder-delay scenarios (modeled) | modeled (implemented) | `rq8_latency.rs`, QL01–QL06: deterministic over an **assumed** rtt, not a measured RTT |
 | Q2 end-to-end latency (real R + network) | deployment | real responder + network RTT, cache, load |
-| Q3 onboarding step / critical-path map | extension | structural audit, not implemented |
-| Q3 canonical artifact sizes | extension | byte sizes of the canonical artifacts, not implemented |
-| Q3 person-time / monetary / operating cost | deployment | human/operating cost under real conditions |
+| Q3 onboarding step / critical-path map | modeled (implemented) | `rq8_onboarding.rs`, OS-O/P/T/R: per-party step counts from the map held as data |
+| Q3 canonical artifact byte sizes | measured | `rq8_onboarding.rs`, OB01–OB11: from the actual fixture bytes |
+| Q3 person-time / monetary / operating / storage cost | deployment | not inferred from bytes or step counts |
 
 ## Non-goals and no-claim statement
 
-- Q1 slice 1 (field disclosure + linkability) and Q2 slice 1 (CPU benchmark + modeled
-  responder-delay scenarios) are implemented; Q3 (onboarding/cost) remains design-only.
+- Q1 slice 1 (field disclosure + linkability), Q2 slice 1 (CPU benchmark + modeled
+  responder-delay scenarios) and Q3 slice 1 (step map + measured artifact byte sizes) are
+  implemented. No human time, monetary cost, storage bill, or operational effort is inferred
+  from bytes or step counts — those remain real-deployment facts.
 - The Q1 observations are structural facts about this synthetic encoding (field names present,
   and which fields are byte-equal across showings). They are **not** a real-world privacy
   guarantee, and no privacy *number* over a real population is asserted. O4 network metadata is

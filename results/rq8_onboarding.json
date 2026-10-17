@@ -1,0 +1,126 @@
+{
+  "cases": [
+    {
+      "actual": "cA_signed_payload_bytes=654",
+      "expected": "cA_signed_payload_bytes=654",
+      "id": "OB01",
+      "label_status": "proposed",
+      "match": true,
+      "note": "C_A canonical signed payload (bytes the signature covers)"
+    },
+    {
+      "actual": "cA_envelope_bytes=1108",
+      "expected": "cA_envelope_bytes=1108",
+      "id": "OB02",
+      "label_status": "proposed",
+      "match": true,
+      "note": "C_A full on-the-wire envelope (base64 payload + base64 sig + type + key_id)"
+    },
+    {
+      "actual": "dU_signed_payload_bytes=820",
+      "expected": "dU_signed_payload_bytes=820",
+      "id": "OB03",
+      "label_status": "proposed",
+      "match": true,
+      "note": "D_U canonical signed payload"
+    },
+    {
+      "actual": "dU_envelope_bytes=1331",
+      "expected": "dU_envelope_bytes=1331",
+      "id": "OB04",
+      "label_status": "proposed",
+      "match": true,
+      "note": "D_U full envelope"
+    },
+    {
+      "actual": "g_signed_payload_bytes=846",
+      "expected": "g_signed_payload_bytes=846",
+      "id": "OB05",
+      "label_status": "proposed",
+      "match": true,
+      "note": "G canonical signed payload"
+    },
+    {
+      "actual": "g_envelope_bytes=1364",
+      "expected": "g_envelope_bytes=1364",
+      "id": "OB06",
+      "label_status": "proposed",
+      "match": true,
+      "note": "G full envelope"
+    },
+    {
+      "actual": "root_signed_payload_bytes=321",
+      "expected": "root_signed_payload_bytes=321",
+      "id": "OB07",
+      "label_status": "proposed",
+      "match": true,
+      "note": "root (OrganizationRoot) canonical signed payload"
+    },
+    {
+      "actual": "root_envelope_bytes=665",
+      "expected": "root_envelope_bytes=665",
+      "id": "OB08",
+      "label_status": "proposed",
+      "match": true,
+      "note": "root full envelope"
+    },
+    {
+      "actual": "signature_bytes=64",
+      "expected": "signature_bytes=64",
+      "id": "OB09",
+      "label_status": "proposed",
+      "match": true,
+      "note": "raw Ed25519 signature, constant for every object"
+    },
+    {
+      "actual": "bundle_total_envelope_bytes=4468",
+      "expected": "bundle_total_envelope_bytes=4468",
+      "id": "OB10",
+      "label_status": "proposed",
+      "match": true,
+      "note": "transmitted bundle cost = sum of the four slot envelopes (root+C_A+D_U+G); NOT the sum of signed payloads"
+    },
+    {
+      "actual": "mediation_request_bundle_bytes=4468 independent_transmission_cost=false",
+      "expected": "mediation_request_bundle_bytes=4468 independent_transmission_cost=false",
+      "id": "OB11",
+      "label_status": "proposed",
+      "match": true,
+      "note": "the MediationRequest re-carries the whole bundle (in-memory struct); a duplication, not an independent transmission cost"
+    },
+    {
+      "actual": "party=O implemented=2 assumed_oob=1 design_only=1",
+      "expected": "party=O implemented=2 assumed_oob=1 design_only=1",
+      "id": "OS-O",
+      "label_status": "proposed",
+      "match": true,
+      "note": "O: K_O gen + C_A issue (impl); pin K_O at P (oob); rotate/retire (design-only)"
+    },
+    {
+      "actual": "party=P implemented=4 assumed_oob=2 design_only=0",
+      "expected": "party=P implemented=4 assumed_oob=2 design_only=0",
+      "id": "OS-P",
+      "label_status": "proposed",
+      "match": true,
+      "note": "P: verify + status query + session + mediate (impl); pin K_O + pin K_R (oob)"
+    },
+    {
+      "actual": "party=T implemented=2 assumed_oob=1 design_only=0",
+      "expected": "party=T implemented=2 assumed_oob=1 design_only=0",
+      "id": "OS-T",
+      "label_status": "proposed",
+      "match": true,
+      "note": "T: hold K_T + session PoP response (impl); receive G delivery (oob)"
+    },
+    {
+      "actual": "party=R implemented=2 assumed_oob=1 design_only=0",
+      "expected": "party=R implemented=2 assumed_oob=1 design_only=0",
+      "id": "OS-R",
+      "label_status": "proposed",
+      "match": true,
+      "note": "R: sign responses + epoch/expiry discipline (impl); provisioned/hold K_R (oob)"
+    }
+  ],
+  "matched": 15,
+  "total": 15
+}

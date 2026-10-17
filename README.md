@@ -28,7 +28,7 @@ assets are in this repository.
 - [docs/session.md](docs/session.md) — RQ5 slice s1: challenge/response proof of possession bound to a provider session
 - [docs/enforcement.md](docs/enforcement.md) — RQ6 slice e2 (implemented, synthetic): provider-mediated synthetic tool adapter
 - [docs/freshness.md](docs/freshness.md) — RQ7 slice f2 (implemented; labels reviewed): status freshness and bounded revocation delay
-- [docs/rq8.md](docs/rq8.md) — RQ8: privacy leakage (Q1 slice 1, 16 reviewed observations), CPU vs end-to-end latency (Q2 slice 1: measured CPU + 6 reviewed modeled responder-delay scenarios), onboarding/cost (Q3 design only); no privacy/latency/cost number over a real deployment claimed
+- [docs/rq8.md](docs/rq8.md) — RQ8: privacy leakage (Q1 slice 1, 16 reviewed observations), CPU vs end-to-end latency (Q2 slice 1: measured CPU + 6 reviewed modeled responder-delay scenarios), onboarding/cost (Q3 slice 1: step map + measured artifact byte sizes, 15 proposed; human/monetary/storage cost not inferred); no privacy/latency/cost number over a real deployment claimed
 - [docs/report.md](docs/report.md) — what was run and what it produced
 
 ## Research questions
@@ -38,7 +38,7 @@ assets are in this repository.
 - RQ5 (tester/session binding): **slice s1, reviewed** (34 labels) — session proof of possession, separate decision; channel binding and relay resistance not addressed.
 - RQ6 (tool effect enforcement): **slice e2, implemented (synthetic)** — a provider-side mediator for synthetic tool operations ([docs/enforcement.md](docs/enforcement.md)); 28 reviewed labels; only modeled in-memory effects, no live tool enforcement.
 - RQ7 (revocation freshness): **slice f2 implemented** — whole-interval status-freshness policy over a signed, timestamped responder statement ([docs/freshness.md](docs/freshness.md)); 34 labels, all **reviewed** (owner-approved; the implementation matches them). Runs behind a separate freshness-slice runner; the chain/session/enforcement outcomes are unchanged.
-- RQ8 (privacy / latency / onboarding): **Q1 slice 1 implemented (synthetic)** — field-disclosure inventory and identical-vs-reissued linkability ([docs/rq8.md](docs/rq8.md)); 16 **reviewed** observations (owner-approved). A structural observation over top-level field names, not a privacy guarantee; O4 network metadata unmeasured. **Q2 slice 1**: a rerun CPU benchmark plus 6 **reviewed** modeled responder-delay scenarios (measured CPU, modeled delay and unmeasured real end-to-end latency kept separate). Q3 onboarding remains design only; no RQ8 number over a real deployment is claimed.
+- RQ8 (privacy / latency / onboarding): **Q1 slice 1 implemented (synthetic)** — field-disclosure inventory and identical-vs-reissued linkability ([docs/rq8.md](docs/rq8.md)); 16 **reviewed** observations (owner-approved). A structural observation over top-level field names, not a privacy guarantee; O4 network metadata unmeasured. **Q2 slice 1**: a rerun CPU benchmark plus 6 **reviewed** modeled responder-delay scenarios (measured CPU, modeled delay and unmeasured real end-to-end latency kept separate). **Q3 slice 1**: a step/critical-path map (O/P/T/R) and measured canonical artifact byte sizes (15 proposed); no human/monetary/storage cost inferred. No RQ8 number over a real deployment is claimed.
 
 ## Layout
 
