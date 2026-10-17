@@ -10,7 +10,7 @@ Generated outputs. Do not edit by hand.
 | `freshness_cases.md`, `.json` | same run, RQ7 freshness-slice labels (34 reviewed) | current (f2) |
 | `rq8_privacy.md`, `.json` | same run, RQ8 Q1 privacy slice: field disclosure + linkability (16 reviewed) | current |
 | `rq8_latency.md`, `.json` | same run, RQ8 Q2 latency slice: modeled responder-delay scenarios (6 reviewed) | current |
-| `rq8_onboarding.md`, `.json` | same run, RQ8 Q3 onboarding slice: step map + artifact byte sizes (15 proposed) | current |
+| `rq8_onboarding.md`, `.json` | same run, RQ8 Q3 onboarding slice: step map + artifact byte sizes (17 proposed) | current |
 | `bench_20261017T025341Z.md`, `.json` | `scripts/bench.sh`, git `8309871`, HEAD rerun for the RQ8 Q2 slice (same machine) | current (RQ8 Q2) |
 | `bench_20261015T201455Z.md`, `.json` | `scripts/bench.sh`, git `21487fc`, after the negative-ε rejection in the time paths | **historical (round 3)** |
 | `bench_20261014T192333Z.md`, `.json` | `scripts/bench.sh`, git `526a3c6`, exact-object status keys | **historical (r3)** |

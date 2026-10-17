@@ -81,12 +81,12 @@
       "note": "transmitted bundle cost = sum of the four slot envelopes (root+C_A+D_U+G); NOT the sum of signed payloads"
     },
     {
-      "actual": "mediation_request_bundle_bytes=4468 independent_transmission_cost=false",
-      "expected": "mediation_request_bundle_bytes=4468 independent_transmission_cost=false",
+      "actual": "mediation_request_bundle_slot_bytes=4468",
+      "expected": "mediation_request_bundle_slot_bytes=4468",
       "id": "OB11",
       "label_status": "proposed",
       "match": true,
-      "note": "the MediationRequest re-carries the whole bundle (in-memory struct); a duplication, not an independent transmission cost"
+      "note": "in-memory bundle-slot bytes carried inside a MediationRequest (sum of its 4 slot envelopes); no transmission-cost claim — there is no request wire encoding/transport, and transport framing and repeated-request cost are unmeasured"
     },
     {
       "actual": "party=O implemented=2 assumed_oob=1 design_only=1",
@@ -94,15 +94,23 @@
       "id": "OS-O",
       "label_status": "proposed",
       "match": true,
-      "note": "O: K_O gen + C_A issue (impl); pin K_O at P (oob); rotate/retire (design-only)"
+      "note": "O: K_O gen + C_A issue (fixture-impl); pin K_O at P (oob RQ1); rotate/retire (design-only)"
     },
     {
-      "actual": "party=P implemented=4 assumed_oob=2 design_only=0",
-      "expected": "party=P implemented=4 assumed_oob=2 design_only=0",
-      "id": "OS-P",
+      "actual": "party=A implemented=2 assumed_oob=0 design_only=0",
+      "expected": "party=A implemented=2 assumed_oob=0 design_only=0",
+      "id": "OS-A",
       "label_status": "proposed",
       "match": true,
-      "note": "P: verify + status query + session + mediate (impl); pin K_O + pin K_R (oob)"
+      "note": "A = admin (K_admin): hold K_admin + issue D_U (fixture-generated signatures)"
+    },
+    {
+      "actual": "party=U implemented=2 assumed_oob=0 design_only=0",
+      "expected": "party=U implemented=2 assumed_oob=0 design_only=0",
+      "id": "OS-U",
+      "label_status": "proposed",
+      "match": true,
+      "note": "U = issuer/authorizer (K_authorizer): hold K_authorizer + issue G (fixture-generated signatures)"
     },
     {
       "actual": "party=T implemented=2 assumed_oob=1 design_only=0",
@@ -113,6 +121,14 @@
       "note": "T: hold K_T + session PoP response (impl); receive G delivery (oob)"
     },
     {
+      "actual": "party=P implemented=4 assumed_oob=3 design_only=0",
+      "expected": "party=P implemented=4 assumed_oob=3 design_only=0",
+      "id": "OS-P",
+      "label_status": "proposed",
+      "match": true,
+      "note": "P: verify + status query + session + mediate (impl); pin K_O (oob RQ1) + pin K_R (oob RQ7) + rely on asset-binding evidence (oob RQ2)"
+    },
+    {
       "actual": "party=R implemented=2 assumed_oob=1 design_only=0",
       "expected": "party=R implemented=2 assumed_oob=1 design_only=0",
       "id": "OS-R",
@@ -121,6 +137,6 @@
       "note": "R: sign responses + epoch/expiry discipline (impl); provisioned/hold K_R (oob)"
     }
   ],
-  "matched": 15,
-  "total": 15
+  "matched": 17,
+  "total": 17
 }
