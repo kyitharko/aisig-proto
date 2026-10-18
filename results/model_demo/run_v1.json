@@ -1,8 +1,9 @@
 {
   "phase": "4b",
-  "kind": "model_driven_run",
+  "kind": "model_driven_run_historical_direct_http",
   "date_utc": "2026-10-18",
-  "orchestrator": "n8n container runtime (same two HTTP calls as demo/n8n-workflow.json): POST ollama /api/chat, then POST controller /v1/runs",
+  "historical": true,
+  "orchestrator": "HISTORICAL: direct HTTP calls issued by hand from INSIDE the n8n container (POST ollama /api/chat, then POST the controller /v1/runs). This is NOT an n8n workflow execution. The genuine n8n workflow executions are recorded separately in n8n_runs.json / exec_v1_n8n.json.",
   "variant": "v1",
   "variant_description": "ordinary request: read the engagement reports page under /app",
   "scenario_id": "fresh",
@@ -10,8 +11,9 @@
   "model": {
     "tag": "qwen3:1.7b",
     "id": "8f68893c685c",
-    "manifest_sha256": "0f45bae8cd2fec097cf09b400b078cf42388a1f5702f4058d2d6d641a09db46d",
-    "runtime": "ollama 0.40.6",
+    "digest_sha256": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
+    "digest_note": "authoritative ollama /api/tags digest for qwen3:1.7b (an earlier draft recorded a different hash in error; the model identity is unchanged)",
+    "runtime": "ollama (via demo/compose.cpu.yml)",
     "sampling": {"think": false, "temperature": 0, "seed": 42, "stream": false}
   },
   "prompt": {

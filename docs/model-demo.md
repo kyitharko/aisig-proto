@@ -1,9 +1,12 @@
 # Small-model API simulation — local infrastructure and implementation plan
 
-**Status: CPU-only n8n/Ollama Compose file prepared, not run here.** The provider API,
-exported experiment workflow, model run and model-derived results are not included in this
-snapshot. The existing `eval` results concern deterministic synthetic fixtures; they must not
-be described as live-model results.
+**Status: implemented and run (CPU-only).** The provider controller, an importable n8n workflow
+and a deterministic excluded-target control workflow are in the repository, and the workflow has
+been imported into n8n and executed against the real local `qwen3:1.7b` model; the recorded
+results are in [`results/model_demo/`](../results/model_demo/) (`n8n_runs.json`,
+`exec_*_n8n.json`, `model_runs.md`). The separate `eval` results concern deterministic synthetic
+fixtures and must not be described as live-model results, and the live-model runs are a small
+illustrative sample, not a benchmark or a determinism proof.
 
 ## Question and boundary
 
@@ -34,10 +37,12 @@ JSON with the demo, without credentials or personal data. The n8n workflow **mus
 nodes that directly fetch a proposed target, write a database, or execute a model-selected
 command. n8n may invoke only the controller's bounded API for an action proposal.
 
-Bind the demo controller to `127.0.0.1` by default. If n8n, Ollama and the controller run as
-containers, keep their service addresses on a private Compose network and publish only n8n's
-UI on host loopback. Do not mistake container `localhost` for the host or another service.
-Implement a provider-owned controller with these routes:
+The demo controller binds `127.0.0.1` by default. In [`demo/compose.cpu.yml`](../demo/compose.cpu.yml)
+it runs as a Compose service that binds `0.0.0.0` **inside its container only, with no published
+host port**, so it is reachable solely by other services on the private network as
+`http://controller:8787` — never from the host or the outside. Only n8n's editor UI is published,
+on host loopback. Do not bind the unauthenticated controller to a routable address, and do not
+mistake container `localhost` for the host or another service. The controller has these routes:
 
 | Route | Input / output |
 | --- | --- |
@@ -67,9 +72,9 @@ This host also reports 182 GiB available disk and Docker/Compose installed. Thes
 support a small local trial, but are not a measured model-performance result. Vulkan on
 older GPUs is an optional separate compatibility experiment, not the baseline.
 
-### Local infrastructure smoke test (controller not implemented yet)
+### Local infrastructure smoke test
 
-From the repository root, after applying this preparation patch to the real branch:
+From the repository root:
 
 ```sh
 docker compose -f demo/compose.cpu.yml up -d
@@ -94,11 +99,16 @@ that n8n can reach a local model API; it does **not** test the authorization ver
 If Docker cannot pull the images or model on a restricted network, transfer/pull them via
 the owner's approved download path and record their image/model digests.
 
-For a recorded experiment, the remaining implementation must add the provider-owned
-controller and an exported n8n workflow that forwards proposed actions to it. Until
-then there are no model-derived authorization results. Stop the local containers with
-`docker compose -f demo/compose.cpu.yml down` (without `-v` if you want to keep the
-local n8n/Ollama data volumes).
+For the recorded experiment, build the controller binary (`cargo build --release --bin
+demo_controller`), bring the stack up, import the exported workflow
+([`demo/n8n-workflow.json`](../demo/n8n-workflow.json)) with `n8n import:workflow`, and run it
+with `n8n execute --id=<id>` (use a one-off `docker compose run --rm --no-deps n8n execute …`
+container to avoid the port-5679 task-broker clash with the live n8n server), or run it from the
+editor UI. The deterministic excluded-target control is
+[`demo/n8n-control-excluded.json`](../demo/n8n-control-excluded.json). Recorded results and the
+exact commands are in [`results/model_demo/model_runs.md`](../results/model_demo/model_runs.md).
+Stop the local containers with `docker compose -f demo/compose.cpu.yml down` (without `-v` if you
+want to keep the local n8n/Ollama data volumes).
 
 Hardware facts were captured with:
 
