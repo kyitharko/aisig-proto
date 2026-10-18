@@ -5,7 +5,7 @@
     {
       "id": "DC01",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "web.get",
@@ -23,7 +23,7 @@
     {
       "id": "DC02",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "web.get",
@@ -42,7 +42,7 @@
     {
       "id": "DC03",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "web.get",
@@ -60,7 +60,7 @@
     {
       "id": "DC04",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "web.get",
@@ -78,7 +78,7 @@
     {
       "id": "DC05",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "db.write",
@@ -96,7 +96,7 @@
     {
       "id": "DC06",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "fs.delete",
@@ -114,7 +114,7 @@
     {
       "id": "DC07",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "web.flood",
@@ -132,7 +132,7 @@
     {
       "id": "DC08",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {
         "operation": "web.get",
@@ -150,7 +150,7 @@
     {
       "id": "DC09",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "expired_session",
       "proposal": {
         "operation": "web.get",
@@ -168,7 +168,7 @@
     {
       "id": "DC10",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "revoked_grant",
       "proposal": {
         "operation": "web.get",
@@ -186,7 +186,7 @@
     {
       "id": "DC11",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "stale_status",
       "proposal": {
         "operation": "web.get",
@@ -204,7 +204,7 @@
     {
       "id": "DC12",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "unavailable_status",
       "proposal": {
         "operation": "web.get",
@@ -222,7 +222,7 @@
     {
       "id": "DC13",
       "series": "control",
-      "timestamp": "2026-10-18T13:40:27Z",
+      "timestamp": "2026-10-18T14:10:48Z",
       "scenario": "fresh",
       "proposal": {},
       "http_status": 200,

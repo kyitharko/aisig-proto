@@ -492,14 +492,37 @@ fn committed_matrix() -> Value {
 
 /// Gate the committed model matrix: full coverage, every cell completed, required fields present,
 /// effect invariant, recorded hashes match the committed workflows, raw-message<->proposal
-/// consistency, and captured identity present.
+/// consistency, and captured identity present. Additionally require, on the committed authoritative
+/// matrix, that every run carries the full provenance (`execute_returncode == 0` and a
+/// recomputable `effective_workflow_fingerprint`) and that the provenance note is present.
 #[test]
 fn committed_model_matrix_is_complete_and_consistent() {
-    let problems = matrix_problems(&committed_matrix());
+    let m = committed_matrix();
+    let problems = matrix_problems(&m);
     assert!(
         problems.is_empty(),
         "committed matrix problems: {problems:?}"
     );
+    assert!(
+        m["provenance"]["effective_workflow_fingerprint"].is_string(),
+        "committed matrix must document the effective-workflow provenance scheme"
+    );
+    for r in m["runs"].as_array().unwrap() {
+        let rid = r["run_id"].as_str().unwrap_or("?");
+        assert_eq!(
+            r["execute_returncode"].as_i64(),
+            Some(0),
+            "{rid}: committed run must record execute_returncode == 0"
+        );
+        let cvs = r["committed_variant_sha256"].as_str().unwrap();
+        let scn = r["scenario"].as_str().unwrap();
+        let expect_fp = sha256_hex(format!("{cvs}\n{scn}").as_bytes());
+        assert_eq!(
+            r["effective_workflow_fingerprint"].as_str(),
+            Some(expect_fp.as_str()),
+            "{rid}: committed run must carry a recomputable effective_workflow_fingerprint"
+        );
+    }
 }
 
 // ---- regression reproductions for the three remaining gate gaps (red before the hardening) ----

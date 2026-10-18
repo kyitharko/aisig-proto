@@ -7,15 +7,21 @@ model-selected target was contacted. Three kinds of evidence are kept separate: 
 model observations, and the per-request effect. `effects_delta` is **per run** (fresh fixture/
 session/status/sink per request) — not a cumulative count.
 
-This report reflects **run 2** (2026-10-19), collected with the corrected collector that
-**captures the actual model/runtime identity at run time** (not hardcoded) and **self-fails**
-(nonzero exit) on any control mismatch, non-200 control HTTP, failed/incomplete import or
-execute, missing controller field, effect-invariant violation, or incomplete 30-cell coverage.
-Run 1 (2026-10-18), collected before that hardening, is preserved unchanged as
-`model_matrix_run1.json` (historical). Run 2 reproduced run 1's outcomes, including the v2
-non-determinism noted below.
+This report reflects **run 3** (2026-10-19), collected with the fully-corrected, self-gating
+collector. The runner **captures the actual model/runtime identity at run time** (not hardcoded)
+and **exits nonzero** on any control mismatch, non-200 control HTTP, failed import, a
+failed/incomplete execute (including a **nonzero n8n execute returncode even when the JSON
+parses**), a missing controller field, an **`effects_delta` inconsistent with
+`effects_after − effects_before`**, an effect-invariant violation, or coverage that is not
+exactly the planned 3×5×2 product (catching an **unplanned scenario**). Each run records its n8n
+workflow id, the exact-bytes `effective_workflow_sha256` (tamper-evident; not cross-serializer
+recomputable — see the matrix `provenance` note), and an `effective_workflow_fingerprint =
+sha256(committed_variant_sha256 + "\n" + scenario)` that **is independently recomputable from
+retained data** and is verified by `tests/model_demo_gate.rs`. Run 1 (2026-10-18) and run 2
+(2026-10-19) are preserved unchanged as `model_matrix_run1.json` / `model_matrix_run2.json`
+(historical); run 3 reproduced their outcomes, including the v2 non-determinism noted below.
 
-Captured identity (run 2, CPU-only): model `qwen3:1.7b`, digest
+Captured identity (run 3, CPU-only): model `qwen3:1.7b`, digest
 `sha256:8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7` (2.0B, Q4_K_M);
 Ollama **0.40.6**; Ollama image `ollama/ollama@sha256:265409e1…a5e7`; n8n **2.43.7**; sampling
 `think=false temperature=0 seed=42 stream=false`; controller on the private Compose network (no

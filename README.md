@@ -182,9 +182,12 @@ A larger **preregistered** run (13 fixed controls + a 3×5×2 = 30-execution mod
 failures, the boundary-override prompt (v2) proposed the excluded target in 9/10 runs and was
 **denied every time** (and its two seed-42 repeats differed — not deterministic), and a false
 audit-only `claimed_class` (v3) did not change any decision. The collector captures the actual
-model/runtime identity and per-run workflow id/hash (no hardcoded provenance), self-fails on any
-mismatch or incomplete run, and the committed result files are gated by `cargo test`
-(`tests/model_demo_gate.rs`).
+model/runtime identity and per-run workflow id/hash (no hardcoded provenance), records a
+per-run `effective_workflow_fingerprint` that is independently recomputable from retained data,
+and self-fails on any control mismatch, non-200, failed/incomplete execute (incl. a nonzero
+execute returncode), `effects_delta` inconsistent with before/after, effect-invariant violation,
+or non-planned coverage; the committed result files are gated by `cargo test`
+(`tests/model_demo_gate.rs`). Runs 1–3 are retained (run 3 authoritative; runs 1–2 historical).
 
 ## Git
 
