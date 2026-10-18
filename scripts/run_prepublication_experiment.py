@@ -119,6 +119,77 @@ def run_controls():
     return out
 
 
+# ---------- captured provenance (not hardcoded) ----------
+def wget_json(url):
+    """Fetch JSON from inside the n8n container (Ollama has no published host port)."""
+    p = dc(["exec", "-T", "n8n", "sh", "-c", f"wget -qO- {url}"], timeout=30)
+    try:
+        return json.loads(p.stdout)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def capture_identity():
+    """Query the actual running model/runtime identity rather than assuming it."""
+    ver = wget_json("http://ollama:11434/api/version") or {}
+    tags = wget_json("http://ollama:11434/api/tags") or {}
+    digest = psize = quant = None
+    for m in tags.get("models", []):
+        if m.get("name") == "qwen3:1.7b":
+            digest = m.get("digest")
+            det = m.get("details", {})
+            psize, quant = det.get("parameter_size"), det.get("quantization_level")
+    n8n_v = dc(["exec", "-T", "n8n", "n8n", "--version"], timeout=30).stdout.strip() or None
+    img = subprocess.run(
+        ["docker", "inspect", "--format", "{{index .RepoDigests 0}}", "ollama/ollama:latest"],
+        capture_output=True, text=True,
+    ).stdout.strip() or None
+    return {
+        "model_tag": "qwen3:1.7b", "model_digest": digest,
+        "parameter_size": psize, "quantization": quant,
+        "ollama_version": ver.get("version"), "ollama_image_digest": img,
+        "n8n_version": n8n_v,
+    }
+
+
+# ---------- gate: the runner fails loudly on bad outcomes ----------
+def gate_problems(controls, matrix, expected_cells=30):
+    """Return a list of problems that must make the runner exit nonzero. Empty => clean."""
+    problems = []
+    if not controls:
+        problems.append("no fixed controls were run")
+    for c in controls:
+        if c.get("http_status") != 200:
+            problems.append(f"control {c.get('id')}: HTTP {c.get('http_status')} (not an authz decision)")
+        if not c.get("pass"):
+            problems.append(f"control {c.get('id')}: decision/delta/parse mismatch vs expected")
+
+    runs = matrix.get("runs", []) if matrix else []
+    attempted = matrix.get("attempted") if matrix else None
+    if matrix is not None:
+        if attempted != expected_cells:
+            problems.append(f"matrix attempted={attempted}, expected {expected_cells}")
+        cells = {(r.get("variant"), r.get("scenario"), r.get("repeat")) for r in runs}
+        if len(cells) != expected_cells or len(runs) != expected_cells:
+            problems.append(f"matrix cell coverage {len(cells)}/{len(runs)} != {expected_cells}")
+        completed = [r for r in runs if r.get("completed")]
+        if matrix.get("completed") != len(completed):
+            problems.append("matrix 'completed' count disagrees with per-run 'completed' flags")
+        for r in runs:
+            rid = r.get("run_id")
+            if not r.get("completed"):
+                problems.append(f"run {rid}: not completed ({r.get('error', 'unknown error')})")
+                continue
+            for f in ("decision", "parse_status", "effects_delta", "proposal", "model_raw_message"):
+                if r.get(f) is None:
+                    problems.append(f"run {rid}: missing controller/model field '{f}'")
+            if r.get("decision") is not None and r.get("effects_delta") is not None:
+                if (r["decision"] == "Allow") != (r["effects_delta"] == 1):
+                    problems.append(f"run {rid}: effect-invariant violation "
+                                    f"(decision={r['decision']}, delta={r['effects_delta']})")
+    return problems
+
+
 # ---------- Part B: model matrix via n8n ----------
 def raw_decode_first(blob):
     """Extract the first sizeable JSON value from n8n execute --rawOutput (log preamble + JSON)."""
@@ -149,26 +220,33 @@ def node_ms(run_data, node):
 
 
 def import_variant(variant, scenario, src_path, tag):
+    """Import the committed variant with only scenario_id overridden. Returns the actual n8n
+    workflow id and the SHA-256 of the exact bytes imported (the effective workflow hash), rather
+    than assuming provenance."""
     wf = json.load(open(src_path))
     wf["name"] = f"aisig-mx-{tag}-{variant}-{scenario}"
     for a in wf["nodes"][1]["parameters"]["assignments"]["assignments"]:
         if a["id"] == "a1":
             a["value"] = scenario
+    effective = json.dumps(wf)
+    effective_sha = sha256_text(effective)
     tmp = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
-    json.dump(wf, tmp)
+    tmp.write(effective)
     tmp.close()
     # NamedTemporaryFile is mode 0600; `docker cp` preserves the mode, and the in-container n8n
     # user ("node") must be able to read it, so make it world-readable before copying.
     os.chmod(tmp.name, 0o644)
     dc(["cp", tmp.name, "n8n:/tmp/mx.json"], timeout=60)
     os.unlink(tmp.name)
-    dc(["exec", "-T", "n8n", "n8n", "import:workflow", "--input=/tmp/mx.json"], timeout=120)
+    imp = dc(["exec", "-T", "n8n", "n8n", "import:workflow", "--input=/tmp/mx.json"], timeout=120)
+    if imp.returncode != 0:
+        return None, effective_sha
     listing = dc(["exec", "-T", "n8n", "n8n", "list:workflow"], timeout=60).stdout
     wid = None
     for line in listing.splitlines():
         if "|" in line and line.split("|", 1)[1].strip() == wf["name"]:
             wid = line.split("|", 1)[0].strip()
-    return wid
+    return wid, effective_sha
 
 
 def execute(wid):
@@ -176,7 +254,7 @@ def execute(wid):
     return p.stdout, p.returncode, p.stderr
 
 
-def run_matrix():
+def run_matrix(identity):
     tag = datetime.datetime.now().strftime("%H%M%S")
     attempted = completed = 0
     runs = []
@@ -186,15 +264,16 @@ def run_matrix():
                   if a["id"] == "a4"][0]
         prompt_sha = sha256_text(prompt)
         for scenario in SCENARIOS:
-            wid = import_variant(variant, scenario, src, tag)
+            wid, eff_sha = import_variant(variant, scenario, src, tag)
             for rep in (1, 2):
                 attempted += 1
                 run_id = f"mx-{variant}-{scenario}-r{rep}"
                 rec = {
                     "run_id": run_id, "series": "model", "variant": variant,
                     "scenario": scenario, "repeat": rep, "timestamp": now_utc(),
-                    "workflow_file": src, "workflow_sha256": wf_sha, "prompt_sha256": prompt_sha,
-                    "committed_variant": src,
+                    "committed_variant": src, "committed_variant_sha256": wf_sha,
+                    "prompt_sha256": prompt_sha,
+                    "effective_workflow_sha256": eff_sha, "workflow_id": wid,
                 }
                 if wid is None:
                     rec["error"] = "import/list did not yield a workflow id"
@@ -234,9 +313,13 @@ def run_matrix():
                 rec["effects_delta"] = ctrl.get("effects_delta")
                 rec["controller_run_id"] = ctrl.get("run_id")
                 rec["model"] = {
-                    "tag": "qwen3:1.7b",
-                    "digest_sha256": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
-                    "ollama_version": "0.40.6",
+                    "tag": identity.get("model_tag"),
+                    "digest": identity.get("model_digest"),
+                    "parameter_size": identity.get("parameter_size"),
+                    "quantization": identity.get("quantization"),
+                    "ollama_version": identity.get("ollama_version"),
+                    "ollama_image_digest": identity.get("ollama_image_digest"),
+                    "n8n_version": identity.get("n8n_version"),
                     "sampling": {"think": False, "temperature": 0, "seed": 42, "stream": False},
                     "eval_count": ollama.get("eval_count"),
                     "ollama_total_duration_ns": ollama.get("total_duration"),
@@ -260,14 +343,31 @@ def main():
               open("results/model_demo/controls_results.json", "w"), indent=2)
     print(f"controls: {sum(c['pass'] for c in controls)}/{len(controls)} pass")
 
-    if os.environ.get("AISIG_SKIP_MODEL") == "1":
+    skip = os.environ.get("AISIG_SKIP_MODEL") == "1"
+    matrix = None
+    if skip:
         print("AISIG_SKIP_MODEL=1 -> skipping model matrix")
-        return
-    print("Part B: model matrix (3 variants x 5 scenarios x 2 repeats)")
-    attempted, completed, runs = run_matrix()
-    json.dump({"kind": "model_matrix_results", "attempted": attempted, "completed": completed,
-               "runs": runs}, open("results/model_demo/model_matrix.json", "w"), indent=2)
-    print(f"matrix: attempted={attempted} completed={completed}")
+    else:
+        identity = capture_identity()
+        print(f"captured identity: model={identity.get('model_digest')} "
+              f"ollama={identity.get('ollama_version')} n8n={identity.get('n8n_version')}")
+        print("Part B: model matrix (3 variants x 5 scenarios x 2 repeats)")
+        attempted, completed, runs = run_matrix(identity)
+        matrix = {"kind": "model_matrix_results", "identity": identity,
+                  "attempted": attempted, "completed": completed, "runs": runs}
+        json.dump(matrix, open("results/model_demo/model_matrix.json", "w"), indent=2)
+        print(f"matrix: attempted={attempted} completed={completed}")
+
+    # Fail loudly: any control mismatch / non-200, failed or incomplete execute, missing field,
+    # effect-invariant violation, or incomplete coverage makes the whole run nonzero.
+    problems = gate_problems(controls, matrix, expected_cells=30 if not skip else None)
+    if problems:
+        print(f"\nGATE FAILED ({len(problems)} problem(s)):")
+        for p in problems:
+            print(f"  - {p}")
+        return 1
+    print("\nGATE PASSED: controls matched and all model cells completed with the effect invariant held.")
+    return 0
 
 
 if __name__ == "__main__":
