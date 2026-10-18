@@ -316,7 +316,24 @@ fn matrix_problems(m: &Value) -> Vec<String> {
         p.push("identity: missing n8n_version".into());
     }
 
-    // Distinct-cell count (coverage of planned cells is added by the hardening commit).
+    // Coverage must be exactly the planned (variant x scenario x repeat) product. This catches an
+    // unplanned scenario (30 distinct cells that are not the planned set) and any missing cell.
+    let variants = ["v1", "v2", "v3"];
+    let scenarios = [
+        "fresh",
+        "expired_session",
+        "revoked_grant",
+        "stale_status",
+        "unavailable_status",
+    ];
+    let mut planned = std::collections::HashSet::new();
+    for v in variants {
+        for s in scenarios {
+            for rep in [1u64, 2] {
+                planned.insert((v.to_owned(), s.to_owned(), rep));
+            }
+        }
+    }
     let mut cells = std::collections::HashSet::new();
     for r in runs {
         cells.insert((
@@ -325,8 +342,12 @@ fn matrix_problems(m: &Value) -> Vec<String> {
             r["repeat"].as_u64().unwrap_or(0),
         ));
     }
-    if cells.len() != 30 {
-        p.push(format!("{} distinct cells != 30", cells.len()));
+    if cells != planned {
+        let unplanned: Vec<_> = cells.difference(&planned).collect();
+        let missing: Vec<_> = planned.difference(&cells).collect();
+        p.push(format!(
+            "coverage != planned 3x5x2 (unplanned={unplanned:?}, missing={missing:?})"
+        ));
     }
 
     let mut wf_sha = HashMap::new();
@@ -379,11 +400,43 @@ fn matrix_problems(m: &Value) -> Vec<String> {
         if !r["workflow_id"].as_str().is_some_and(|s| !s.is_empty()) {
             p.push(format!("{rid}: missing workflow_id"));
         }
+        // A nonzero n8n execute returncode is a failure even if the JSON parsed.
+        if let Some(rc) = r["execute_returncode"].as_i64() {
+            if rc != 0 {
+                p.push(format!("{rid}: nonzero n8n execute returncode {rc}"));
+            }
+        }
+        // effective_workflow_fingerprint must be recomputable from retained data.
+        if let (Some(cvs), Some(scn)) = (
+            r["committed_variant_sha256"].as_str(),
+            r["scenario"].as_str(),
+        ) {
+            let expect_fp = sha256_hex(format!("{cvs}\n{scn}").as_bytes());
+            if let Some(fp) = r["effective_workflow_fingerprint"].as_str() {
+                if fp != expect_fp {
+                    p.push(format!(
+                        "{rid}: effective_workflow_fingerprint not recomputable"
+                    ));
+                }
+            }
+        }
 
         let allow = r["decision"] == "Allow";
-        let delta1 = r["effects_delta"] == Value::from(1);
+        let delta1 = r["effects_delta"] == 1;
         if allow != delta1 {
             p.push(format!("{rid}: effect-invariant violation"));
+        }
+        // effects_delta must equal effects_after - effects_before.
+        if let (Some(b), Some(a), Some(d)) = (
+            r["effects_before"].as_i64(),
+            r["effects_after"].as_i64(),
+            r["effects_delta"].as_i64(),
+        ) {
+            if d != a - b {
+                p.push(format!(
+                    "{rid}: effects_delta {d} != effects_after {a} - effects_before {b}"
+                ));
+            }
         }
 
         let parse = r["parse_status"].as_str().unwrap_or("");

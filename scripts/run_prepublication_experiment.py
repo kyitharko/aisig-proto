@@ -169,9 +169,16 @@ def gate_problems(controls, matrix, expected_cells=30):
     if matrix is not None:
         if attempted != expected_cells:
             problems.append(f"matrix attempted={attempted}, expected {expected_cells}")
+        if len(runs) != expected_cells:
+            problems.append(f"matrix has {len(runs)} runs, expected {expected_cells}")
+        # Coverage must be exactly the planned (variant x scenario x repeat) product: this catches
+        # an unplanned scenario (30 distinct cells that are not the planned set) and missing cells.
+        planned = {(v, s, rep) for v, _ in VARIANTS for s in SCENARIOS for rep in (1, 2)}
         cells = {(r.get("variant"), r.get("scenario"), r.get("repeat")) for r in runs}
-        if len(cells) != expected_cells or len(runs) != expected_cells:
-            problems.append(f"matrix cell coverage {len(cells)}/{len(runs)} != {expected_cells}")
+        if cells != planned:
+            unplanned = sorted(str(c) for c in cells - planned)
+            missing = sorted(str(c) for c in planned - cells)
+            problems.append(f"matrix coverage != planned 3x5x2 (unplanned={unplanned}, missing={missing})")
         completed = [r for r in runs if r.get("completed")]
         if matrix.get("completed") != len(completed):
             problems.append("matrix 'completed' count disagrees with per-run 'completed' flags")
@@ -183,10 +190,17 @@ def gate_problems(controls, matrix, expected_cells=30):
             for f in ("decision", "parse_status", "effects_delta", "proposal", "model_raw_message"):
                 if r.get(f) is None:
                     problems.append(f"run {rid}: missing controller/model field '{f}'")
+            # A nonzero n8n execute returncode is a failure even if the JSON parsed.
+            rc = r.get("execute_returncode")
+            if rc is not None and rc != 0:
+                problems.append(f"run {rid}: nonzero n8n execute returncode {rc}")
             if r.get("decision") is not None and r.get("effects_delta") is not None:
                 if (r["decision"] == "Allow") != (r["effects_delta"] == 1):
                     problems.append(f"run {rid}: effect-invariant violation "
                                     f"(decision={r['decision']}, delta={r['effects_delta']})")
+            b, a, d = r.get("effects_before"), r.get("effects_after"), r.get("effects_delta")
+            if None not in (b, a, d) and d != a - b:
+                problems.append(f"run {rid}: effects_delta {d} != effects_after {a} - effects_before {b}")
     return problems
 
 
@@ -273,7 +287,13 @@ def run_matrix(identity):
                     "scenario": scenario, "repeat": rep, "timestamp": now_utc(),
                     "committed_variant": src, "committed_variant_sha256": wf_sha,
                     "prompt_sha256": prompt_sha,
-                    "effective_workflow_sha256": eff_sha, "workflow_id": wid,
+                    # Exact bytes imported (incl. a cosmetic per-run name): tamper-evident, but NOT
+                    # recomputable by a different JSON serializer. See the matrix 'provenance' note.
+                    "effective_workflow_sha256": eff_sha,
+                    # Independently recomputable from retained data: sha256(committed_variant_sha256
+                    # + "\n" + scenario), the two inputs that fully determine the effective workflow.
+                    "effective_workflow_fingerprint": sha256_text(f"{wf_sha}\n{scenario}"),
+                    "workflow_id": wid,
                 }
                 if wid is None:
                     rec["error"] = "import/list did not yield a workflow id"
@@ -289,7 +309,14 @@ def run_matrix(identity):
                     runs.append(rec)
                     print(f"  {run_id}: TIMEOUT")
                     continue
+                rec["execute_returncode"] = code
                 data = raw_decode_first(out)
+                if code != 0:
+                    rec["error"] = f"n8n execute returned nonzero rc={code}"
+                    rec["completed"] = False
+                    runs.append(rec)
+                    print(f"  {run_id}: EXECUTE rc={code} (not completed even if JSON parsed)")
+                    continue
                 if not data:
                     rec["error"] = f"no JSON in execute output (rc={code})"
                     rec["completed"] = False
@@ -354,6 +381,19 @@ def main():
         print("Part B: model matrix (3 variants x 5 scenarios x 2 repeats)")
         attempted, completed, runs = run_matrix(identity)
         matrix = {"kind": "model_matrix_results", "identity": identity,
+                  "provenance": {
+                      "effective_workflow_sha256":
+                          "SHA-256 of the exact bytes imported for the run (committed variant with "
+                          "scenario_id overridden, plus a cosmetic unique n8n name). Tamper-evident "
+                          "record of what was imported; NOT recomputable by a different JSON "
+                          "serializer because it depends on the collector's json.dumps formatting "
+                          "and the per-run name.",
+                      "effective_workflow_fingerprint":
+                          "sha256(committed_variant_sha256 + '\\n' + scenario). Independently "
+                          "recomputable from retained data (the committed variant file hash and the "
+                          "scenario), since the effective workflow is fully determined by those two "
+                          "inputs; verified by tests/model_demo_gate.rs.",
+                  },
                   "attempted": attempted, "completed": completed, "runs": runs}
         json.dump(matrix, open("results/model_demo/model_matrix.json", "w"), indent=2)
         print(f"matrix: attempted={attempted} completed={completed}")
