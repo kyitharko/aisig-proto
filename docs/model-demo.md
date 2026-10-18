@@ -39,10 +39,13 @@ command. n8n may invoke only the controller's bounded API for an action proposal
 
 The demo controller binds `127.0.0.1` by default. In [`demo/compose.cpu.yml`](../demo/compose.cpu.yml)
 it runs as a Compose service that binds `0.0.0.0` **inside its container only, with no published
-host port**, so it is reachable solely by other services on the private network as
-`http://controller:8787` — never from the host or the outside. Only n8n's editor UI is published,
-on host loopback. Do not bind the unauthenticated controller to a routable address, and do not
-mistake container `localhost` for the host or another service. The controller has these routes:
+host port**, so it is not reachable from other machines and is reached by other services on the
+private network as `http://controller:8787`. This is **not** complete host isolation: on Linux
+the Docker host can still reach the container's own IP directly (e.g. `http://172.x.x.x:8787`),
+and the controller is unauthenticated — so run the whole stack only on a single trusted host,
+never on a shared/multi-user or internet-facing machine, and only n8n's editor UI is published
+(host loopback). Do not bind the controller to a routable address, and do not mistake container
+`localhost` for the host or another service. The controller has these routes:
 
 | Route | Input / output |
 | --- | --- |

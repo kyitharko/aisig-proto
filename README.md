@@ -119,9 +119,12 @@ shell command runs, and no target is reached. This is a demonstration of the pro
 decision path, not real tool enforcement and not a deployment latency measurement.
 
 The whole stack is three Compose services on one private network: n8n (only its editor UI is
-published, on `127.0.0.1:5678`), Ollama, and the controller (no published port, reachable only
-as `http://controller:8787`). n8n calls the controller by service name; the controller is never
-exposed on a routable address.
+published, on `127.0.0.1:5678`), Ollama, and the controller. The controller has **no published
+host port**, so it is not reachable from other machines; n8n calls it by service name as
+`http://controller:8787`. This is **not** complete host isolation: on Linux the Docker host
+itself can still reach the controller's container IP directly (e.g. `http://172.x.x.x:8787`), and
+the controller is unauthenticated. Treat the whole thing as a single-trusted-host synthetic demo
+— do not run it on a shared/multi-user or internet-facing machine, and do not expose it.
 
 ```sh
 # 1. build the provider controller binary (std-only, no extra deps; the controller service

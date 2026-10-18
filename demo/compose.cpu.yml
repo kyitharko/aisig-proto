@@ -2,10 +2,12 @@
 # Three services on one private Compose network:
 #   - n8n       workflow orchestrator; ONLY service published to the host (loopback UI).
 #   - ollama    local model API; reachable only inside the network as http://ollama:11434.
-#   - controller the Rust provider controller; reachable only inside the network as
-#                http://controller:8787, with NO published host port.
+#   - controller the Rust provider controller; NO published host port, reached by other services
+#                as http://controller:8787. Not full host isolation — the Docker host can still
+#                reach its container IP directly, and it is unauthenticated (see its service note).
 # Everything is synthetic. The controller performs no real scan/fetch/DB/shell; n8n never
-# performs a model-selected action, it only forwards a proposal to the controller.
+# performs a model-selected action, it only forwards a proposal to the controller. Run only on a
+# single trusted host.
 services:
   n8n:
     image: n8nio/n8n:2.43.7
@@ -39,8 +41,11 @@ services:
     image: debian:bookworm-slim
     restart: unless-stopped
     # Binds 0.0.0.0 INSIDE the container only. There is deliberately no `ports:` mapping, so the
-    # unauthenticated controller is reachable solely by other services on this private network
-    # (http://controller:8787), never from the host or the outside.
+    # controller is NOT published on any host port and is unreachable from outside this machine.
+    # It is reached by other services on the private network as http://controller:8787.
+    # NOT full host isolation: on Linux the Docker host can still reach the container's own IP
+    # directly (e.g. http://172.x.x.x:8787). The controller is unauthenticated, so run this whole
+    # stack only on a single trusted host, never on a shared/multi-user or internet-facing machine.
     environment:
       AISIG_DEMO_BIND: "0.0.0.0:8787"
       AISIG_DEMO_MAX_RUNS: "1000"
