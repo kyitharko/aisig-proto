@@ -1,0 +1,238 @@
+{
+  "kind": "fixed_controls_results",
+  "controller_url": "http://172.21.0.4:8787",
+  "controls": [
+    {
+      "id": "DC01",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/app/reports"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Allow",
+      "actual_delta": 1,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Allow",
+      "expected_delta": 1,
+      "pass": true
+    },
+    {
+      "id": "DC02",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/app/reports",
+        "claimed_class": "data_modification"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Allow",
+      "actual_delta": 1,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Allow",
+      "expected_delta": 1,
+      "pass": true
+    },
+    {
+      "id": "DC03",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/app/admin"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / scope / DenyTargetExcluded",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / scope / DenyTargetExcluded",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC04",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/other"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / scope / DenyTargetOutOfScope",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / scope / DenyTargetOutOfScope",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC05",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "db.write",
+        "target": "db:cluster1/main/billing"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / class / DenyTestClassNotPermitted",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / class / DenyTestClassNotPermitted",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC06",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "fs.delete",
+        "target": "web:https://app.acme.test:443/app/reports"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / classify / DenyUnknownOperation",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / classify / DenyUnknownOperation",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC07",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "web.flood",
+        "target": "web:https://app.acme.test:443/app"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / effects / DenyUnboundedSecondaryEffect",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / effects / DenyUnboundedSecondaryEffect",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC08",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://APP.acme.test:443/app"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / validate / DenyNoncanonicalTarget",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / validate / DenyNoncanonicalTarget",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC09",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "expired_session",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/app/reports"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / expiry / DenySessionExpired",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / expiry / DenySessionExpired",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC10",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "revoked_grant",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/app/reports"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Deny / chain / ChainRejected(Reject / X / Revoked{G})",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Deny / chain / ChainRejected(Reject / X / Revoked{G})",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC11",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "stale_status",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/app/reports"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusStale)",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC12",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "unavailable_status",
+      "proposal": {
+        "operation": "web.get",
+        "target": "web:https://app.acme.test:443/app/reports"
+      },
+      "http_status": 200,
+      "actual_parse_status": "tool_call",
+      "actual_decision": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable)",
+      "actual_delta": 0,
+      "expected_parse_status": "tool_call",
+      "expected_decision": "Indeterminate / chain / ChainIndeterminate(Indeterminate / X / StatusUnavailable)",
+      "expected_delta": 0,
+      "pass": true
+    },
+    {
+      "id": "DC13",
+      "series": "control",
+      "timestamp": "2026-10-18T09:36:50Z",
+      "scenario": "fresh",
+      "proposal": {},
+      "http_status": 200,
+      "actual_parse_status": "no_call",
+      "actual_decision": "no mediation: no tool call (no operation proposed)",
+      "actual_delta": 0,
+      "expected_parse_status": "no_call",
+      "expected_decision": "no mediation: no tool call (no operation proposed)",
+      "expected_delta": 0,
+      "pass": true
+    }
+  ]
+}

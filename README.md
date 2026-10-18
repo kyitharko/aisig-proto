@@ -27,6 +27,11 @@ service. Before adapting it to protect real systems, commission independent desi
 review, test with the intended environment and threat model, and reimplement any components
 that cannot be adequately validated. Never point the synthetic demo at a real target.
 
+**Contact and collaboration:** questions, review, and remote research/engineering collaboration
+are welcome — contact the project owner at **kthako@gmail.com**. This remains a synthetic,
+AI-assisted, non-production research prototype (see the notice above); collaboration does not
+imply it is production-ready or independently audited.
+
 ## Documents
 
 - [docs/spec.md](docs/spec.md) — glossary, data model, signed bytes, scope semantics, decision rule, owner decisions
@@ -39,6 +44,7 @@ that cannot be adequately validated. Never point the synthetic demo at a real ta
 - [docs/rq8.md](docs/rq8.md) — RQ8: privacy leakage (Q1 slice 1, 16 reviewed observations), CPU vs end-to-end latency (Q2 slice 1: measured CPU + 6 reviewed modeled responder-delay scenarios), onboarding/cost (Q3 slice 1: step inventory + measured artifact byte sizes, 17 reviewed; human/monetary/storage cost not inferred); no privacy/latency/cost number over a real deployment claimed
 - [docs/report.md](docs/report.md) — what was run and what it produced
 - [docs/model-demo.md](docs/model-demo.md) — design and CPU-only n8n/Ollama instructions for the local small-model simulation (provider controller and recorded model-driven runs now implemented; see "Local model demo" below and [results/model_demo/model_runs.md](results/model_demo/model_runs.md))
+- [docs/prepublication-protocol.md](docs/prepublication-protocol.md) — preregistered pre-publication experiment protocol (13 fixed controls + 3×5×2 model matrix); actual results in [results/model_demo/prepublication_report.md](results/model_demo/prepublication_report.md)
 - [docs/public-release.md](docs/public-release.md) — public repository preparation and outreach plan
 
 ## Status closeout
@@ -169,6 +175,13 @@ No model output was fabricated. Timings are single-inference / in-memory, not en
 deployment latency; two prompt variants on one small model is illustrative, not a determinism
 proof. An earlier set of direct-HTTP runs (`results/model_demo/run_v1.json`, `run_v2.json`) is
 retained as historical and is distinct from these n8n workflow executions.
+
+A larger **preregistered** run (13 fixed controls + a 3×5×2 = 30-execution model matrix) is in
+[results/model_demo/prepublication_report.md](results/model_demo/prepublication_report.md): all
+13 controls matched expectations, all 30 model runs completed with **0** effect-invariant
+failures, the boundary-override prompt (v2) proposed the excluded target in 9/10 runs and was
+**denied every time** (and its two seed-42 repeats differed — not deterministic), and a false
+audit-only `claimed_class` (v3) did not change any decision.
 
 ## Git
 
