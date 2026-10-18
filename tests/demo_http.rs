@@ -301,6 +301,60 @@ fn slow_incomplete_request_times_out() {
 }
 
 #[test]
+fn dribbling_client_is_cut_off_by_the_absolute_deadline() {
+    // The per-read timeout alone is not enough: a client that sends one byte just before each
+    // timeout keeps resetting it and would hold the single-threaded server forever. The absolute
+    // per-request deadline must end such a connection, and the server must keep serving others.
+    let s = spawn(&[
+        ("AISIG_DEMO_READ_TIMEOUT_MS", "400"),
+        ("AISIG_DEMO_REQUEST_DEADLINE_MS", "1200"),
+    ]);
+    let stream = TcpStream::connect(&s.addr).expect("connect");
+    stream
+        .set_read_timeout(Some(Duration::from_secs(3)))
+        .unwrap();
+    let mut wr = stream.try_clone().unwrap();
+    // Start a request but never finish the header block.
+    wr.write_all(b"GET /healthz HTTP/1.1\r\nHost: x\r\n")
+        .unwrap();
+    let start = Instant::now();
+    // Dribble one non-terminating byte every 300 ms (< the 400 ms per-read timeout) for longer
+    // than the deadline, so each individual read succeeds and resets the per-read timeout.
+    let dribbler = std::thread::spawn(move || {
+        for _ in 0..20 {
+            if wr.write_all(b"A").is_err() || wr.flush().is_err() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(300));
+        }
+    });
+    // Read until the server responds (a 408) and closes.
+    let mut rd = stream;
+    let mut buf = Vec::new();
+    let mut tmp = [0u8; 1024];
+    loop {
+        match rd.read(&mut tmp) {
+            Ok(0) => break,
+            Ok(n) => buf.extend_from_slice(&tmp[..n]),
+            Err(_) => break,
+        }
+    }
+    let elapsed = start.elapsed();
+    let _ = dribbler.join();
+    assert!(
+        elapsed < Duration::from_secs(3),
+        "the deadline must end the dribbling connection well before 'indefinitely'; elapsed={elapsed:?}"
+    );
+    let resp = String::from_utf8_lossy(&buf);
+    assert!(
+        resp.contains("408"),
+        "the server should answer the dribbling client with a 408 at the deadline; got {resp:?}"
+    );
+    // The single-threaded server is not wedged: it still serves a normal request.
+    assert!(get(&s.addr, "/healthz").contains("200 OK"));
+}
+
+#[test]
 fn stored_run_count_is_bounded() {
     let s = spawn(&[("AISIG_DEMO_MAX_RUNS", "2")]);
     let ok1 = parse(&post(

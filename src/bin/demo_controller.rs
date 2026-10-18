@@ -19,7 +19,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use aisig_proto::demo::{self, DemoError, Proposal, RunRecord};
 use serde::Deserialize;
@@ -31,6 +31,7 @@ const MAX_HEADERS: usize = 100;
 const MAX_HEADER_BYTES: usize = 16_384;
 const DEFAULT_MAX_RUNS: usize = 1_000;
 const DEFAULT_READ_TIMEOUT_MS: u64 = 10_000;
+const DEFAULT_REQUEST_DEADLINE_MS: u64 = 15_000;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -48,7 +49,13 @@ struct RunRequest {
 
 struct Config {
     max_runs: usize,
+    /// Per-individual-read timeout (SO_RCVTIMEO). On its own this does not bound total time: a
+    /// client that sends one byte just before every timeout keeps resetting it.
     read_timeout: Option<Duration>,
+    /// Absolute wall-clock budget for reading one whole request (request line + headers + body),
+    /// checked between reads. This is what actually stops the dribble/slowloris case on a
+    /// single-threaded server.
+    request_deadline: Duration,
 }
 
 type Store = Mutex<HashMap<String, RunRecord>>;
@@ -61,12 +68,16 @@ fn main() {
             0 => None,
             ms => Some(Duration::from_millis(ms)),
         },
+        request_deadline: Duration::from_millis(env_u64(
+            "AISIG_DEMO_REQUEST_DEADLINE_MS",
+            DEFAULT_REQUEST_DEADLINE_MS,
+        )),
     };
     let listener = TcpListener::bind(&bind).unwrap_or_else(|e| panic!("bind {bind}: {e}"));
     eprintln!(
         "demo controller listening on http://{bind} (synthetic only; no real effects; \
-         max_runs={}, read_timeout={:?})",
-        cfg.max_runs, cfg.read_timeout
+         max_runs={}, read_timeout={:?}, request_deadline={:?})",
+        cfg.max_runs, cfg.read_timeout, cfg.request_deadline
     );
     let store: Store = Mutex::new(HashMap::new());
     let counter = AtomicU64::new(1);
@@ -106,12 +117,17 @@ enum LineRead {
 }
 
 /// Read one CRLF/LF-terminated line, one byte at a time (from a buffered reader), refusing a line
-/// longer than `cap` bytes. This bounds both the request line and each header line, and the read
-/// timeout on the stream turns a stalled sender into an `Err` rather than an unbounded wait.
-fn read_line_capped<R: BufRead>(r: &mut R, cap: usize) -> LineRead {
+/// longer than `cap` bytes. This bounds both the request line and each header line. The per-read
+/// timeout turns a stalled sender into an `Err`; the absolute `deadline`, re-checked before every
+/// byte, stops a client that dribbles one byte just before each timeout (which would otherwise
+/// keep resetting the per-read timeout and hold a single-threaded server forever).
+fn read_line_capped<R: BufRead>(r: &mut R, cap: usize, deadline: Instant) -> LineRead {
     let mut out = Vec::new();
     let mut byte = [0u8; 1];
     loop {
+        if Instant::now() >= deadline {
+            return LineRead::Err;
+        }
         match r.read(&mut byte) {
             Ok(0) => {
                 return if out.is_empty() {
@@ -140,6 +156,39 @@ fn trim_cr(bytes: &[u8]) -> String {
         .to_owned()
 }
 
+/// Read exactly `len` body bytes, re-checking the absolute `deadline` between chunks so a client
+/// that dribbles the body one byte before each per-read timeout is cut off at the deadline rather
+/// than holding the single-threaded server. Returns an error message on timeout, deadline, or a
+/// truncated body (all mapped to a 408 by the caller, with no run created).
+fn read_body_by_deadline(
+    reader: &mut BufReader<TcpStream>,
+    len: usize,
+    deadline: Instant,
+) -> Result<Vec<u8>, &'static str> {
+    let mut buf = vec![0u8; len];
+    let mut read = 0usize;
+    while read < len {
+        if Instant::now() >= deadline {
+            return Err("exceeded the request deadline reading the request body");
+        }
+        match reader.read(&mut buf[read..]) {
+            Ok(0) => return Err("truncated request body"),
+            Ok(n) => read += n,
+            Err(e)
+                if e.kind() == std::io::ErrorKind::WouldBlock
+                    || e.kind() == std::io::ErrorKind::TimedOut =>
+            {
+                // A per-read timeout fired with no new bytes: the sender has stalled, so give up
+                // now rather than wait out the whole deadline. A client that keeps dribbling bytes
+                // never trips this branch and is instead cut off by the deadline check above.
+                return Err("timed out reading request body");
+            }
+            Err(_) => return Err("error reading request body"),
+        }
+    }
+    Ok(buf)
+}
+
 fn handle(
     mut stream: TcpStream,
     cfg: &Config,
@@ -148,19 +197,21 @@ fn handle(
 ) -> std::io::Result<()> {
     stream.set_read_timeout(cfg.read_timeout)?;
     let mut reader = BufReader::new(stream.try_clone()?);
+    // Absolute budget for reading this whole request, independent of the per-read timeout.
+    let deadline = Instant::now() + cfg.request_deadline;
 
-    let (status, body) = match read_line_capped(&mut reader, MAX_REQUEST_LINE) {
+    let (status, body) = match read_line_capped(&mut reader, MAX_REQUEST_LINE, deadline) {
         LineRead::Eof => return Ok(()),
         LineRead::TooLong => ("414 URI Too Long", err_json("request line too long")),
         LineRead::Err => (
             "408 Request Timeout",
-            err_json("timed out reading request line"),
+            err_json("timed out or exceeded the request deadline reading the request line"),
         ),
         LineRead::Line(request_line) => {
             let mut parts = request_line.split_whitespace();
             let method = parts.next().unwrap_or("").to_owned();
             let path = parts.next().unwrap_or("").to_owned();
-            match read_headers(&mut reader) {
+            match read_headers(&mut reader, deadline) {
                 Err(resp) => resp,
                 Ok(content_length) => route(
                     &method,
@@ -170,6 +221,7 @@ fn handle(
                     cfg,
                     store,
                     counter,
+                    deadline,
                 ),
             }
         }
@@ -201,12 +253,15 @@ fn handle(
 
 /// Read the header block, bounding the header count and total bytes, and return the declared
 /// Content-Length. On a limit breach or read error, return the response to send instead.
-fn read_headers(reader: &mut BufReader<TcpStream>) -> Result<usize, (&'static str, String)> {
+fn read_headers(
+    reader: &mut BufReader<TcpStream>,
+    deadline: Instant,
+) -> Result<usize, (&'static str, String)> {
     let mut content_length = 0usize;
     let mut count = 0usize;
     let mut bytes = 0usize;
     loop {
-        match read_line_capped(reader, MAX_HEADER_LINE) {
+        match read_line_capped(reader, MAX_HEADER_LINE, deadline) {
             LineRead::Eof => break,
             LineRead::TooLong => {
                 return Err((
@@ -215,7 +270,10 @@ fn read_headers(reader: &mut BufReader<TcpStream>) -> Result<usize, (&'static st
                 ))
             }
             LineRead::Err => {
-                return Err(("408 Request Timeout", err_json("timed out reading headers")))
+                return Err((
+                    "408 Request Timeout",
+                    err_json("timed out or exceeded the request deadline reading headers"),
+                ))
             }
             LineRead::Line(line) => {
                 if line.is_empty() {
@@ -250,6 +308,7 @@ fn route(
     cfg: &Config,
     store: &Store,
     counter: &AtomicU64,
+    deadline: Instant,
 ) -> (&'static str, String) {
     match (method, path) {
         ("GET", "/healthz") => ("200 OK", r#"{"status":"ok"}"#.to_owned()),
@@ -265,17 +324,10 @@ fn route(
                     err_json("stored run limit reached"),
                 );
             }
-            let mut buf = vec![0u8; content_length];
-            if let Err(e) = reader.read_exact(&mut buf) {
-                let msg = if e.kind() == std::io::ErrorKind::WouldBlock
-                    || e.kind() == std::io::ErrorKind::TimedOut
-                {
-                    ("408 Request Timeout", "timed out reading request body")
-                } else {
-                    ("400 Bad Request", "truncated body")
-                };
-                return (msg.0, err_json(msg.1));
-            }
+            let buf = match read_body_by_deadline(reader, content_length, deadline) {
+                Ok(b) => b,
+                Err(msg) => return ("408 Request Timeout", err_json(msg)),
+            };
             let req: RunRequest = match serde_json::from_slice(&buf) {
                 Ok(r) => r,
                 Err(e) => return ("400 Bad Request", err_json(&format!("invalid JSON: {e}"))),
