@@ -27,3 +27,7 @@ client-data/
 # Private, unredacted evidence kept locally only (e.g. original n8n exports with resume tokens).
 # The committed copies under results/model_demo/ are sanitized; see scripts/sanitize_n8n_export.py.
 .private-evidence/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
