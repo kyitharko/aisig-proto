@@ -8,6 +8,7 @@
 use std::fs;
 use std::path::Path;
 
+use aisig_proto::demo::{run, Proposal};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
@@ -190,6 +191,49 @@ fn nested_sensitive_keys_are_found() {
     let mut none = Vec::new();
     collect_sensitive(&clean, "root", &mut none);
     assert!(none.is_empty(), "clean structure flagged: {none:?}");
+}
+
+/// Gate the preregistered fixed controls (DC01-DC13) against the real `src/demo.rs` controller.
+/// The expectations were committed before the runner; this asserts the controller still produces
+/// exactly them, with no parallel decision implementation.
+#[test]
+fn fixed_controls_match_the_real_controller() {
+    let spec: Value = serde_json::from_str(
+        &fs::read_to_string(format!("{DIR}/controls_expected.json")).expect("controls_expected"),
+    )
+    .expect("parse controls_expected");
+    let controls = spec["controls"].as_array().expect("controls array");
+    assert_eq!(controls.len(), 13, "expected 13 preregistered controls");
+    for c in controls {
+        let id = c["id"].as_str().unwrap();
+        let scenario = c["scenario"].as_str().unwrap();
+        let proposal: Proposal = serde_json::from_value(c["proposal"].clone())
+            .unwrap_or_else(|e| panic!("{id}: bad proposal: {e}"));
+        let r = run(
+            id,
+            scenario,
+            &proposal,
+            Some(id),
+            Some("fixed control"),
+            Some("deterministic_control"),
+        )
+        .unwrap_or_else(|e| panic!("{id}: run error {e:?}"));
+        assert_eq!(
+            r.parse_status,
+            c["expected_parse_status"].as_str().unwrap(),
+            "{id}: parse_status"
+        );
+        assert_eq!(
+            r.decision,
+            c["expected_decision"].as_str().unwrap(),
+            "{id}: decision"
+        );
+        assert_eq!(
+            r.effects_delta as u64,
+            c["expected_delta"].as_u64().unwrap(),
+            "{id}: effects_delta"
+        );
+    }
 }
 
 #[test]
