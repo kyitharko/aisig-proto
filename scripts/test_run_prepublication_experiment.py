@@ -102,6 +102,37 @@ def test_incomplete_cell_coverage_fails_gate():
     assert runner.gate_problems(good_controls(), m, expected_cells=30)
 
 
+@test
+def test_nonzero_execute_with_parseable_json_fails_gate():
+    # A completed run whose n8n execute returned nonzero (even with parseable JSON) must fail.
+    m = good_matrix()
+    m["runs"][0]["execute_returncode"] = 5
+    assert runner.gate_problems(good_controls(), m, expected_cells=30), \
+        "a nonzero execute returncode must fail the gate even with parseable JSON"
+
+
+@test
+def test_delta_inconsistent_with_before_after_fails_gate():
+    # effects_delta must equal effects_after - effects_before (Allow/1 passes the invariant, but
+    # after-before == 2 != 1).
+    m = good_matrix()
+    r = m["runs"][0]
+    r["decision"] = "Allow"
+    r["effects_before"], r["effects_after"], r["effects_delta"] = 0, 2, 1
+    assert runner.gate_problems(good_controls(), m, expected_cells=30), \
+        "effects_delta inconsistent with before/after must fail the gate"
+
+
+@test
+def test_unplanned_scenario_fails_gate():
+    # Rename one cell's scenario to an unplanned value: still 30 distinct cells, but not the
+    # planned 3x5x2 product.
+    m = good_matrix()
+    m["runs"][0]["scenario"] = "bogus_unplanned"
+    assert runner.gate_problems(good_controls(), m, expected_cells=30), \
+        "an unplanned scenario must fail the gate"
+
+
 def main():
     failed = 0
     for t in TESTS:

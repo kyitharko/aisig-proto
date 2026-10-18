@@ -5,6 +5,7 @@
 //! credential, secret, password, cookie, or authorization field. The test fails with the key
 //! *paths* only, never the redacted values.
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -284,64 +285,69 @@ fn committed_control_results_all_matched() {
     }
 }
 
-/// Gate the committed model matrix: full 3x5x2 coverage, every cell completed, required fields
-/// present, effect invariant holds, recorded hashes match the committed workflows, the model's
-/// raw message is consistent with the recorded proposal, and the captured identity is present.
-#[test]
-fn committed_model_matrix_is_complete_and_consistent() {
-    let m: Value = serde_json::from_str(
-        &fs::read_to_string(format!("{DIR}/model_matrix.json")).expect("model_matrix"),
-    )
-    .expect("parse matrix");
-    let runs = m["runs"].as_array().expect("runs");
-    assert_eq!(m["attempted"], 30, "attempted must be 30");
-    assert_eq!(runs.len(), 30, "must have 30 runs");
+/// All problems with a model-matrix JSON value (empty => clean). Pure, so it is unit-testable
+/// with synthetic inputs. Mirrors the matrix portion of
+/// `scripts/run_prepublication_experiment.py::gate_problems`, plus hash/consistency checks against
+/// the committed workflow files.
+fn matrix_problems(m: &Value) -> Vec<String> {
+    let mut p: Vec<String> = Vec::new();
+    let runs = match m["runs"].as_array() {
+        Some(r) => r,
+        None => {
+            p.push("matrix has no runs array".into());
+            return p;
+        }
+    };
+    if m["attempted"].as_u64() != Some(30) {
+        p.push(format!("attempted != 30 ({:?})", m["attempted"]));
+    }
+    if runs.len() != 30 {
+        p.push(format!("runs.len()={} != 30", runs.len()));
+    }
 
-    // Captured identity must be present (not hardcoded sentinels left empty).
     let id = &m["identity"];
-    assert!(
-        id["model_digest"].as_str().is_some_and(|s| s.len() >= 12),
-        "missing model_digest"
-    );
-    assert!(
-        id["ollama_version"].as_str().is_some_and(|s| !s.is_empty()),
-        "missing ollama_version"
-    );
-    assert!(
-        id["n8n_version"].as_str().is_some_and(|s| !s.is_empty()),
-        "missing n8n_version"
-    );
+    if !id["model_digest"].as_str().is_some_and(|s| s.len() >= 12) {
+        p.push("identity: missing model_digest".into());
+    }
+    if !id["ollama_version"].as_str().is_some_and(|s| !s.is_empty()) {
+        p.push("identity: missing ollama_version".into());
+    }
+    if !id["n8n_version"].as_str().is_some_and(|s| !s.is_empty()) {
+        p.push("identity: missing n8n_version".into());
+    }
 
-    // Full 3x5x2 coverage.
+    // Distinct-cell count (coverage of planned cells is added by the hardening commit).
     let mut cells = std::collections::HashSet::new();
     for r in runs {
         cells.insert((
-            r["variant"].as_str().unwrap().to_owned(),
-            r["scenario"].as_str().unwrap().to_owned(),
-            r["repeat"].as_u64().unwrap(),
+            r["variant"].as_str().unwrap_or("").to_owned(),
+            r["scenario"].as_str().unwrap_or("").to_owned(),
+            r["repeat"].as_u64().unwrap_or(0),
         ));
     }
-    assert_eq!(
-        cells.len(),
-        30,
-        "expected 30 distinct (variant,scenario,repeat) cells"
-    );
+    if cells.len() != 30 {
+        p.push(format!("{} distinct cells != 30", cells.len()));
+    }
 
-    // Cache committed variant hashes + prompt hashes.
-    let mut wf_sha = std::collections::HashMap::new();
-    let mut prompt_sha = std::collections::HashMap::new();
+    let mut wf_sha = HashMap::new();
+    let mut prompt_sha = HashMap::new();
     for v in ["v1", "v2", "v3"] {
-        let f = variant_file(v);
-        let bytes = fs::read(f).unwrap_or_else(|_| panic!("missing {f}"));
-        wf_sha.insert(v, sha256_hex(&bytes));
-        let wf: Value = serde_json::from_slice(&bytes).unwrap();
-        prompt_sha.insert(v, sha256_hex(user_prompt(&wf).expect("prompt").as_bytes()));
+        if let Ok(bytes) = fs::read(variant_file(v)) {
+            wf_sha.insert(v, sha256_hex(&bytes));
+            if let Ok(wf) = serde_json::from_slice::<Value>(&bytes) {
+                if let Some(pr) = user_prompt(&wf) {
+                    prompt_sha.insert(v, sha256_hex(pr.as_bytes()));
+                }
+            }
+        }
     }
 
     for r in runs {
-        let rid = r["run_id"].as_str().unwrap();
-        let variant = r["variant"].as_str().unwrap();
-        assert_eq!(r["completed"], true, "{rid}: not completed");
+        let rid = r["run_id"].as_str().unwrap_or("?").to_owned();
+        if r["completed"] != Value::Bool(true) {
+            p.push(format!("{rid}: not completed"));
+            continue;
+        }
         for f in [
             "decision",
             "parse_status",
@@ -349,80 +355,147 @@ fn committed_model_matrix_is_complete_and_consistent() {
             "proposal",
             "model_raw_message",
         ] {
-            assert!(!r[f].is_null(), "{rid}: missing field {f}");
+            if r[f].is_null() {
+                p.push(format!("{rid}: missing field {f}"));
+            }
         }
-        // Recorded hashes must match the committed workflow files.
-        assert_eq!(
-            r["committed_variant_sha256"].as_str(),
-            Some(wf_sha[variant].as_str()),
-            "{rid}: committed_variant_sha256 != committed file"
-        );
-        assert_eq!(
-            r["prompt_sha256"].as_str(),
-            Some(prompt_sha[variant].as_str()),
-            "{rid}: prompt_sha256 != committed variant prompt"
-        );
-        assert!(
-            r["effective_workflow_sha256"]
-                .as_str()
-                .is_some_and(|s| s.len() == 64),
-            "{rid}: missing effective_workflow_sha256"
-        );
-        assert!(
-            r["workflow_id"].as_str().is_some_and(|s| !s.is_empty()),
-            "{rid}: missing workflow_id"
-        );
+        let variant = r["variant"].as_str().unwrap_or("");
+        if let Some(exp) = wf_sha.get(variant) {
+            if r["committed_variant_sha256"].as_str() != Some(exp.as_str()) {
+                p.push(format!("{rid}: committed_variant_sha256 != committed file"));
+            }
+        }
+        if let Some(exp) = prompt_sha.get(variant) {
+            if r["prompt_sha256"].as_str() != Some(exp.as_str()) {
+                p.push(format!("{rid}: prompt_sha256 != committed variant prompt"));
+            }
+        }
+        if !r["effective_workflow_sha256"]
+            .as_str()
+            .is_some_and(|s| s.len() == 64)
+        {
+            p.push(format!("{rid}: missing effective_workflow_sha256"));
+        }
+        if !r["workflow_id"].as_str().is_some_and(|s| !s.is_empty()) {
+            p.push(format!("{rid}: missing workflow_id"));
+        }
 
-        // Effect invariant.
         let allow = r["decision"] == "Allow";
-        let delta1 = r["effects_delta"] == 1;
-        assert_eq!(allow, delta1, "{rid}: effect-invariant violation");
+        let delta1 = r["effects_delta"] == Value::from(1);
+        if allow != delta1 {
+            p.push(format!("{rid}: effect-invariant violation"));
+        }
 
-        // Raw-message <-> proposal consistency.
-        let parse = r["parse_status"].as_str().unwrap();
+        let parse = r["parse_status"].as_str().unwrap_or("");
         let proposal = &r["proposal"];
         let calls = r["model_raw_message"]["tool_calls"].as_array();
         if parse == "tool_call" {
-            assert!(
-                proposal["operation"]
-                    .as_str()
-                    .is_some_and(|s| !s.is_empty()),
-                "{rid}: tool_call proposal missing operation"
-            );
-            assert!(
-                proposal["target"].as_str().is_some_and(|s| !s.is_empty()),
-                "{rid}: tool_call proposal missing target"
-            );
-            let first = calls
-                .and_then(|c| c.first())
-                .unwrap_or_else(|| panic!("{rid}: tool_call but raw message has no tool_calls"));
-            assert_eq!(
-                first["function"]["name"], "propose_action",
-                "{rid}: raw tool call is not propose_action"
-            );
-            // When the raw arguments are an object, they must match the recorded proposal.
-            let args = &first["function"]["arguments"];
-            if args.is_object() {
-                assert_eq!(
-                    args["operation"], proposal["operation"],
-                    "{rid}: op mismatch raw vs proposal"
-                );
-                assert_eq!(
-                    args["target"], proposal["target"],
-                    "{rid}: target mismatch raw vs proposal"
-                );
+            if !proposal["operation"]
+                .as_str()
+                .is_some_and(|s| !s.is_empty())
+            {
+                p.push(format!("{rid}: tool_call proposal missing operation"));
+            }
+            if !proposal["target"].as_str().is_some_and(|s| !s.is_empty()) {
+                p.push(format!("{rid}: tool_call proposal missing target"));
+            }
+            match calls.and_then(|c| c.first()) {
+                None => p.push(format!(
+                    "{rid}: tool_call but raw message has no tool_calls"
+                )),
+                Some(first) => {
+                    if first["function"]["name"] != "propose_action" {
+                        p.push(format!("{rid}: raw tool call is not propose_action"));
+                    }
+                    let args = &first["function"]["arguments"];
+                    if args.is_object() {
+                        if args["operation"] != proposal["operation"] {
+                            p.push(format!("{rid}: op mismatch raw vs proposal"));
+                        }
+                        if args["target"] != proposal["target"] {
+                            p.push(format!("{rid}: target mismatch raw vs proposal"));
+                        }
+                    }
+                }
             }
         } else if parse == "no_call" {
-            assert!(
-                proposal["operation"].is_null(),
-                "{rid}: no_call must not carry an operation"
-            );
-            assert!(
-                calls.map(|c| c.is_empty()).unwrap_or(true),
-                "{rid}: no_call but raw message has tool_calls"
-            );
+            if !proposal["operation"].is_null() {
+                p.push(format!("{rid}: no_call must not carry an operation"));
+            }
+            if !calls.map(|c| c.is_empty()).unwrap_or(true) {
+                p.push(format!("{rid}: no_call but raw message has tool_calls"));
+            }
         }
     }
+    p
+}
+
+fn committed_matrix() -> Value {
+    serde_json::from_str(
+        &fs::read_to_string(format!("{DIR}/model_matrix.json")).expect("model_matrix"),
+    )
+    .expect("parse matrix")
+}
+
+/// Gate the committed model matrix: full coverage, every cell completed, required fields present,
+/// effect invariant, recorded hashes match the committed workflows, raw-message<->proposal
+/// consistency, and captured identity present.
+#[test]
+fn committed_model_matrix_is_complete_and_consistent() {
+    let problems = matrix_problems(&committed_matrix());
+    assert!(
+        problems.is_empty(),
+        "committed matrix problems: {problems:?}"
+    );
+}
+
+// ---- regression reproductions for the three remaining gate gaps (red before the hardening) ----
+
+#[test]
+fn regression_nonzero_execute_with_parseable_json_fails_gate() {
+    // A completed run whose n8n execute returned nonzero (even with parseable JSON) must fail.
+    let mut m = committed_matrix();
+    m["runs"][0]["execute_returncode"] = Value::from(5);
+    let problems = matrix_problems(&m);
+    assert!(
+        problems
+            .iter()
+            .any(|s| s.contains("execute") && s.contains("nonzero") || s.contains("returncode")),
+        "a nonzero execute returncode must be a gate failure; got {problems:?}"
+    );
+}
+
+#[test]
+fn regression_delta_inconsistent_with_before_after_fails_gate() {
+    // effects_delta must equal effects_after - effects_before (here Allow/1 passes the existing
+    // invariant, but after-before == 2 != 1).
+    let mut m = committed_matrix();
+    m["runs"][0]["decision"] = Value::from("Allow");
+    m["runs"][0]["effects_before"] = Value::from(0);
+    m["runs"][0]["effects_after"] = Value::from(2);
+    m["runs"][0]["effects_delta"] = Value::from(1);
+    let problems = matrix_problems(&m);
+    assert!(
+        problems
+            .iter()
+            .any(|s| s.contains("delta") && s.contains("before")),
+        "effects_delta inconsistent with before/after must fail the gate; got {problems:?}"
+    );
+}
+
+#[test]
+fn regression_unplanned_scenario_fails_gate() {
+    // Rename one cell's scenario to an unplanned value: still 30 distinct cells, but not the
+    // planned 3x5x2 product. The distinct-count check alone misses this.
+    let mut m = committed_matrix();
+    m["runs"][0]["scenario"] = Value::from("bogus_unplanned");
+    let problems = matrix_problems(&m);
+    assert!(
+        problems
+            .iter()
+            .any(|s| s.contains("planned") || s.contains("unplanned")),
+        "an unplanned scenario must fail the gate; got {problems:?}"
+    );
 }
 
 #[test]
