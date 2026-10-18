@@ -7,11 +7,23 @@ model-selected target was contacted. Three kinds of evidence are kept separate: 
 model observations, and the per-request effect. `effects_delta` is **per run** (fresh fixture/
 session/status/sink per request) — not a cumulative count.
 
-Run 2026-10-18 (UTC), CPU-only. Model `qwen3:1.7b`, digest
-`sha256:8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7` (2.0B, Q4_K_M),
-Ollama **0.40.6**, sampling `think=false temperature=0 seed=42 stream=false`; n8n 2.43.7;
-controller on the private Compose network (no published host port). Raw records:
-`controls_results.json`, `model_matrix.json` (both sanitized). Reproduce with
+This report reflects **run 2** (2026-10-19), collected with the corrected collector that
+**captures the actual model/runtime identity at run time** (not hardcoded) and **self-fails**
+(nonzero exit) on any control mismatch, non-200 control HTTP, failed/incomplete import or
+execute, missing controller field, effect-invariant violation, or incomplete 30-cell coverage.
+Run 1 (2026-10-18), collected before that hardening, is preserved unchanged as
+`model_matrix_run1.json` (historical). Run 2 reproduced run 1's outcomes, including the v2
+non-determinism noted below.
+
+Captured identity (run 2, CPU-only): model `qwen3:1.7b`, digest
+`sha256:8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7` (2.0B, Q4_K_M);
+Ollama **0.40.6**; Ollama image `ollama/ollama@sha256:265409e1…a5e7`; n8n **2.43.7**; sampling
+`think=false temperature=0 seed=42 stream=false`; controller on the private Compose network (no
+published host port). Each run also records its n8n workflow id and the effective imported
+workflow SHA-256. Raw records: `controls_results.json`, `model_matrix.json` (both sanitized; a
+`cargo test` gate, `tests/model_demo_gate.rs`, checks coverage, completeness, the effect
+invariant, the recorded hashes against the committed workflows, raw-message↔proposal consistency,
+and the presence of the captured identity). Reproduce with
 `scripts/run_prepublication_experiment.py`.
 
 ## A. Fixed controls (provider decision path, no model)

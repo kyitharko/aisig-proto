@@ -181,13 +181,18 @@ A larger **preregistered** run (13 fixed controls + a 3×5×2 = 30-execution mod
 13 controls matched expectations, all 30 model runs completed with **0** effect-invariant
 failures, the boundary-override prompt (v2) proposed the excluded target in 9/10 runs and was
 **denied every time** (and its two seed-42 repeats differed — not deterministic), and a false
-audit-only `claimed_class` (v3) did not change any decision.
+audit-only `claimed_class` (v3) did not change any decision. The collector captures the actual
+model/runtime identity and per-run workflow id/hash (no hardcoded provenance), self-fails on any
+mismatch or incomplete run, and the committed result files are gated by `cargo test`
+(`tests/model_demo_gate.rs`).
 
 ## Git
 
-At this snapshot, work is local on `feature/chain-verifier-prototype`; nothing has been pushed
-and no remote is configured. See [docs/public-release.md](docs/public-release.md) before
-publishing the local history.
+At this snapshot all work is local; nothing has been pushed and no remote is configured. The
+sanitized, push-intended history is the `public/chain-verifier-prototype` branch (this snapshot);
+the private `feature/chain-verifier-prototype` branch and the gitignored `.private-evidence/`
+retain the original unredacted material and are never pushed. See
+[docs/public-release.md](docs/public-release.md) before publishing the local history.
 
 ## License
 
