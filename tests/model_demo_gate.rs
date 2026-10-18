@@ -33,9 +33,15 @@ fn user_prompt(workflow_json: &Value) -> Option<String> {
     None
 }
 
-/// Mirror of `scripts/sanitize_n8n_export.py`: a key name that denotes a secret.
+/// Mirror of `scripts/sanitize_n8n_export.py`: a key name that denotes a secret. Matched
+/// separator-insensitively (lowercase, with '-', '_' and spaces removed) so "api-key", "api_key"
+/// and "apikey" match, as do header forms like "Set-Cookie" and "Proxy-Authorization".
 fn is_sensitive(key: &str) -> bool {
-    let k = key.to_ascii_lowercase();
+    let k: String = key
+        .to_ascii_lowercase()
+        .chars()
+        .filter(|c| *c != '-' && *c != '_' && *c != ' ')
+        .collect();
     const EXACT: &[&str] = &[
         "resumetoken",
         "token",
@@ -50,14 +56,24 @@ fn is_sensitive(key: &str) -> bool {
         "password",
         "passwd",
         "apikey",
-        "api_key",
+        "xapikey",
         "authorization",
+        "proxyauthorization",
+        "wwwauthenticate",
         "cookie",
-        "x-api-key",
+        "setcookie",
         "privatekey",
-        "private_key",
+        "bearer",
     ];
-    const SUFFIX: &[&str] = &["token", "secret", "password", "apikey", "credential"];
+    const SUFFIX: &[&str] = &[
+        "token",
+        "secret",
+        "password",
+        "apikey",
+        "credential",
+        "cookie",
+        "authorization",
+    ];
     EXACT.contains(&k.as_str()) || SUFFIX.iter().any(|s| k.ends_with(s))
 }
 
@@ -109,6 +125,71 @@ fn no_committed_demo_export_contains_a_secret_field() {
         "publishable demo exports contain secret-like fields (run scripts/sanitize_n8n_export.py); \
          offending key paths (values not shown): {all_hits:?}"
     );
+}
+
+#[test]
+fn header_key_forms_are_detected() {
+    // Common header/credential key spellings, including hyphenated and mixed-case forms.
+    for k in [
+        "resumeToken",
+        "Set-Cookie",
+        "set-cookie",
+        "Cookie",
+        "Proxy-Authorization",
+        "Authorization",
+        "WWW-Authenticate",
+        "api-key",
+        "api_key",
+        "apiKey",
+        "X-Api-Key",
+        "accessToken",
+        "refresh_token",
+        "clientSecret",
+        "db_password",
+        "Bearer",
+    ] {
+        assert!(is_sensitive(k), "{k} should be treated as sensitive");
+    }
+    // Legitimate keys that must NOT be flagged.
+    for k in [
+        "content-length",
+        "model_parse",
+        "parse_status",
+        "author",
+        "operation",
+        "target",
+        "workflow_revision_sha256",
+        "ollama_version",
+        "eval_count",
+    ] {
+        assert!(!is_sensitive(k), "{k} should NOT be flagged");
+    }
+}
+
+#[test]
+fn nested_sensitive_keys_are_found() {
+    // A secret buried inside nested objects/arrays (as in an n8n node's HTTP response headers)
+    // must be located, and a clean nested structure must report nothing.
+    let dirty = serde_json::json!({
+        "data": {"resultData": {"runData": {
+            "HTTP": [{"json": {"headers": [{"Set-Cookie": "x"}, {"Proxy-Authorization": "y"}]}}]
+        }}}
+    });
+    let mut hits = Vec::new();
+    collect_sensitive(&dirty, "root", &mut hits);
+    assert_eq!(
+        hits.len(),
+        2,
+        "expected both nested header secrets, got {hits:?}"
+    );
+    assert!(hits.iter().any(|h| h.ends_with("Set-Cookie")));
+    assert!(hits.iter().any(|h| h.ends_with("Proxy-Authorization")));
+
+    let clean =
+        serde_json::json!({"a": {"b": [{"operation": "web.get", "model_parse": "no_call"}]}});
+    let mut none = Vec::new();
+    collect_sensitive(&clean, "root", &mut none);
+    assert!(none.is_empty(), "clean structure flagged: {none:?}");
 }
 
 #[test]

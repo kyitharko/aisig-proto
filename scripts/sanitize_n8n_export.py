@@ -18,17 +18,25 @@ import json
 import os
 import sys
 
-# A key is stripped if its lowercased name is in this set, or ends with one of the suffixes.
+# Keys are matched separator-insensitively: the name is lowercased and its '-', '_' and spaces
+# are removed before comparison, so "api-key", "api_key" and "apikey" all match, as do header
+# forms such as "Set-Cookie", "Proxy-Authorization" and "WWW-Authenticate". A normalized name is
+# stripped if it is in SENSITIVE_EXACT or ends with one of SENSITIVE_SUFFIX.
 SENSITIVE_EXACT = {
     "resumetoken", "token", "accesstoken", "refreshtoken", "sessiontoken", "oauthtokendata",
     "credential", "credentials", "secret", "secrets", "password", "passwd",
-    "apikey", "api_key", "authorization", "cookie", "x-api-key", "privatekey", "private_key",
+    "apikey", "xapikey", "authorization", "proxyauthorization", "wwwauthenticate",
+    "cookie", "setcookie", "privatekey", "bearer",
 }
-SENSITIVE_SUFFIX = ("token", "secret", "password", "apikey", "credential")
+SENSITIVE_SUFFIX = ("token", "secret", "password", "apikey", "credential", "cookie", "authorization")
+
+
+def _norm(key: str) -> str:
+    return key.lower().replace("-", "").replace("_", "").replace(" ", "")
 
 
 def is_sensitive(key: str) -> bool:
-    k = key.lower()
+    k = _norm(key)
     return k in SENSITIVE_EXACT or k.endswith(SENSITIVE_SUFFIX)
 
 
