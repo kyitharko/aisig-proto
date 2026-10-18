@@ -354,6 +354,97 @@ fn dribbling_client_is_cut_off_by_the_absolute_deadline() {
     assert!(get(&s.addr, "/healthz").contains("200 OK"));
 }
 
+/// Start a request, never finish the header block, then go silent; assert the server gives up by
+/// the deadline (not the per-read timeout) and answers 408.
+fn assert_silent_client_cut_off(s: &Server, within: Duration) {
+    let mut stream = TcpStream::connect(&s.addr).expect("connect");
+    stream
+        .set_read_timeout(Some(Duration::from_secs(8)))
+        .unwrap();
+    stream
+        .write_all(b"GET /healthz HTTP/1.1\r\nHost: x\r\n")
+        .unwrap();
+    let start = Instant::now();
+    let mut buf = Vec::new();
+    let mut tmp = [0u8; 1024];
+    loop {
+        match stream.read(&mut tmp) {
+            Ok(0) => break,
+            Ok(n) => buf.extend_from_slice(&tmp[..n]),
+            Err(_) => break,
+        }
+    }
+    let elapsed = start.elapsed();
+    assert!(
+        elapsed < within,
+        "the deadline must bound a silent client; elapsed={elapsed:?}"
+    );
+    let resp = String::from_utf8_lossy(&buf);
+    assert!(
+        resp.contains("408"),
+        "expected a 408 at the deadline; got {resp:?}"
+    );
+}
+
+#[test]
+fn silent_client_bounded_by_deadline_even_with_longer_per_read_timeout() {
+    // Per-read timeout (5s) far exceeds the deadline (1s): the deadline must still bound the read.
+    let s = spawn(&[
+        ("AISIG_DEMO_READ_TIMEOUT_MS", "5000"),
+        ("AISIG_DEMO_REQUEST_DEADLINE_MS", "1000"),
+    ]);
+    assert_silent_client_cut_off(&s, Duration::from_millis(2500));
+}
+
+#[test]
+fn silent_client_bounded_by_deadline_with_per_read_disabled() {
+    // AISIG_DEMO_READ_TIMEOUT_MS=0 => no per-read timeout at all; the remaining deadline alone
+    // must still bound every blocking read.
+    let s = spawn(&[
+        ("AISIG_DEMO_READ_TIMEOUT_MS", "0"),
+        ("AISIG_DEMO_REQUEST_DEADLINE_MS", "1000"),
+    ]);
+    assert_silent_client_cut_off(&s, Duration::from_millis(2500));
+}
+
+#[test]
+fn client_dribbling_after_408_does_not_block_other_requests() {
+    // A client that keeps sending even after its 408 must not hold the single-threaded server:
+    // its connection is bounded by the deadline plus the bounded drain, so another request is
+    // served within a bounded time.
+    let s = spawn(&[
+        ("AISIG_DEMO_READ_TIMEOUT_MS", "300"),
+        ("AISIG_DEMO_REQUEST_DEADLINE_MS", "800"),
+    ]);
+    let addr = s.addr.clone();
+    let noisy = std::thread::spawn(move || {
+        if let Ok(mut c) = TcpStream::connect(&addr) {
+            let _ = c.write_all(b"GET /healthz HTTP/1.1\r\nHost: x\r\n");
+            // Keep dribbling for several seconds, well past the 408 and the drain.
+            for _ in 0..24 {
+                if c.write_all(b"A").is_err() || c.flush().is_err() {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(250));
+            }
+        }
+    });
+    // Let the noisy client occupy the server first.
+    std::thread::sleep(Duration::from_millis(100));
+    let start = Instant::now();
+    let resp = get(&s.addr, "/healthz");
+    let elapsed = start.elapsed();
+    let _ = noisy.join();
+    assert!(
+        resp.contains("200 OK"),
+        "a second /healthz must still succeed while the noisy client is sending; got {resp:?}"
+    );
+    assert!(
+        elapsed < Duration::from_secs(3),
+        "the noisy client must not block other requests indefinitely; elapsed={elapsed:?}"
+    );
+}
+
 #[test]
 fn stored_run_count_is_bounded() {
     let s = spawn(&[("AISIG_DEMO_MAX_RUNS", "2")]);

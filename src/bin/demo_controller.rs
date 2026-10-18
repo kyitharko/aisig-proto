@@ -15,7 +15,7 @@
 //! a maximum body size, and a maximum number of stored runs.
 
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
@@ -116,16 +116,44 @@ enum LineRead {
     Err,
 }
 
-/// Read one CRLF/LF-terminated line, one byte at a time (from a buffered reader), refusing a line
-/// longer than `cap` bytes. This bounds both the request line and each header line. The per-read
-/// timeout turns a stalled sender into an `Err`; the absolute `deadline`, re-checked before every
-/// byte, stops a client that dribbles one byte just before each timeout (which would otherwise
-/// keep resetting the per-read timeout and hold a single-threaded server forever).
-fn read_line_capped<R: BufRead>(r: &mut R, cap: usize, deadline: Instant) -> LineRead {
+/// Arm the socket read timeout to the time left until `deadline` (never longer than the
+/// configured per-read timeout, floored at 1ms). Returns false once the deadline has passed.
+///
+/// This is what makes the deadline a *real* wall-clock bound on every blocking read: a single
+/// `read` can block at most until the deadline, even when `AISIG_DEMO_READ_TIMEOUT_MS=0` (no
+/// per-read timeout at all) and even if the configured per-read timeout is longer than the whole
+/// deadline. Setting the option on the original stream covers the `BufReader` over its clone,
+/// since dup'd descriptors share one socket (and thus one `SO_RCVTIMEO`).
+fn arm_read(stream: &TcpStream, deadline: Instant, per_read: Option<Duration>) -> bool {
+    let now = Instant::now();
+    if now >= deadline {
+        return false;
+    }
+    let mut remaining = deadline - now;
+    if let Some(t) = per_read {
+        if t < remaining {
+            remaining = t;
+        }
+    }
+    // Floor at 1ms: a zero timeout means "block forever", the opposite of what we want.
+    let remaining = remaining.max(Duration::from_millis(1));
+    stream.set_read_timeout(Some(remaining)).is_ok()
+}
+
+/// Read one CRLF/LF-terminated line, one byte at a time, refusing a line longer than `cap` bytes.
+/// Before every byte the read is armed to the remaining deadline, so the whole line read is
+/// bounded by the deadline regardless of the per-read timeout (including when it is disabled).
+fn read_line_capped(
+    stream: &TcpStream,
+    r: &mut BufReader<TcpStream>,
+    cap: usize,
+    deadline: Instant,
+    per_read: Option<Duration>,
+) -> LineRead {
     let mut out = Vec::new();
     let mut byte = [0u8; 1];
     loop {
-        if Instant::now() >= deadline {
+        if !arm_read(stream, deadline, per_read) {
             return LineRead::Err;
         }
         match r.read(&mut byte) {
@@ -161,14 +189,16 @@ fn trim_cr(bytes: &[u8]) -> String {
 /// than holding the single-threaded server. Returns an error message on timeout, deadline, or a
 /// truncated body (all mapped to a 408 by the caller, with no run created).
 fn read_body_by_deadline(
+    stream: &TcpStream,
     reader: &mut BufReader<TcpStream>,
     len: usize,
     deadline: Instant,
+    per_read: Option<Duration>,
 ) -> Result<Vec<u8>, &'static str> {
     let mut buf = vec![0u8; len];
     let mut read = 0usize;
     while read < len {
-        if Instant::now() >= deadline {
+        if !arm_read(stream, deadline, per_read) {
             return Err("exceeded the request deadline reading the request body");
         }
         match reader.read(&mut buf[read..]) {
@@ -178,10 +208,10 @@ fn read_body_by_deadline(
                 if e.kind() == std::io::ErrorKind::WouldBlock
                     || e.kind() == std::io::ErrorKind::TimedOut =>
             {
-                // A per-read timeout fired with no new bytes: the sender has stalled, so give up
-                // now rather than wait out the whole deadline. A client that keeps dribbling bytes
-                // never trips this branch and is instead cut off by the deadline check above.
-                return Err("timed out reading request body");
+                // The armed read timed out: either the per-read timeout fired on a stalled sender
+                // or the deadline was reached. Either way, give up now. A client that keeps
+                // dribbling bytes advances `read` instead and is cut off by the deadline above.
+                return Err("timed out or exceeded the request deadline reading the request body");
             }
             Err(_) => return Err("error reading request body"),
         }
@@ -195,37 +225,41 @@ fn handle(
     store: &Store,
     counter: &AtomicU64,
 ) -> std::io::Result<()> {
-    stream.set_read_timeout(cfg.read_timeout)?;
     let mut reader = BufReader::new(stream.try_clone()?);
-    // Absolute budget for reading this whole request, independent of the per-read timeout.
+    // Absolute wall-clock budget for reading this whole request. Every blocking read is armed to
+    // the time remaining until this deadline (see `arm_read`), so it holds even with no per-read
+    // timeout configured.
     let deadline = Instant::now() + cfg.request_deadline;
+    let per_read = cfg.read_timeout;
 
-    let (status, body) = match read_line_capped(&mut reader, MAX_REQUEST_LINE, deadline) {
-        LineRead::Eof => return Ok(()),
-        LineRead::TooLong => ("414 URI Too Long", err_json("request line too long")),
-        LineRead::Err => (
-            "408 Request Timeout",
-            err_json("timed out or exceeded the request deadline reading the request line"),
-        ),
-        LineRead::Line(request_line) => {
-            let mut parts = request_line.split_whitespace();
-            let method = parts.next().unwrap_or("").to_owned();
-            let path = parts.next().unwrap_or("").to_owned();
-            match read_headers(&mut reader, deadline) {
-                Err(resp) => resp,
-                Ok(content_length) => route(
-                    &method,
-                    &path,
-                    &mut reader,
-                    content_length,
-                    cfg,
-                    store,
-                    counter,
-                    deadline,
-                ),
+    let (status, body) =
+        match read_line_capped(&stream, &mut reader, MAX_REQUEST_LINE, deadline, per_read) {
+            LineRead::Eof => return Ok(()),
+            LineRead::TooLong => ("414 URI Too Long", err_json("request line too long")),
+            LineRead::Err => (
+                "408 Request Timeout",
+                err_json("timed out or exceeded the request deadline reading the request line"),
+            ),
+            LineRead::Line(request_line) => {
+                let mut parts = request_line.split_whitespace();
+                let method = parts.next().unwrap_or("").to_owned();
+                let path = parts.next().unwrap_or("").to_owned();
+                match read_headers(&stream, &mut reader, deadline, per_read) {
+                    Err(resp) => resp,
+                    Ok(content_length) => route(
+                        &method,
+                        &path,
+                        &stream,
+                        &mut reader,
+                        content_length,
+                        cfg,
+                        store,
+                        counter,
+                        deadline,
+                    ),
+                }
             }
-        }
-    };
+        };
 
     let response = format!(
         "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
@@ -235,13 +269,18 @@ fn handle(
     stream.flush()?;
     // Half-close the write side so the peer sees end-of-response immediately, then best-effort
     // discard any unread request bytes (e.g. the oversized remainder of a rejected request) so
-    // closing the socket does not reset the peer before it reads the response. Bounded by a short
-    // drain timeout and a hard byte cap so this never waits on the full request read timeout.
+    // closing the socket does not reset the peer before it reads the response. Bounded three ways
+    // so a client that keeps sending after the response can never hold the server: a short per-read
+    // timeout, a hard byte cap, and an absolute elapsed-time budget for the whole drain.
     let _ = stream.shutdown(std::net::Shutdown::Write);
-    let _ = stream.set_read_timeout(Some(Duration::from_millis(500)));
+    let _ = stream.set_read_timeout(Some(Duration::from_millis(200)));
+    let drain_deadline = Instant::now() + Duration::from_millis(1_000);
     let mut sink = [0u8; 4096];
     let mut drained = 0usize;
     while drained < 1_048_576 {
+        if Instant::now() >= drain_deadline {
+            break;
+        }
         match reader.read(&mut sink) {
             Ok(0) => break,
             Ok(n) => drained += n,
@@ -254,14 +293,16 @@ fn handle(
 /// Read the header block, bounding the header count and total bytes, and return the declared
 /// Content-Length. On a limit breach or read error, return the response to send instead.
 fn read_headers(
+    stream: &TcpStream,
     reader: &mut BufReader<TcpStream>,
     deadline: Instant,
+    per_read: Option<Duration>,
 ) -> Result<usize, (&'static str, String)> {
     let mut content_length = 0usize;
     let mut count = 0usize;
     let mut bytes = 0usize;
     loop {
-        match read_line_capped(reader, MAX_HEADER_LINE, deadline) {
+        match read_line_capped(stream, reader, MAX_HEADER_LINE, deadline, per_read) {
             LineRead::Eof => break,
             LineRead::TooLong => {
                 return Err((
@@ -303,6 +344,7 @@ fn read_headers(
 fn route(
     method: &str,
     path: &str,
+    stream: &TcpStream,
     reader: &mut BufReader<TcpStream>,
     content_length: usize,
     cfg: &Config,
@@ -324,7 +366,13 @@ fn route(
                     err_json("stored run limit reached"),
                 );
             }
-            let buf = match read_body_by_deadline(reader, content_length, deadline) {
+            let buf = match read_body_by_deadline(
+                stream,
+                reader,
+                content_length,
+                deadline,
+                cfg.read_timeout,
+            ) {
                 Ok(b) => b,
                 Err(msg) => return ("408 Request Timeout", err_json(msg)),
             };
