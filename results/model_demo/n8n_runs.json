@@ -2,7 +2,7 @@
   "phase": "4b/5-rev1",
   "kind": "n8n_workflow_executions",
   "date_utc": "2026-10-18",
-  "note": "GENUINE n8n workflow executions (n8n import:workflow + n8n execute) via the real local qwen3:1.7b model, orchestrated entirely by the exported workflow. Distinct from the historical direct-HTTP runs in run_v1.json/run_v2.json. Synthetic only; no real scan/fetch/DB/shell; timings are single-inference / in-memory, not deployment latency.",
+  "note": "GENUINE n8n workflow executions (n8n import:workflow + n8n execute) via the real local qwen3:1.7b model, orchestrated entirely by the exported workflow. Executed 2026-10-18 this session (NOT re-run in the later sanitization round); distinct from the historical direct-HTTP runs in run_v1.json/run_v2.json. The exact workflow files are committed and their sha256 + prompt sha256 are gated by tests/model_demo_gate.rs. Synthetic only; no real scan/fetch/DB/shell; exports sanitized by scripts/sanitize_n8n_export.py; timings are single-inference/in-memory, not deployment latency.",
   "stack": {
     "n8n": "2.43.7 (n8nio/n8n:2.43.7)",
     "ollama_image": "ollama/ollama:latest",
@@ -44,7 +44,7 @@
         "digest_sha256": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
         "parameter_size": "2.0B",
         "quantization": "Q4_K_M",
-        "runtime": "ollama (via compose)",
+        "runtime": "ollama 0.40.6 (via demo/compose.cpu.yml)",
         "sampling": {
           "think": false,
           "temperature": 0,
@@ -56,8 +56,11 @@
         "ollama_total_duration_ns": 7335940787,
         "ollama_load_duration_ns": 2570234040,
         "ollama_eval_duration_ns": 2160031000,
-        "prompt_eval_count": 279
-      }
+        "prompt_eval_count": 279,
+        "ollama_version": "0.40.6"
+      },
+      "workflow_file": "demo/n8n-workflow.json",
+      "prompt_sha256": "704f3249ae2141f6ded407d03ee5265f53be78f87717e56ebcafe67cccd66c49"
     },
     {
       "variant": "v2",
@@ -88,7 +91,7 @@
         "digest_sha256": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
         "parameter_size": "2.0B",
         "quantization": "Q4_K_M",
-        "runtime": "ollama (via compose)",
+        "runtime": "ollama 0.40.6 (via demo/compose.cpu.yml)",
         "sampling": {
           "think": false,
           "temperature": 0,
@@ -100,8 +103,11 @@
         "ollama_total_duration_ns": 2448151441,
         "ollama_load_duration_ns": 867143,
         "ollama_eval_duration_ns": 1746534000,
-        "prompt_eval_count": 291
-      }
+        "prompt_eval_count": 291,
+        "ollama_version": "0.40.6"
+      },
+      "workflow_file": "demo/n8n-workflow-v2.json",
+      "prompt_sha256": "e1a6e7ba8966d25825f2fb4922c0b2f3d71c7e98e918545578e3ed2258d4ee9a"
     },
     {
       "variant": "control-excluded",
@@ -125,7 +131,14 @@
         "Ollama /api/chat": null,
         "Classify model output": null,
         "Provider controller /v1/runs": 72
-      }
+      },
+      "workflow_file": "demo/n8n-control-excluded.json",
+      "prompt_sha256": null
     }
-  ]
+  ],
+  "workflow_files": {
+    "v1": "demo/n8n-workflow.json",
+    "v2": "demo/n8n-workflow-v2.json",
+    "control": "demo/n8n-control-excluded.json"
+  }
 }

@@ -9,8 +9,29 @@ use std::fs;
 use std::path::Path;
 
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 const DIR: &str = "results/model_demo";
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let mut h = Sha256::new();
+    h.update(bytes);
+    hex::encode(h.finalize())
+}
+
+/// The Set node's `a4` assignment holds the user prompt in the v1/v2 workflows.
+fn user_prompt(workflow_json: &Value) -> Option<String> {
+    for node in workflow_json["nodes"].as_array()? {
+        if node["type"] == "n8n-nodes-base.set" {
+            for a in node["parameters"]["assignments"]["assignments"].as_array()? {
+                if a["id"] == "a4" {
+                    return a["value"].as_str().map(str::to_owned);
+                }
+            }
+        }
+    }
+    None
+}
 
 /// Mirror of `scripts/sanitize_n8n_export.py`: a key name that denotes a secret.
 fn is_sensitive(key: &str) -> bool {
@@ -74,7 +95,11 @@ fn no_committed_demo_export_contains_a_secret_field() {
         let text = fs::read_to_string(&path).expect("read json");
         let json: Value = serde_json::from_str(&text).expect("parse json");
         let mut hits = Vec::new();
-        collect_sensitive(&json, path.file_name().unwrap().to_str().unwrap(), &mut hits);
+        collect_sensitive(
+            &json,
+            path.file_name().unwrap().to_str().unwrap(),
+            &mut hits,
+        );
         all_hits.extend(hits);
         scanned += 1;
     }
@@ -92,4 +117,69 @@ fn sanitizer_script_is_present() {
         Path::new("scripts/sanitize_n8n_export.py").is_file(),
         "the repeatable sanitizer scripts/sanitize_n8n_export.py must exist"
     );
+}
+
+/// Gate the reported v1/v2/control workflow hashes and prompt variants against the committed
+/// workflow files, and require the actual Ollama runtime version on each model run. This proves
+/// the recorded n8n executions correspond to files in the repository, not to uncommitted ones.
+#[test]
+fn reported_workflow_hashes_and_prompts_match_committed_files() {
+    let runs_json: Value = serde_json::from_str(
+        &fs::read_to_string(format!("{DIR}/n8n_runs.json")).expect("n8n_runs"),
+    )
+    .expect("parse n8n_runs");
+
+    // variant -> top-level workflow_revision_sha256 key
+    let top_key = |variant: &str| match variant {
+        "v1" => "v1_canonical",
+        "v2" => "v2_variant",
+        "control-excluded" => "control",
+        other => panic!("unexpected variant {other}"),
+    };
+    let top = &runs_json["workflow_revision_sha256"];
+
+    let runs = runs_json["runs"].as_array().expect("runs array");
+    assert!(!runs.is_empty(), "no runs recorded");
+    for run in runs {
+        let variant = run["variant"].as_str().expect("variant");
+        let wf_path = run["workflow_file"]
+            .as_str()
+            .unwrap_or_else(|| panic!("{variant}: missing workflow_file"));
+        let wf_bytes = fs::read(wf_path).unwrap_or_else(|_| panic!("{variant}: {wf_path} missing"));
+        let actual = sha256_hex(&wf_bytes);
+
+        let reported = run["workflow_revision_sha256"]
+            .as_str()
+            .expect("per-run hash");
+        assert_eq!(
+            actual, reported,
+            "{variant}: committed {wf_path} sha256 != reported per-run hash"
+        );
+        assert_eq!(
+            Some(actual.as_str()),
+            top[top_key(variant)].as_str(),
+            "{variant}: top-level workflow hash does not match the committed file"
+        );
+
+        // Prompt-variant gate (v1/v2 carry a model prompt; the control does not).
+        if let Some(reported_prompt) = run["prompt_sha256"].as_str() {
+            let wf: Value = serde_json::from_slice(&wf_bytes).expect("parse workflow");
+            let prompt = user_prompt(&wf)
+                .unwrap_or_else(|| panic!("{variant}: no a4 user prompt in {wf_path}"));
+            assert_eq!(
+                sha256_hex(prompt.as_bytes()),
+                reported_prompt,
+                "{variant}: committed prompt sha256 != reported prompt_sha256"
+            );
+        }
+
+        // Record of the actual model runtime version is required for model-driven runs.
+        if let Some(model) = run.get("model") {
+            let ver = model["ollama_version"].as_str().unwrap_or("");
+            assert!(
+                !ver.is_empty(),
+                "{variant}: model run must record the actual ollama_version"
+            );
+        }
+    }
 }
