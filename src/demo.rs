@@ -43,6 +43,7 @@ const MAX_CLASS: usize = 64;
 const MAX_REFUSAL: usize = 4096;
 const MAX_META: usize = 2048;
 const MAX_VARIANT: usize = 64;
+const MAX_PARSE: usize = 64;
 
 /// One synthetic environment the controller offers. The model does not choose it.
 pub struct ScenarioDef {
@@ -116,8 +117,14 @@ pub struct RunRecord {
     pub prompt_variant_id: Option<String>,
     /// Untrusted model metadata, echoed back for audit (bounded).
     pub model_metadata: Option<String>,
+    /// Untrusted client-side parse classification (e.g. the n8n parser's `no_call`,
+    /// `malformed_args`, `unknown_tool`, `multiple_calls`). Audit-only, echoed verbatim; the
+    /// provider's own trusted `parse_status` below is derived from the proposal, not from this.
+    pub model_parse: Option<String>,
     pub proposal: Proposal,
-    /// `tool_call`, `refusal`, or `empty` (no operation and no refusal).
+    /// Provider-derived classification of the proposal: `tool_call` (an operation is present and
+    /// was mediated), `refusal` (the model explicitly declined), or `no_call` (no operation and
+    /// no explicit refusal — including empty model content, which is a no-call, not a refusal).
     pub parse_status: String,
     /// The `Mediate` decision string, or a no-mediation note for a refusal/empty proposal.
     pub decision: String,
@@ -132,6 +139,7 @@ fn check_bounds(
     p: &Proposal,
     variant: Option<&str>,
     meta: Option<&str>,
+    model_parse: Option<&str>,
 ) -> Result<(), DemoError> {
     if !SCENARIOS.iter().any(|s| s.id == scenario_id) {
         return Err(DemoError::UnknownScenario);
@@ -156,6 +164,9 @@ fn check_bounds(
     }
     if meta.is_some_and(|s| s.len() > MAX_META) {
         return Err(DemoError::Oversized("model_metadata"));
+    }
+    if model_parse.is_some_and(|s| s.len() > MAX_PARSE) {
+        return Err(DemoError::Oversized("model_parse"));
     }
     Ok(())
 }
@@ -390,8 +401,15 @@ pub fn run(
     proposal: &Proposal,
     prompt_variant_id: Option<&str>,
     model_metadata: Option<&str>,
+    model_parse: Option<&str>,
 ) -> Result<RunRecord, DemoError> {
-    check_bounds(scenario_id, proposal, prompt_variant_id, model_metadata)?;
+    check_bounds(
+        scenario_id,
+        proposal,
+        prompt_variant_id,
+        model_metadata,
+        model_parse,
+    )?;
 
     let record =
         |parse_status: &str, decision: String, before: usize, after: usize, ms: u128| RunRecord {
@@ -400,6 +418,7 @@ pub fn run(
             fixture_version: FIXTURE_VERSION.to_owned(),
             prompt_variant_id: prompt_variant_id.map(str::to_owned),
             model_metadata: model_metadata.map(str::to_owned),
+            model_parse: model_parse.map(str::to_owned),
             proposal: proposal.clone(),
             parse_status: parse_status.to_owned(),
             decision,
@@ -409,17 +428,20 @@ pub fn run(
             verify_ms: ms,
         };
 
-    // A refusal (or an empty proposal) is never mediated: no effect can occur.
+    // No operation proposed → never mediated, so no effect can occur. An explicit refusal and a
+    // plain no-call (including empty model content) are classified separately; neither is treated
+    // as the other, and empty content is a no-call, not evidence of a refusal.
     if proposal.operation.is_none() {
-        let status = if proposal.refusal.is_some() {
-            "refusal"
+        let (status, note) = if proposal.refusal.is_some() {
+            (
+                "refusal",
+                "no mediation: model explicitly refused (no tool call)",
+            )
         } else {
-            "empty"
-        };
-        let note = if proposal.refusal.is_some() {
-            "no mediation: model refused to call a tool"
-        } else {
-            "no mediation: empty proposal (no operation)"
+            (
+                "no_call",
+                "no mediation: no tool call (no operation proposed)",
+            )
         };
         return Ok(record(status, note.to_owned(), 0, 0, 0));
     }

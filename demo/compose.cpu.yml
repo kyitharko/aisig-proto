@@ -1,9 +1,16 @@
-# Local infrastructure smoke test only. The Rust provider controller and n8n
-# authorization workflow are not implemented by this file.
+# CPU-only local demo stack for the small-model authorization simulation (docs/model-demo.md).
+# Three services on one private Compose network:
+#   - n8n       workflow orchestrator; ONLY service published to the host (loopback UI).
+#   - ollama    local model API; reachable only inside the network as http://ollama:11434.
+#   - controller the Rust provider controller; reachable only inside the network as
+#                http://controller:8787, with NO published host port.
+# Everything is synthetic. The controller performs no real scan/fetch/DB/shell; n8n never
+# performs a model-selected action, it only forwards a proposal to the controller.
 services:
   n8n:
     image: n8nio/n8n:2.43.7
     restart: unless-stopped
+    # The only host-published port: the n8n editor UI on loopback.
     ports:
       - "127.0.0.1:5678:5678"
     environment:
@@ -14,14 +21,33 @@ services:
       - n8n_data:/home/node/.n8n
     depends_on:
       - ollama
+      - controller
 
   ollama:
     image: ollama/ollama:latest
     restart: unless-stopped
+    # No published port: reachable only inside the private network as http://ollama:11434.
     environment:
       OLLAMA_VULKAN: "0"
     volumes:
       - ollama_data:/root/.ollama
+
+  controller:
+    # Minimal runtime for the host-built provider controller binary. Build it first:
+    #   cargo build --release --bin demo_controller
+    # The binary needs glibc >= 2.34; bookworm-slim ships 2.36, so the host build runs as-is.
+    image: debian:bookworm-slim
+    restart: unless-stopped
+    # Binds 0.0.0.0 INSIDE the container only. There is deliberately no `ports:` mapping, so the
+    # unauthenticated controller is reachable solely by other services on this private network
+    # (http://controller:8787), never from the host or the outside.
+    environment:
+      AISIG_DEMO_BIND: "0.0.0.0:8787"
+      AISIG_DEMO_MAX_RUNS: "1000"
+      AISIG_DEMO_READ_TIMEOUT_MS: "10000"
+    volumes:
+      - ../target/release/demo_controller:/usr/local/bin/demo_controller:ro
+    command: ["/usr/local/bin/demo_controller"]
 
 volumes:
   n8n_data:

@@ -25,6 +25,7 @@ fn call(scenario: &str, p: Proposal) -> (String, usize) {
         &p,
         Some("test"),
         Some("deterministic"),
+        Some("tool_call"),
     )
     .expect("known scenario");
     // The core invariant: exactly one modeled effect iff Allow, zero otherwise.
@@ -190,6 +191,7 @@ fn refusal_is_not_mediated() {
         &prop(None, None, None, Some("I won't")),
         None,
         None,
+        Some("refusal"),
     )
     .expect("known scenario");
     assert_eq!(r.parse_status, "refusal");
@@ -197,16 +199,19 @@ fn refusal_is_not_mediated() {
 }
 
 #[test]
-fn empty_proposal_is_not_mediated() {
+fn empty_proposal_is_a_no_call_not_a_refusal() {
+    // No operation and no explicit refusal (e.g. empty model content) is a no-call, which the
+    // provider must never record as a refusal, and which produces no effect.
     let r = run(
         "run-test",
         "fresh",
         &prop(None, None, None, None),
         None,
         None,
+        Some("no_call"),
     )
     .expect("known scenario");
-    assert_eq!(r.parse_status, "empty");
+    assert_eq!(r.parse_status, "no_call");
     assert_eq!(r.effects_delta, 0);
 }
 
@@ -217,7 +222,8 @@ fn unknown_scenario_is_an_error() {
         "nope",
         &prop(Some("web.get"), Some(REPORTS), None, None),
         None,
-        None
+        None,
+        None,
     )
     .is_err());
 }
@@ -230,7 +236,8 @@ fn oversized_operation_is_rejected_without_effect() {
         "fresh",
         &prop(Some(&big), Some(REPORTS), None, None),
         None,
-        None
+        None,
+        None,
     )
     .is_err());
 }
