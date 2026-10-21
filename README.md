@@ -124,13 +124,14 @@ model-selected action, and nothing real is ever contacted** — no scan, fetch, 
 shell command runs, and no target is reached. This is a demonstration of the provider
 decision path, not real tool enforcement and not a deployment latency measurement.
 
-The whole stack is three Compose services on one private network: n8n (only its editor UI is
-published, on `127.0.0.1:5678`), Ollama, and the controller. The controller has **no published
+The default stack is three Compose services on one private network: n8n (only its editor UI is
+published, on `127.0.0.1:5678`), Ollama, and the controller. By default the controller has **no published
 host port**, so it is not reachable from other machines; n8n calls it by service name as
 `http://controller:8787`. This is **not** complete host isolation: on Linux the Docker host
 itself can still reach the controller's container IP directly (e.g. `http://172.x.x.x:8787`), and
-the controller is unauthenticated. Treat the whole thing as a single-trusted-host synthetic demo
-— do not run it on a shared/multi-user or internet-facing machine, and do not expose it.
+the controller is unauthenticated. Treat the whole thing as a single-trusted-host synthetic demo.
+An [optional private-IP override](docs/remote-manual-access.md) publishes n8n and the synthetic
+controller on one trusted host interface for laptop experiments; it is not a public deployment.
 
 ```sh
 # 1. build the provider controller binary (std-only, no extra deps; the controller service
@@ -188,6 +189,19 @@ and self-fails on any control mismatch, non-200, failed/incomplete execute (incl
 execute returncode), `effects_delta` inconsistent with before/after, effect-invariant violation,
 or non-planned coverage; the committed result files are gated by `cargo test`
 (`tests/model_demo_gate.rs`). Runs 1–3 are retained (run 3 authoritative; runs 1–2 historical).
+
+![Provider decision counts by prompt variant, ten runs each](results/model_demo/decision_distribution.svg)
+
+**Explore the results visually:** download
+[the offline interactive report](results/model_demo/visual_report.html) and open it locally.
+It shows outcome counts,
+the 3×5 scenario matrix, observed model proposals, per-run effects, a separate model-duration
+chart, discussion, and limitations. Regenerate both from the result JSON using
+`python3 scripts/build_model_visual_report.py`. For your own local spot checks, follow
+[the manual experiment guide](docs/manual-experiments.md) and fill a copy of the
+[experiment workbook](docs/experiment-workbook.md); do not mix exploratory runs with the
+preregistered matrix. Set `AISIG_OUTPUT_DIR` under gitignored `local-experiments/` to keep a new
+collector run separate from the committed results.
 
 ## Git
 

@@ -15,6 +15,8 @@ Generated outputs. Do not edit by hand.
 | `bench_20261015T201455Z.md`, `.json` | `scripts/bench.sh`, git `21487fc`, after the negative-ε rejection in the time paths | **historical (round 3)** |
 | `bench_20261014T192333Z.md`, `.json` | `scripts/bench.sh`, git `526a3c6`, exact-object status keys | **historical (r3)** |
 | `bench_20261014T183348Z.md`, `.json` | `scripts/bench.sh`, git `9412502`, status keyed by (id, version) | **historical (r2)**; the status stage it measured no longer exists |
+| `model_demo/controls_results.json`, `model_matrix.json` | n8n/Ollama/controller observations; 13 fixed controls and 30 model runs | current synthetic demo (run 3) |
+| `model_demo/visual_report.html`, `decision_distribution.svg` | offline visual presentation built from those two result files by `scripts/build_model_visual_report.py` | current synthetic demo; regenerate after changing the source pair |
 
 RQ7 `tests/cases/freshness_cases.toml` (34 reviewed, f2) is matched by the RQ7 implementation
 and reported in `freshness_cases.md`/`.json`; the owner has approved all 34 expected outcomes.
