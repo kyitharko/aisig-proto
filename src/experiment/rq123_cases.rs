@@ -177,6 +177,7 @@ pub const MUTATIONS: &[&str] = &[
     "status_source_unavailable",
     "modified_request_payload_keeps_original_signature",
     "malformed_noncanonical_manifest",
+    "foreign_signed_record_and_request_on_other_path",
 ];
 
 pub fn labels_cover_mutations(labels: &[Label]) -> bool {
@@ -223,6 +224,7 @@ pub fn run(mutation: &str) -> Outcome {
     let mut record_overlap = false;
     let mut bad_leaf_parent = false;
     let mut foreign_record = false;
+    let mut splice_foreign_record = false;
     let mut tamper_request = false;
     let mut noncanonical_manifest = false;
     let mut senior_revoked = false;
@@ -246,6 +248,7 @@ pub fn run(mutation: &str) -> Outcome {
         "request_targets_wrong_provider" => request_audience = Q_AUD,
         "request_claims_different_user_id" => user_id = "user-other",
         "request_uses_record_from_other_path" => foreign_record = true,
+        "foreign_signed_record_and_request_on_other_path" => splice_foreign_record = true,
         "unrelated_senior_revoked_other_path_still_valid" => sibling_revoked = true,
         "junior_class_expands_beyond_senior" => leaf_expands_class = true,
         "record_asset_outside_registrar_scope" => record_asset = asset_b.clone(),
@@ -381,7 +384,7 @@ pub fn run(mutation: &str) -> Outcome {
         classes: vec![TestClass::ReadOnlyDataAccess],
         validity,
     };
-    let (record_raw, record_payload) = signed(TypeTag::AssetRecord, &record, record_signer);
+    let (mut record_raw, record_payload) = signed(TypeTag::AssetRecord, &record, record_signer);
     let mut request = AssetRequest {
         format: FORMAT.to_owned(),
         id: "asset-request-one".to_owned(),
@@ -402,9 +405,11 @@ pub fn run(mutation: &str) -> Outcome {
         manifest_digest: digest,
         class: TestClass::ReadOnlyDataAccess,
     };
-    if foreign_record {
-        // Construct a genuinely issued B record via Senior 2 and its own
-        // Senior→Junior edge, then try to name it from the presented A path.
+    let mut foreign_path = None;
+    let mut foreign_keys = Vec::new();
+    if foreign_record || splice_foreign_record {
+        // Construct a genuinely signed B record under B's Senior→Junior path.
+        // AA17 names it from A's request; AA25 submits it with the A path.
         let mut other_senior = edge(
             "edge-senior-2",
             Role::Senior,
@@ -416,7 +421,8 @@ pub fn run(mutation: &str) -> Outcome {
             true,
         );
         other_senior.parent = Some(refs[0].clone());
-        let (_, senior_payload) = signed(TypeTag::RoleDelegation, &other_senior, "cto");
+        let (other_senior_raw, senior_payload) =
+            signed(TypeTag::RoleDelegation, &other_senior, "cto");
         let senior_ref = exact(
             &other_senior.id,
             1,
@@ -434,31 +440,71 @@ pub fn run(mutation: &str) -> Outcome {
             false,
         );
         other_junior.parent = Some(senior_ref.clone());
-        let (_, junior_payload) = signed(TypeTag::RoleDelegation, &other_junior, "senior-2");
+        let (other_junior_raw, junior_payload) =
+            signed(TypeTag::RoleDelegation, &other_junior, "senior-2");
+        let other_junior_ref = exact(
+            &other_junior.id,
+            1,
+            TypeTag::RoleDelegation,
+            &junior_payload,
+        );
+        let other_manifest = AssetManifest {
+            format: MANIFEST_FORMAT.to_owned(),
+            asset: asset_b.clone(),
+            asset_version: 1,
+            snapshot_marker: "synthetic-db-snapshot-one".to_owned(),
+        };
+        let other_manifest_bytes = canonical_bytes(&other_manifest).unwrap();
         let other_record = AssetRecord {
             id: "asset-record-from-other-path".to_owned(),
             registrar: senior_ref,
-            junior: exact(
-                &other_junior.id,
-                1,
-                TypeTag::RoleDelegation,
-                &junior_payload,
-            ),
+            junior: other_junior_ref.clone(),
             asset: asset_b.clone(),
-            manifest_digest: snapshot_digest(
-                &canonical_bytes(&AssetManifest {
-                    format: MANIFEST_FORMAT.to_owned(),
-                    asset: asset_b.clone(),
-                    asset_version: 1,
-                    snapshot_marker: "synthetic-db-snapshot-one".to_owned(),
-                })
-                .unwrap(),
-            ),
+            manifest_digest: snapshot_digest(&other_manifest_bytes),
             issuer_key_id: kid("senior-2"),
             ..record.clone()
         };
-        let (_, other_payload) = signed(TypeTag::AssetRecord, &other_record, "senior-2");
+        let (other_record_raw, other_payload) =
+            signed(TypeTag::AssetRecord, &other_record, "senior-2");
         request.record = exact(&other_record.id, 1, TypeTag::AssetRecord, &other_payload);
+        if splice_foreign_record {
+            // Unlike AA17, submit the signed B record and its matching signed
+            // request with the A path. The same B objects must Accept on B's
+            // complete path before this cross-path test counts as meaningful.
+            request.junior = other_junior_ref;
+            request.asset = asset_b.clone();
+            request.manifest_digest = other_record.manifest_digest.clone();
+            record_raw = other_record_raw;
+            manifest = other_manifest;
+            foreign_path = Some(vec![
+                signed_edges[0].0.clone(),
+                other_senior_raw,
+                other_junior_raw,
+            ]);
+            foreign_keys = vec![
+                StatusKey::for_object(
+                    ACME,
+                    TypeTag::RoleDelegation,
+                    &other_senior.id,
+                    other_senior.version,
+                    &senior_payload,
+                ),
+                StatusKey::for_object(
+                    ACME,
+                    TypeTag::RoleDelegation,
+                    &other_junior.id,
+                    other_junior.version,
+                    &junior_payload,
+                ),
+                StatusKey::for_object(
+                    ACME,
+                    TypeTag::AssetRecord,
+                    &other_record.id,
+                    other_record.version,
+                    &other_payload,
+                ),
+            ];
+        }
     }
     let (mut request_raw, _) = signed(TypeTag::AssetRequest, &request, request_signer);
     if tamper_request {
@@ -495,6 +541,9 @@ pub fn run(mutation: &str) -> Outcome {
             ObjStatus::Active,
         );
     }
+    for key in foreign_keys {
+        status.entries.insert(key, ObjStatus::Active);
+    }
     if sibling_revoked {
         let mut sibling = edge(
             "edge-senior-1",
@@ -527,13 +576,26 @@ pub fn run(mutation: &str) -> Outcome {
         request: request_raw,
         manifest: manifest_raw,
     };
-    AuthorityVerifier {
+    let verifier = AuthorityVerifier {
         audience: P_AUD,
         registry: &registry,
         clock: &clock,
         status: &status,
+    };
+    if let Some(path) = foreign_path {
+        let valid_b = AuthorityBundle {
+            path,
+            record: bundle.record.clone(),
+            request: bundle.request.clone(),
+            manifest: bundle.manifest.clone(),
+        };
+        assert_eq!(
+            verifier.verify(&valid_b),
+            Outcome::Accept,
+            "AA25 foreign signed objects must work on their own B path"
+        );
     }
-    .verify(&bundle)
+    verifier.verify(&bundle)
 }
 
 pub fn run_all(labels: &[Label]) -> Vec<Row> {

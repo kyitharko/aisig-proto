@@ -6,9 +6,11 @@ after they are measured.
 ## What an Accept does not mean
 
 - It is not proof that O exists, that K_O belongs to O, or that O legally owns or may
-  authorize testing of an asset. Organization identity (RQ1) is an in-memory registry
-  fixture and asset binding (RQ2) is an in-memory binding fixture. Both are assumed
-  correct; nothing in this prototype checks them against real evidence.
+  authorize testing of an asset. In the original chain decision, organization identity
+  (RQ1) and asset binding (RQ2) are trusted in-memory fixtures. The separate
+  `AssetAuthority` slice (docs/rq123.md) checks signed synthetic declarations and
+  fixed delegation paths under an assumed pinned root. Its manifest hash binds
+  submitted bytes, not evidence of live control or legal ownership of an asset.
 - It is not proof that the party presenting G holds K_T, nor that a given agent session
   or subagent is bound to G. A copied grant verifies exactly like the original. The RQ5
   slice (docs/session.md) adds a *separate* `SessionAccept` decision for that. A chain
@@ -53,8 +55,9 @@ after they are measured.
 
 ## Model limits
 
-- Fixed chain depth (root → admin → authorizer → grant). Arbitrary-depth or multi-admin
-  delegation (rest of RQ3) is not modelled.
+- Fixed chain depth (root → admin → authorizer → grant); the separate RQ1–RQ3
+  slice also has a fixed root → CTO → Senior → Junior path. Arbitrary-depth or
+  multi-admin delegation and cross-candidate conflict aggregation are not modelled.
 - Two asset types only (web origin+path, database schema hierarchy). No wildcards, regex,
   IP ranges, cloud resources, query strings or ports-as-ranges.
 - Exactly one known constraint (`max_requests_per_second`); everything else is an unknown

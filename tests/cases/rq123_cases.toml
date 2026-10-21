@@ -1,146 +1,155 @@
-# Proposed labels written before the RQ1–RQ3 verifier implementation.
-# Every result is for one complete path, one asset, one requested class.
+# AA01–AA24 were reviewed for their stated synthetic outcomes after the first
+# 24/24 run. AA25 is proposed before its runner. Every result is for one
+# complete presented path, one asset, and one requested class.
 
 [[cases]]
 id = "AA01"
 mutation = "senior_1_asset_a"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA02"
 mutation = "senior_2_asset_b_same_junior"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA03"
 mutation = "cto_registers_asset_a"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA04"
 mutation = "unrecognized_root_signs_first_edge"
 expected = "Reject / RootNotPinned"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA05"
 mutation = "request_signed_by_wrong_key"
 expected = "Reject / InvalidSignature"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA06"
 mutation = "junior_edge_parent_points_to_other_senior"
 expected = "Reject / PathMismatch"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA07"
 mutation = "junior_scope_expands_beyond_senior"
 expected = "Reject / DelegationAmplifies"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA08"
 mutation = "asset_b_requested_under_asset_a_path"
 expected = "Reject / AssetOutsideScope"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA09"
 mutation = "record_issuer_lacks_registration_right"
 expected = "Reject / RecordIssuerUnauthorized"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA10"
 mutation = "record_digest_not_manifest_digest"
 expected = "Reject / SnapshotDigestMismatch"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA11"
 mutation = "manifest_changed_after_record_signing"
 expected = "Reject / SnapshotDigestMismatch"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA12"
 mutation = "senior_edge_expired"
 expected = "Reject / Expired"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA13"
 mutation = "senior_edge_revoked"
 expected = "Reject / Revoked"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA14"
 mutation = "asset_record_status_missing"
 expected = "Indeterminate / StatusUnknown"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA15"
 mutation = "request_targets_wrong_provider"
 expected = "Reject / WrongAudience"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA16"
 mutation = "request_claims_different_user_id"
 expected = "Reject / UserMismatch"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA17"
 mutation = "request_uses_record_from_other_path"
 expected = "Reject / PathMismatch"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA18"
 mutation = "unrelated_senior_revoked_other_path_still_valid"
 expected = "Accept"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA19"
 mutation = "junior_class_expands_beyond_senior"
 expected = "Reject / DelegationAmplifies"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA20"
 mutation = "record_asset_outside_registrar_scope"
 expected = "Reject / AssetOutsideScope"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA21"
 mutation = "clock_uncertainty_overlaps_record_expiry"
 expected = "Indeterminate / ClockUncertainty"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA22"
 mutation = "status_source_unavailable"
 expected = "Indeterminate / StatusUnavailable"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA23"
 mutation = "modified_request_payload_keeps_original_signature"
 expected = "Reject / InvalidSignature"
-label_status = "proposed"
+label_status = "reviewed"
 
 [[cases]]
 id = "AA24"
 mutation = "malformed_noncanonical_manifest"
 expected = "Reject / MalformedInput"
+label_status = "reviewed"
+
+# The foreign B record itself and its matching, validly signed Junior request
+# are presented with the A delegation path (not merely a foreign reference).
+[[cases]]
+id = "AA25"
+mutation = "foreign_signed_record_and_request_on_other_path"
+expected = "Reject / PathMismatch"
 label_status = "proposed"
