@@ -42,6 +42,7 @@ imply it is production-ready or independently audited.
 - [docs/enforcement.md](docs/enforcement.md) — RQ6 slice e2 (implemented, synthetic): provider-mediated synthetic tool adapter
 - [docs/freshness.md](docs/freshness.md) — RQ7 slice f2 (implemented; labels reviewed): status freshness and bounded revocation delay
 - [docs/rq8.md](docs/rq8.md) — RQ8: privacy leakage (Q1 slice 1, 16 reviewed observations), CPU vs end-to-end latency (Q2 slice 1: measured CPU + 6 reviewed modeled responder-delay scenarios), onboarding/cost (Q3 slice 1: step inventory + measured artifact byte sizes, 17 reviewed; human/monetary/storage cost not inferred); no privacy/latency/cost number over a real deployment claimed
+- [docs/rq123.md](docs/rq123.md) — RQ1–RQ3 slice (synthetic): a separate `AssetAuthority` decision over a pinned root → CTO → Senior → Junior delegation chain, a signed `AssetRecord`/`AssetRequest`, and a manifest content hash; **24 proposed labels** (`tests/cases/rq123_cases.toml`), results in [results/rq123_cases.md](results/rq123_cases.md). RQ1 vetting/key-delivery are assumptions; the manifest hash pins a declared synthetic snapshot, not real asset possession; `ValidChain_P`/session/RQ6 and their reviewed labels are unchanged
 - [docs/report.md](docs/report.md) — what was run and what it produced
 - [docs/model-demo.md](docs/model-demo.md) — design and CPU-only n8n/Ollama instructions for the local small-model simulation (provider controller and recorded model-driven runs now implemented; see "Local model demo" below and [results/model_demo/model_runs.md](results/model_demo/model_runs.md))
 - [docs/prepublication-protocol.md](docs/prepublication-protocol.md) — preregistered pre-publication experiment protocol (13 fixed controls + 3×5×2 model matrix); actual results in [results/model_demo/prepublication_report.md](results/model_demo/prepublication_report.md)
@@ -64,7 +65,9 @@ environment/commit.
 
 ## Research questions
 
-- RQ1 (organization identity) and RQ2 (asset binding): **assumed**, as trusted in-memory fixtures.
+- RQ1 (organization identity): **assumed** (manual vetting, root-key issuance/delivery and public-key pinning are explicit out-of-band assumptions — the prototype does not perform real vetting or prove deletion of a provider-held private-key copy). A new **AssetAuthority slice** ([docs/rq123.md](docs/rq123.md)) exercises the pinned-root → CTO → Senior → Junior delegation chain on top of that assumption; **24 proposed labels, 24/24 match** the implementation (not owner-reviewed).
+- RQ2 (asset binding): **slice, synthetic** — signed role delegations with bounded asset/class/validity rights, a CTO/Senior-signed `AssetRecord` and a Junior-signed `AssetRequest`, with a manifest content hash pinning a **declared synthetic snapshot**. This is not proof of legal ownership or live control of a real asset. In-memory status only; RQ7 freshness for the new objects is not wired in.
+- RQ3 (independent paths): **slice, synthetic** — Senior 1 grants Asset A and Senior 2 grants Asset B to the same Junior key; each `(path, record, request, manifest)` is verified independently with no edge/record splicing between paths. This is **not** a 2-of-2 threshold policy, and arbitrary-depth path discovery is out of scope.
 - RQ4 (grant scope semantics, non-amplification): **this prototype**.
 - RQ5 (tester/session binding): **slice s1, reviewed** (34 labels) — session proof of possession, separate decision; channel binding and relay resistance not addressed.
 - RQ6 (tool effect enforcement): **slice e2, implemented (synthetic)** — a provider-side mediator for synthetic tool operations ([docs/enforcement.md](docs/enforcement.md)); 28 reviewed labels; only modeled in-memory effects, no live tool enforcement.

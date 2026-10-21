@@ -1,0 +1,194 @@
+[
+  {
+    "id": "AA01",
+    "mutation": "senior_1_asset_a",
+    "label_status": "proposed",
+    "expected": "Accept",
+    "actual": "Accept",
+    "match_label": true
+  },
+  {
+    "id": "AA02",
+    "mutation": "senior_2_asset_b_same_junior",
+    "label_status": "proposed",
+    "expected": "Accept",
+    "actual": "Accept",
+    "match_label": true
+  },
+  {
+    "id": "AA03",
+    "mutation": "cto_registers_asset_a",
+    "label_status": "proposed",
+    "expected": "Accept",
+    "actual": "Accept",
+    "match_label": true
+  },
+  {
+    "id": "AA04",
+    "mutation": "unrecognized_root_signs_first_edge",
+    "label_status": "proposed",
+    "expected": "Reject / RootNotPinned",
+    "actual": "Reject / RootNotPinned",
+    "match_label": true
+  },
+  {
+    "id": "AA05",
+    "mutation": "request_signed_by_wrong_key",
+    "label_status": "proposed",
+    "expected": "Reject / InvalidSignature",
+    "actual": "Reject / InvalidSignature",
+    "match_label": true
+  },
+  {
+    "id": "AA06",
+    "mutation": "junior_edge_parent_points_to_other_senior",
+    "label_status": "proposed",
+    "expected": "Reject / PathMismatch",
+    "actual": "Reject / PathMismatch",
+    "match_label": true
+  },
+  {
+    "id": "AA07",
+    "mutation": "junior_scope_expands_beyond_senior",
+    "label_status": "proposed",
+    "expected": "Reject / DelegationAmplifies",
+    "actual": "Reject / DelegationAmplifies",
+    "match_label": true
+  },
+  {
+    "id": "AA08",
+    "mutation": "asset_b_requested_under_asset_a_path",
+    "label_status": "proposed",
+    "expected": "Reject / AssetOutsideScope",
+    "actual": "Reject / AssetOutsideScope",
+    "match_label": true
+  },
+  {
+    "id": "AA09",
+    "mutation": "record_issuer_lacks_registration_right",
+    "label_status": "proposed",
+    "expected": "Reject / RecordIssuerUnauthorized",
+    "actual": "Reject / RecordIssuerUnauthorized",
+    "match_label": true
+  },
+  {
+    "id": "AA10",
+    "mutation": "record_digest_not_manifest_digest",
+    "label_status": "proposed",
+    "expected": "Reject / SnapshotDigestMismatch",
+    "actual": "Reject / SnapshotDigestMismatch",
+    "match_label": true
+  },
+  {
+    "id": "AA11",
+    "mutation": "manifest_changed_after_record_signing",
+    "label_status": "proposed",
+    "expected": "Reject / SnapshotDigestMismatch",
+    "actual": "Reject / SnapshotDigestMismatch",
+    "match_label": true
+  },
+  {
+    "id": "AA12",
+    "mutation": "senior_edge_expired",
+    "label_status": "proposed",
+    "expected": "Reject / Expired",
+    "actual": "Reject / Expired",
+    "match_label": true
+  },
+  {
+    "id": "AA13",
+    "mutation": "senior_edge_revoked",
+    "label_status": "proposed",
+    "expected": "Reject / Revoked",
+    "actual": "Reject / Revoked",
+    "match_label": true
+  },
+  {
+    "id": "AA14",
+    "mutation": "asset_record_status_missing",
+    "label_status": "proposed",
+    "expected": "Indeterminate / StatusUnknown",
+    "actual": "Indeterminate / StatusUnknown",
+    "match_label": true
+  },
+  {
+    "id": "AA15",
+    "mutation": "request_targets_wrong_provider",
+    "label_status": "proposed",
+    "expected": "Reject / WrongAudience",
+    "actual": "Reject / WrongAudience",
+    "match_label": true
+  },
+  {
+    "id": "AA16",
+    "mutation": "request_claims_different_user_id",
+    "label_status": "proposed",
+    "expected": "Reject / UserMismatch",
+    "actual": "Reject / UserMismatch",
+    "match_label": true
+  },
+  {
+    "id": "AA17",
+    "mutation": "request_uses_record_from_other_path",
+    "label_status": "proposed",
+    "expected": "Reject / PathMismatch",
+    "actual": "Reject / PathMismatch",
+    "match_label": true
+  },
+  {
+    "id": "AA18",
+    "mutation": "unrelated_senior_revoked_other_path_still_valid",
+    "label_status": "proposed",
+    "expected": "Accept",
+    "actual": "Accept",
+    "match_label": true
+  },
+  {
+    "id": "AA19",
+    "mutation": "junior_class_expands_beyond_senior",
+    "label_status": "proposed",
+    "expected": "Reject / DelegationAmplifies",
+    "actual": "Reject / DelegationAmplifies",
+    "match_label": true
+  },
+  {
+    "id": "AA20",
+    "mutation": "record_asset_outside_registrar_scope",
+    "label_status": "proposed",
+    "expected": "Reject / AssetOutsideScope",
+    "actual": "Reject / AssetOutsideScope",
+    "match_label": true
+  },
+  {
+    "id": "AA21",
+    "mutation": "clock_uncertainty_overlaps_record_expiry",
+    "label_status": "proposed",
+    "expected": "Indeterminate / ClockUncertainty",
+    "actual": "Indeterminate / ClockUncertainty",
+    "match_label": true
+  },
+  {
+    "id": "AA22",
+    "mutation": "status_source_unavailable",
+    "label_status": "proposed",
+    "expected": "Indeterminate / StatusUnavailable",
+    "actual": "Indeterminate / StatusUnavailable",
+    "match_label": true
+  },
+  {
+    "id": "AA23",
+    "mutation": "modified_request_payload_keeps_original_signature",
+    "label_status": "proposed",
+    "expected": "Reject / InvalidSignature",
+    "actual": "Reject / InvalidSignature",
+    "match_label": true
+  },
+  {
+    "id": "AA24",
+    "mutation": "malformed_noncanonical_manifest",
+    "label_status": "proposed",
+    "expected": "Reject / MalformedInput",
+    "actual": "Reject / MalformedInput",
+    "match_label": true
+  }
+]
