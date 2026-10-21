@@ -1,0 +1,23 @@
+# Optional access from a laptop on the same trusted private network.
+# Use with: docker compose -f demo/compose.cpu.yml -f demo/compose.access.yml up -d
+# AISIG_DEMO_ACCESS_IP must be an address assigned to the Docker host.
+# The base file still publishes n8n on 127.0.0.1. This adds two mappings on
+# the chosen host interface; Ollama remains internal to the Compose network.
+services:
+  n8n:
+    ports:
+      - target: 5678
+        published: "5678"
+        host_ip: ${AISIG_DEMO_ACCESS_IP:?Set AISIG_DEMO_ACCESS_IP to the Docker host's private IP}
+        protocol: tcp
+    environment:
+      # HTTP access by IP cannot use n8n's HTTPS-only secure cookie. Only use
+      # this override on a trusted, encrypted private link with n8n login.
+      N8N_SECURE_COOKIE: "false"
+
+  controller:
+    ports:
+      - target: 8787
+        published: "8787"
+        host_ip: ${AISIG_DEMO_ACCESS_IP:?Set AISIG_DEMO_ACCESS_IP to the Docker host's private IP}
+        protocol: tcp
