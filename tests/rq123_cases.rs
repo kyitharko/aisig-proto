@@ -10,15 +10,11 @@ fn every_label_has_exactly_one_runner_and_review_status_is_explicit() {
             .iter()
             .filter(|l| l.label_status == "reviewed")
             .count(),
-        24
+        25
     );
-    assert_eq!(
-        labels
-            .iter()
-            .filter(|l| l.label_status == "proposed")
-            .map(|l| l.id.as_str())
-            .collect::<Vec<_>>(),
-        vec!["AA25"]
+    assert!(
+        labels.iter().all(|l| l.label_status == "reviewed"),
+        "all 25 AA labels are reviewed"
     );
 }
 

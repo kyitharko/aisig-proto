@@ -1,6 +1,6 @@
-# AA01–AA24 were reviewed for their stated synthetic outcomes after the first
-# 24/24 run. AA25 is proposed before its runner. Every result is for one
-# complete presented path, one asset, and one requested class.
+# All 25 AA cases are reviewed for their stated synthetic outcomes: AA01–AA24
+# after the first 24/24 run, AA25 after its runner landed and the 25/25 run.
+# Every result is for one complete presented path, one asset, one requested class.
 
 [[cases]]
 id = "AA01"
@@ -152,4 +152,4 @@ label_status = "reviewed"
 id = "AA25"
 mutation = "foreign_signed_record_and_request_on_other_path"
 expected = "Reject / PathMismatch"
-label_status = "proposed"
+label_status = "reviewed"
