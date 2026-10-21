@@ -1,6 +1,6 @@
 # RQ1–RQ3 synthetic authority slice
 
-**Status:** 24 reviewed labels; 1 proposed. RQ1 manual vetting and asset namespace are assumptions.
+**Status:** 25 reviewed labels; 0 proposed. RQ1 manual vetting and asset namespace are assumptions.
 Asset hashes bind a declared snapshot; no live asset-control proof or tool effect.
 
 | ID | Mutation | Expected | Actual | Match |

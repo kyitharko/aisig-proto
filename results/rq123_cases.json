@@ -194,7 +194,7 @@
   {
     "id": "AA25",
     "mutation": "foreign_signed_record_and_request_on_other_path",
-    "label_status": "proposed",
+    "label_status": "reviewed",
     "expected": "Reject / PathMismatch",
     "actual": "Reject / PathMismatch",
     "match_label": true
