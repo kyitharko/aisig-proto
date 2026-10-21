@@ -10,6 +10,7 @@ AI_Agent_*.md
 
 # Local demo runtime data and downloaded model weights (never commit)
 demo/data/
+/local-experiments/
 *.gguf
 *.safetensors
 
