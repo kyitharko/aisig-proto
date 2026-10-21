@@ -1,6 +1,6 @@
 # RQ1–RQ3 synthetic authority slice
 
-**Status:** all labels proposed; RQ1 manual vetting and asset namespace are assumptions.
+**Status:** 24 reviewed labels; 1 proposed. RQ1 manual vetting and asset namespace are assumptions.
 Asset hashes bind a declared snapshot; no live asset-control proof or tool effect.
 
 | ID | Mutation | Expected | Actual | Match |
@@ -29,3 +29,4 @@ Asset hashes bind a declared snapshot; no live asset-control proof or tool effec
 | AA22 | status_source_unavailable | Indeterminate / StatusUnavailable | Indeterminate / StatusUnavailable | true |
 | AA23 | modified_request_payload_keeps_original_signature | Reject / InvalidSignature | Reject / InvalidSignature | true |
 | AA24 | malformed_noncanonical_manifest | Reject / MalformedInput | Reject / MalformedInput | true |
+| AA25 | foreign_signed_record_and_request_on_other_path | Reject / PathMismatch | Reject / PathMismatch | true |
