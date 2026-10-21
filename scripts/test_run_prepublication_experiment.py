@@ -12,7 +12,12 @@ Before the fix the runner has no `gate_problems` function at all — it always e
 tests fail (red), documenting the defect. After the fix they pass.
 """
 import importlib.util
+import json
+import os
+from pathlib import Path
 import sys
+import tempfile
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("runner", "scripts/run_prepublication_experiment.py")
 runner = importlib.util.module_from_spec(spec)
@@ -131,6 +136,37 @@ def test_unplanned_scenario_fails_gate():
     m["runs"][0]["scenario"] = "bogus_unplanned"
     assert runner.gate_problems(good_controls(), m, expected_cells=30), \
         "an unplanned scenario must fail the gate"
+
+
+@test
+def test_controls_only_with_output_dir_preserves_committed_results():
+    reference = Path("results/model_demo/controls_results.json")
+    before = reference.read_bytes()
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch.dict(os.environ, {"AISIG_OUTPUT_DIR": tmp, "AISIG_SKIP_MODEL": "1"}):
+            with patch.object(runner, "run_controls", return_value=good_controls()):
+                assert runner.main() == 0
+        out = Path(tmp) / "controls_results.json"
+        assert len(json.loads(out.read_text())["controls"]) == 13
+        assert not (Path(tmp) / "model_matrix.json").exists()
+    assert reference.read_bytes() == before, "local experiment must not rewrite the committed reference"
+
+
+@test
+def test_full_matrix_with_output_dir_preserves_both_committed_results():
+    references = [Path("results/model_demo") / name
+                  for name in ("controls_results.json", "model_matrix.json")]
+    before = [p.read_bytes() for p in references]
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch.dict(os.environ, {"AISIG_OUTPUT_DIR": tmp}):
+            with patch.object(runner, "run_controls", return_value=good_controls()), \
+                    patch.object(runner, "capture_identity", return_value={"model_tag": "test"}), \
+                    patch.object(runner, "run_matrix", return_value=(30, 30, good_matrix()["runs"])):
+                os.environ.pop("AISIG_SKIP_MODEL", None)
+                assert runner.main() == 0
+        assert len(json.loads((Path(tmp) / "controls_results.json").read_text())["controls"]) == 13
+        assert len(json.loads((Path(tmp) / "model_matrix.json").read_text())["runs"]) == 30
+    assert [p.read_bytes() for p in references] == before
 
 
 def main():

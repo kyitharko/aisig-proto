@@ -10,8 +10,8 @@
     "n8n_version": "2.43.7"
   },
   "provenance": {
-    "effective_workflow_sha256": "SHA-256 of the exact bytes imported for the run (committed variant with scenario_id overridden, plus a cosmetic unique n8n name). Tamper-evident record of what was imported; NOT recomputable by a different JSON serializer because it depends on the collector's json.dumps formatting and the per-run name.",
-    "effective_workflow_fingerprint": "sha256(committed_variant_sha256 + '\\n' + scenario). Independently recomputable from retained data (the committed variant file hash and the scenario), since the effective workflow is fully determined by those two inputs; verified by tests/model_demo_gate.rs."
+    "effective_workflow_sha256": "SHA-256 of the exact bytes imported for the run (committed variant with scenario_id overridden, plus a cosmetic unique n8n name). This is a collector-recorded hash; its exact bytes cannot be independently recomputed from retained data without the name and Python json.dumps serialization. The committed gate does not verify this exact hash.",
+    "effective_workflow_fingerprint": "sha256(committed_variant_sha256 + '\\n' + scenario). Independently recomputable from the committed variant file and scenario. This verifies the recorded variant/scenario pairing, NOT the exact imported bytes; verified by tests/model_demo_gate.rs."
   },
   "attempted": 30,
   "completed": 30,

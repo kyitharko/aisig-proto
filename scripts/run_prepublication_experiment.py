@@ -11,19 +11,23 @@ calls are recorded as such, never reclassified as a provider Deny.
 
 Nothing contacts a model-selected target; the only effect is the controller's in-memory sink.
 Every captured n8n export is sanitized (scripts/sanitize_n8n_export.py predicate) before writing.
-Writes results/model_demo/controls_results.json and results/model_demo/model_matrix.json.
+Writes results/model_demo/controls_results.json and results/model_demo/model_matrix.json by
+default. Set AISIG_OUTPUT_DIR to an ignored local-experiments subdirectory for a new run; this
+preserves the committed reference results.
 
 Env:
   AISIG_CONTROLLER_URL  controller base URL (default http://controller:8787; from the host use the
                         controller container IP, e.g. http://172.x.x.x:8787)
   AISIG_COMPOSE         compose file (default demo/compose.cpu.yml)
   AISIG_SKIP_MODEL      if set to "1", run only Part A (controls)
+  AISIG_OUTPUT_DIR      destination directory (default results/model_demo)
 """
 import datetime
 import hashlib
 import importlib.util
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
 import tempfile
@@ -287,11 +291,10 @@ def run_matrix(identity):
                     "scenario": scenario, "repeat": rep, "timestamp": now_utc(),
                     "committed_variant": src, "committed_variant_sha256": wf_sha,
                     "prompt_sha256": prompt_sha,
-                    # Exact bytes imported (incl. a cosmetic per-run name): tamper-evident, but NOT
-                    # recomputable by a different JSON serializer. See the matrix 'provenance' note.
+                    # Collector-recorded hash of bytes imported, including a cosmetic name.
+                    # Retained data alone do not let the committed gate re-hash those bytes.
                     "effective_workflow_sha256": eff_sha,
-                    # Independently recomputable from retained data: sha256(committed_variant_sha256
-                    # + "\n" + scenario), the two inputs that fully determine the effective workflow.
+                    # Independently recomputable pairing check; not a hash of the imported bytes.
                     "effective_workflow_fingerprint": sha256_text(f"{wf_sha}\n{scenario}"),
                     "workflow_id": wid,
                 }
@@ -364,10 +367,14 @@ def run_matrix(identity):
 
 
 def main():
+    output_dir = Path(os.environ.get("AISIG_OUTPUT_DIR", "results/model_demo"))
+    output_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Experiment output directory: {output_dir}")
     print(f"Part A: fixed controls via {CTRL}")
     controls = run_controls()
-    json.dump({"kind": "fixed_controls_results", "controller_url": CTRL, "controls": controls},
-              open("results/model_demo/controls_results.json", "w"), indent=2)
+    with (output_dir / "controls_results.json").open("w") as f:
+        json.dump({"kind": "fixed_controls_results", "controller_url": CTRL, "controls": controls},
+                  f, indent=2)
     print(f"controls: {sum(c['pass'] for c in controls)}/{len(controls)} pass")
 
     skip = os.environ.get("AISIG_SKIP_MODEL") == "1"
@@ -384,18 +391,19 @@ def main():
                   "provenance": {
                       "effective_workflow_sha256":
                           "SHA-256 of the exact bytes imported for the run (committed variant with "
-                          "scenario_id overridden, plus a cosmetic unique n8n name). Tamper-evident "
-                          "record of what was imported; NOT recomputable by a different JSON "
-                          "serializer because it depends on the collector's json.dumps formatting "
-                          "and the per-run name.",
+                          "scenario_id overridden, plus a cosmetic unique n8n name). This is a "
+                          "collector-recorded hash; its exact bytes cannot be independently "
+                          "recomputed from retained data without the name and Python json.dumps "
+                          "serialization. The committed gate does not verify this exact hash.",
                       "effective_workflow_fingerprint":
                           "sha256(committed_variant_sha256 + '\\n' + scenario). Independently "
-                          "recomputable from retained data (the committed variant file hash and the "
-                          "scenario), since the effective workflow is fully determined by those two "
-                          "inputs; verified by tests/model_demo_gate.rs.",
+                          "recomputable from the committed variant file and scenario. This verifies "
+                          "the recorded variant/scenario pairing, NOT the exact imported bytes; "
+                          "verified by tests/model_demo_gate.rs.",
                   },
                   "attempted": attempted, "completed": completed, "runs": runs}
-        json.dump(matrix, open("results/model_demo/model_matrix.json", "w"), indent=2)
+        with (output_dir / "model_matrix.json").open("w") as f:
+            json.dump(matrix, f, indent=2)
         print(f"matrix: attempted={attempted} completed={completed}")
 
     # Fail loudly: any control mismatch / non-200, failed or incomplete execute, missing field,
@@ -406,7 +414,10 @@ def main():
         for p in problems:
             print(f"  - {p}")
         return 1
-    print("\nGATE PASSED: controls matched and all model cells completed with the effect invariant held.")
+    if skip:
+        print("\nGATE PASSED: controls matched; model matrix was skipped.")
+    else:
+        print("\nGATE PASSED: controls matched and all model cells completed with the effect invariant held.")
     return 0
 
 

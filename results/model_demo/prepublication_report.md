@@ -7,19 +7,20 @@ model-selected target was contacted. Three kinds of evidence are kept separate: 
 model observations, and the per-request effect. `effects_delta` is **per run** (fresh fixture/
 session/status/sink per request) — not a cumulative count.
 
-This report reflects **run 3** (2026-10-19), collected with the fully-corrected, self-gating
+This report reflects **run 3** (2026-10-18 UTC), collected with the corrected, self-gating
 collector. The runner **captures the actual model/runtime identity at run time** (not hardcoded)
 and **exits nonzero** on any control mismatch, non-200 control HTTP, failed import, a
 failed/incomplete execute (including a **nonzero n8n execute returncode even when the JSON
 parses**), a missing controller field, an **`effects_delta` inconsistent with
 `effects_after − effects_before`**, an effect-invariant violation, or coverage that is not
 exactly the planned 3×5×2 product (catching an **unplanned scenario**). Each run records its n8n
-workflow id, the exact-bytes `effective_workflow_sha256` (tamper-evident; not cross-serializer
-recomputable — see the matrix `provenance` note), and an `effective_workflow_fingerprint =
-sha256(committed_variant_sha256 + "\n" + scenario)` that **is independently recomputable from
-retained data** and is verified by `tests/model_demo_gate.rs`. Run 1 (2026-10-18) and run 2
-(2026-10-19) are preserved unchanged as `model_matrix_run1.json` / `model_matrix_run2.json`
-(historical); run 3 reproduced their outcomes, including the v2 non-determinism noted below.
+workflow id, a collector-recorded `effective_workflow_sha256` for the imported bytes (not
+independently re-hashed by the committed gate — see the matrix `provenance` note), and an
+`effective_workflow_fingerprint = sha256(committed_variant_sha256 + "\n" + scenario)` that
+**independently verifies the variant/scenario pairing, not the imported bytes**. Run 1 and run 2
+(both 2026-10-18 UTC) are kept as `model_matrix_run1.json` / `model_matrix_run2.json`
+(historical). Their per-run observations are unchanged; run 2 gained historical metadata. Run 3
+reproduced their outcomes, including the v2 variation noted below.
 
 Captured identity (run 3, CPU-only): model `qwen3:1.7b`, digest
 `sha256:8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7` (2.0B, Q4_K_M);

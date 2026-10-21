@@ -2046,5 +2046,5 @@
       }
     }
   ],
-  "historical_note": "Run 2 (2026-10-19): collected with the self-gating runner and captured identity, but before the runner recorded execute_returncode and effective_workflow_fingerprint. Preserved unchanged; superseded by model_matrix.json (run 3) collected with the fully-corrected collector. Observations (proposals/decisions) are identical in kind to run 3."
+  "historical_note": "Run 2 (2026-10-18 UTC): collected with the self-gating runner and captured identity, but before the runner recorded execute_returncode and effective_workflow_fingerprint. The run records are unchanged; historical metadata was added. Superseded by model_matrix.json (run 3) collected with the corrected collector. Observations (proposals/decisions) match run 3."
 }
