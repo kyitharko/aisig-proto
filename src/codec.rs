@@ -22,6 +22,9 @@ pub enum TypeTag {
     AdminDelegation,
     IssuerDelegation,
     EngagementGrant,
+    RoleDelegation,
+    AssetRecord,
+    AssetRequest,
 }
 
 impl TypeTag {
@@ -31,6 +34,9 @@ impl TypeTag {
             TypeTag::AdminDelegation => "AdminDelegation",
             TypeTag::IssuerDelegation => "IssuerDelegation",
             TypeTag::EngagementGrant => "EngagementGrant",
+            TypeTag::RoleDelegation => "RoleDelegation",
+            TypeTag::AssetRecord => "AssetRecord",
+            TypeTag::AssetRequest => "AssetRequest",
         }
     }
 }

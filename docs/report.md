@@ -18,6 +18,16 @@ Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 | RQ7 revocation freshness | **Slice f2 implemented (synthetic).** Whole-interval freshness over a signed responder statement (docs/freshness.md; `src/freshness.rs`): 34/34 cases match. Labels all owner-`reviewed`. The chain/session/enforcement runs keep the instant, always-current fixture. |
 | RQ8 privacy / latency / onboarding | **Q1 + Q2 + Q3 slice 1 implemented (synthetic).** Q1: field-disclosure + linkability (`rq8_privacy.rs`): 16/16 **reviewed**. Q2: a rerun CPU benchmark (`results/bench_20261017T025341Z.md`, wall-clock, not process CPU time) plus 6 **reviewed** modeled responder-delay scenarios (`rq8_latency.rs`), kept separate from the measured CPU and the unmeasured real end-to-end latency. Q3: a per-party step inventory (critical path open) and measured bundle-slot artifact byte sizes (`rq8_onboarding.rs`, 17 **reviewed**); no human/monetary/storage cost inferred. Structural/modeled observations, not privacy/latency/cost guarantees; O4 network metadata unmeasured. No RQ8 number over a real deployment is claimed. |
 
+**Later RQ1–RQ3 supplement:** The RQ1–RQ3 rows above describe the original
+`ValidChain_P` decision. A separate synthetic `AssetAuthority` slice is described
+in [rq123.md](rq123.md): manual organization vetting remains assumed; a signed
+record binds a declared snapshot, and two complete delegation paths are checked
+independently. Its first 24 cases matched and are now reviewed. AA25, which
+presents a genuinely signed B record/request under A's path, has been specified,
+implemented, and run: the slice now reports 25/25 labels match (24 reviewed,
+AA25 proposed), with AA25's B objects accepting on their own B path and rejecting
+(`PathMismatch`) on the A path. AA25 remains proposed pending owner review.
+
 ## RQ5 session slice s1 (reviewed; separate from the chain results)
 
 Spec [session.md](session.md); labels `tests/cases/session_cases.toml` (28, all
@@ -364,6 +374,10 @@ runs are marked historical in results/README.md.
   round-2/round-3 snapshots below are historical.
 
 ## Final synthetic-prototype closeout
+
+This section records the earlier chain/RQ5–RQ8 closeout. The later, separate
+RQ1–RQ3 synthetic slice is summarized above; it does not revise the reviewed
+counts in this table.
 
 All decision-slice labels are owner-reviewed; the RQ8 measurement-slice labels are owner-reviewed
 as fixture-specific synthetic observations.

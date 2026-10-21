@@ -20,6 +20,7 @@
 //! - [`experiment`]: synthetic fixture, case mutations, label loading and reporting.
 
 pub mod asset;
+pub mod asset_authority;
 pub mod baseline;
 pub mod codec;
 pub mod crypto;
