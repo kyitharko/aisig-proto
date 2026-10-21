@@ -7,6 +7,7 @@ pub mod fixture;
 pub mod freshness_cases;
 pub mod mutations;
 pub mod report;
+pub mod rq123_cases;
 pub mod rq8_latency;
 pub mod rq8_onboarding;
 pub mod rq8_privacy;
