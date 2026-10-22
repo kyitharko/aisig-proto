@@ -78,7 +78,7 @@ The publication JSON hashes (SHA-256) are:
 | File | SHA-256 |
 | --- | --- |
 | `controls_results.json` | `32e739aeaf28ec32eae2e7fcfe038e310ea2576d8507d3ccef0188fad758628b` |
-| `model_matrix.json` | `ec4ef12d32a8f117bfc3073c2309b5610be4c1a390a9c98cef42` |
+| `model_matrix.json` | `ec4ef12d32a8f117bfc3073c2309b5610be4c3fbd3ed86e4c1a390a9c98cef42` |
 
 The owner's original `controls_results.json` had a private controller
 address. For this copy, only `controller_url` was replaced with the
