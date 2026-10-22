@@ -208,6 +208,13 @@ chart, discussion, and limitations. Regenerate both from the result JSON using
 preregistered matrix. Set `AISIG_OUTPUT_DIR` under gitignored `local-experiments/` to keep a new
 collector run separate from the committed results.
 
+An independently reviewed [manual replication from 2026-10-19 UTC](results/model_demo/manual_replication_20261019/README.md)
+retains a **separate** 13/13 control and 30/30 model result pair. Its
+[offline visual report](results/model_demo/manual_replication_20261019/visual_report.html)
+is generated from that pair. The publication copy redacts the private
+controller address; it does not replace prepublication run 3 or claim
+real-tool enforcement.
+
 ## Git
 
 At this snapshot all work is local; nothing has been pushed and no remote is configured. The

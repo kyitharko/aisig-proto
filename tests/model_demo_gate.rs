@@ -105,21 +105,24 @@ fn no_committed_demo_export_contains_a_secret_field() {
     assert!(dir.is_dir(), "{DIR} must exist");
     let mut scanned = 0usize;
     let mut all_hits: Vec<String> = Vec::new();
-    for entry in fs::read_dir(dir).expect("read results/model_demo") {
-        let path = entry.expect("entry").path();
-        if path.extension().and_then(|e| e.to_str()) != Some("json") {
-            continue;
+    let mut pending = vec![dir.to_path_buf()];
+    while let Some(next) = pending.pop() {
+        for entry in fs::read_dir(next).expect("read results/model_demo") {
+            let path = entry.expect("entry").path();
+            if path.is_dir() {
+                pending.push(path);
+                continue;
+            }
+            if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                continue;
+            }
+            let text = fs::read_to_string(&path).expect("read json");
+            let json: Value = serde_json::from_str(&text).expect("parse json");
+            let mut hits = Vec::new();
+            collect_sensitive(&json, &path.display().to_string(), &mut hits);
+            all_hits.extend(hits);
+            scanned += 1;
         }
-        let text = fs::read_to_string(&path).expect("read json");
-        let json: Value = serde_json::from_str(&text).expect("parse json");
-        let mut hits = Vec::new();
-        collect_sensitive(
-            &json,
-            path.file_name().unwrap().to_str().unwrap(),
-            &mut hits,
-        );
-        all_hits.extend(hits);
-        scanned += 1;
     }
     assert!(scanned > 0, "no demo JSON files were scanned");
     assert!(
@@ -522,6 +525,88 @@ fn committed_model_matrix_is_complete_and_consistent() {
             Some(expect_fp.as_str()),
             "{rid}: committed run must carry a recomputable effective_workflow_fingerprint"
         );
+    }
+}
+
+/// Keep the independently executed manual replication separate from run 3, while gating its
+/// preregistered controls, full matrix, recorded provenance, and public address redaction.
+#[test]
+fn published_manual_replication_matches_its_preregistration() {
+    let dir = format!("{DIR}/manual_replication_20261019");
+    let expected: Value = serde_json::from_str(
+        &fs::read_to_string(format!("{DIR}/controls_expected.json")).expect("controls_expected"),
+    )
+    .expect("parse controls_expected");
+    let controls: Value = serde_json::from_str(
+        &fs::read_to_string(format!("{dir}/controls_results.json")).expect("manual controls"),
+    )
+    .expect("parse manual controls");
+    assert_eq!(
+        controls["controller_url"], "http://100.x.y.z:8787",
+        "publication result must redact the private controller address"
+    );
+    let results = controls["controls"]
+        .as_array()
+        .expect("manual control results");
+    assert_eq!(results.len(), 13);
+    for e in expected["controls"].as_array().expect("expected controls") {
+        let id = e["id"].as_str().expect("control id");
+        let matches: Vec<_> = results
+            .iter()
+            .filter(|r| r["id"].as_str() == Some(id))
+            .collect();
+        assert_eq!(matches.len(), 1, "{id}: expected exactly one result");
+        let r = matches[0];
+        for field in [
+            "scenario",
+            "proposal",
+            "expected_decision",
+            "expected_parse_status",
+            "expected_delta",
+        ] {
+            assert_eq!(r[field], e[field], "{id}: preregistered {field} changed");
+        }
+        assert_eq!(r["http_status"], 200, "{id}: HTTP status");
+        assert_eq!(r["pass"], true, "{id}: recorded control failure");
+        assert_eq!(
+            r["actual_decision"], e["expected_decision"],
+            "{id}: decision"
+        );
+        assert_eq!(
+            r["actual_parse_status"], e["expected_parse_status"],
+            "{id}: parse"
+        );
+        assert_eq!(r["actual_delta"], e["expected_delta"], "{id}: effect delta");
+    }
+
+    let matrix: Value = serde_json::from_str(
+        &fs::read_to_string(format!("{dir}/model_matrix.json")).expect("manual matrix"),
+    )
+    .expect("parse manual matrix");
+    let problems = matrix_problems(&matrix);
+    assert!(problems.is_empty(), "manual matrix problems: {problems:?}");
+    assert_eq!(matrix["completed"], 30, "manual matrix completed count");
+    for r in matrix["runs"].as_array().expect("manual runs") {
+        let rid = r["run_id"].as_str().expect("run id");
+        assert_eq!(r["execute_returncode"], 0, "{rid}: n8n execution");
+        assert_eq!(r["model_parse"], r["parse_status"], "{rid}: parse mismatch");
+        let wf = r["committed_variant_sha256"]
+            .as_str()
+            .expect("workflow hash");
+        let scenario = r["scenario"].as_str().expect("scenario");
+        let expected_fp = sha256_hex(format!("{wf}\n{scenario}").as_bytes());
+        assert_eq!(
+            r["effective_workflow_fingerprint"].as_str(),
+            Some(expected_fp.as_str()),
+            "{rid}: fingerprint"
+        );
+        if r["model_parse"] == "tool_call" {
+            let raw_args = &r["model_raw_message"]["tool_calls"][0]["function"]["arguments"];
+            assert_eq!(
+                r["proposal"]["claimed_class"], raw_args["claimed_class"],
+                "{rid}: audit-only claimed class differs from raw call"
+            );
+        }
     }
 }
 
