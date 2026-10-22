@@ -24,9 +24,9 @@ in [rq123.md](rq123.md): manual organization vetting remains assumed; a signed
 record binds a declared snapshot, and two complete delegation paths are checked
 independently. Its first 24 cases matched and are now reviewed. AA25, which
 presents a genuinely signed B record/request under A's path, has been specified,
-implemented, and run: the slice now reports 25/25 labels match (24 reviewed,
-AA25 proposed), with AA25's B objects accepting on their own B path and rejecting
-(`PathMismatch`) on the A path. AA25 remains proposed pending owner review.
+implemented, and run: the slice now reports 25/25 labels match (all 25 reviewed),
+with AA25's B objects accepting on their own B path and rejecting
+(`PathMismatch`) on the A path. Its expected outcome was reviewed without change.
 
 ## RQ5 session slice s1 (reviewed; separate from the chain results)
 
