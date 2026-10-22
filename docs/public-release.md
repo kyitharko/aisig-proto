@@ -6,11 +6,17 @@ a demo claim. Source publication can proceed separately if the prototype limitat
 
 ## License and provenance
 
-- Proposed license for this release: Apache-2.0 (`LICENSE`, `Cargo.toml`). It permits free use,
+- Selected license for this release: Apache-2.0 — already in place (`LICENSE` is the unmodified
+  Apache License 2.0; `Cargo.toml` sets `license = "Apache-2.0"`). It permits free use,
   modification and redistribution, including commercial use, and contains an express patent
-  grant. Confirm that the repository owner has authority to license every committed file and
-  that any borrowed material and dependencies have compatible terms. Model weights and the n8n
-  runtime have their own licenses; do not bundle them or imply they are Apache-2.0 licensed.
+  grant. It covers the project's own committed material: original Rust/source code, repository
+  documentation, the synthetic fixtures and cases, and the original generated results and
+  visualizations the owner can license. It does **not** extend to separately licensed items that
+  are not bundled here — downloaded model weights, the third-party Rust dependencies (fetched at
+  build time, each under its own terms), and the Ollama and n8n software (referenced as Docker
+  images, not vendored); do not imply any of those are Apache-2.0 licensed. The README's
+  production-use warning is a non-binding caution, not an added license restriction. Confirm the
+  owner has authority to license every committed file before publishing.
 - Keep the README's AI-assisted development disclosure and production-use limitations visible.
   Reviewed expected labels and green tests do not constitute an independent security audit.
 - Preserve `publish = false` unless crates.io publication is deliberately planned.
