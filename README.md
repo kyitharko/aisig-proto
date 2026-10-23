@@ -53,6 +53,7 @@ that cannot be adequately validated. Never point the synthetic demo at a real ta
 are welcome — contact the project owner at **kthako@gmail.com**. This remains a synthetic,
 AI-assisted, non-production research prototype (see the notice above); collaboration does not
 imply it is production-ready or independently audited.
+For a security finding, follow the [security policy](SECURITY.md) and avoid public issue details.
 
 ## Documents
 
@@ -69,6 +70,7 @@ imply it is production-ready or independently audited.
 - [docs/model-demo.md](docs/model-demo.md) — design and CPU-only n8n/Ollama instructions for the local small-model simulation (provider controller and recorded model-driven runs now implemented; see "Local model demo" below and [results/model_demo/model_runs.md](results/model_demo/model_runs.md))
 - [docs/prepublication-protocol.md](docs/prepublication-protocol.md) — preregistered pre-publication experiment protocol (13 fixed controls + 3×5×2 model matrix); actual results in [results/model_demo/prepublication_report.md](results/model_demo/prepublication_report.md)
 - [docs/public-release.md](docs/public-release.md) — public repository preparation and outreach plan
+- [docs/release-notes-v0.1.0-research.md](docs/release-notes-v0.1.0-research.md) — draft research-prototype pre-release notes
 - [docs/demo-walkthrough.md](docs/demo-walkthrough.md) — short, evidence-linked presentation script for a screen recording
 - [docs/automated-experiments.md](docs/automated-experiments.md) — one local script for prerequisite checks, configuration, stack setup, isolated experiments and visual reports
 - [docs/manual-02-publication.md](docs/manual-02-publication.md) — validate and sanitize the completed manual-02 run before independent review or publication
