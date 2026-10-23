@@ -19,6 +19,7 @@ Generated outputs. Do not edit by hand.
 | `model_demo/controls_results.json`, `model_matrix.json` | n8n/Ollama/controller observations; 13 fixed controls and 30 model runs | current synthetic demo (run 3) |
 | `model_demo/visual_report.html`, `decision_distribution.svg` | offline visual presentation built from those two result files by `scripts/build_model_visual_report.py` | current synthetic demo; regenerate after changing the source pair |
 | `model_demo/manual_replication_20261019/` | separate 2026-10-19 manual replication: 13 controls, 30 model runs, redacted result JSON, offline report and chart | independently checked synthetic observation; see its README |
+| `model_demo/manual_replication_20261022/` | separate 2026-10-22 manual-02 replication: 13 controls, 30 model runs, redacted JSON, reproducible offline report and chart | independently checked synthetic observation; 4 Allow / 13 Deny / 8 Indeterminate / 5 no mediation; see its README |
 
 RQ7 `tests/cases/freshness_cases.toml` (34 reviewed, f2) is matched by the RQ7 implementation
 and reported in `freshness_cases.md`/`.json`; the owner has approved all 34 expected outcomes.

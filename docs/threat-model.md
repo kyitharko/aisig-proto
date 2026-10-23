@@ -78,7 +78,8 @@ before their signature verifies.
 | TH28 | Grant altered, revoked or expired between issuance and redemption | Chain re-verified at redemption (chain) | SS14, SS23 |
 | TH29 | An evidence outage yields SessionAccept, or burns the challenge | Indeterminate never accepts and never consumes; failed attempts do not consume (chain, challenge, time) | SS12, SS15, SS20, SS21, SS24 |
 
-Out of scope for s1, stated so that no one reads them as defended:
+Out of scope for s1 alone, stated so that no one reads them as defended by that slice (later
+e2 and f2 slices exercise modeled parts of RQ6 and RQ7):
 - relay or phishing of a challenge into an attacker's own P session;
 - TLS or channel binding;
 - the session becoming a bearer state after redemption (no per-request proof of possession);
@@ -86,9 +87,10 @@ Out of scope for s1, stated so that no one reads them as defended:
 - RQ6 tool enforcement;
 - RQ7 status freshness during a session.
 
-## 3b. RQ6 enforcement-slice threats (e1, design only; see [enforcement.md](enforcement.md))
+## 3b. RQ6 modeled enforcement threats (e2 implemented; see [enforcement.md](enforcement.md))
 
-These are proposed with the design; **no RQ6 code exists yet**.
+This table originated with the e1 design. The e2 synthetic mediator is implemented, and
+EE01–EE28 are owner-reviewed. It records modeled operations and in-memory effects only.
 
 | ID | Threat | Expected defence (mediation stage) | Cases |
 | --- | --- | --- | --- |
@@ -97,16 +99,17 @@ These are proposed with the design; **no RQ6 code exists yet**.
 | TH32 | An unmodeled op or a wrong-typed target slips through | Unknown op and target-type mismatch fail closed (classify, effects) | EE13, EE14 |
 | TH33 | An operation with effects beyond the target (whole origin, other tenants) | Unbounded secondary effects denied (effects) | EE15 |
 | TH34 | Acting after the session/grant window, with no session, or naming another session | `session_ref` from P's authenticated context (not a request field); session-window expiry; grant-ref match (session, expiry, chain) | EE16, EE17, EE18 |
-| TH35 | A tampered or revoked grant used at action time | Chain (status stage included) re-verified at mediation; the open RQ7 item is status-source freshness, not whether status is checked (chain) | EE22, EE26 |
+| TH35 | A tampered or revoked grant used at action time | Chain (status stage included) re-verified at mediation; the separate RQ7 f2 slice tests status-source freshness (chain) | EE22, EE26 |
 | TH36 | An evidence outage produces an effect | Indeterminate never performs an effect; every non-Allow is effects=0 (session, expiry, chain) | EE19-EE21 |
 | TH37 | A non-canonical target smuggled past scope, or a directly-built `AssetRef` bypassing validation | Target decoded and canonical-validated before scope; the mediator takes the wire form, not a pre-built `AssetRef` (validate) | EE25 |
 | TH38 | A GET-style read of an excluded resource treated as mere metadata | `web.get` classed `read_only_data_access`, but an excluded/out-of-scope target is denied at scope before the class check (scope) | EE05-EE07, EE23 |
 
-Out of scope for e1, stated so none is read as defended:
+Out of scope for the e2 mediator, stated so none is read as defended:
 - interception of real tools, processes, syscalls or network traffic (only modeled effects);
 - confinement of unmanaged/opaque tools P cannot observe;
 - completeness of the modeled effect taxonomy;
-- RQ7 status freshness during a session (the mediator trusts the session window).
+- real-world status publication and delivery latency; the EE cases do not measure it. The
+  separate RQ7 f2 slice evaluates synthetic status freshness.
 
 ## 3c. RQ7 status-freshness threats (f2; see [freshness.md](freshness.md))
 

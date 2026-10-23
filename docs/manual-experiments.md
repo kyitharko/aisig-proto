@@ -9,6 +9,8 @@ controller has no authentication and is reachable from the Docker host by contai
 
 Use the [experiment workbook](experiment-workbook.md) to record the purpose,
 procedure, checklist, observed result, discussion and conclusion for E0–E6.
+For a shorter command sequence that creates isolated output directories and
+the visual report automatically, see [scripted setup and experiments](automated-experiments.md).
 Copy it before starting:
 
 ```sh

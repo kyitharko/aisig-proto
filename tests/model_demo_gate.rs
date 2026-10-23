@@ -530,9 +530,7 @@ fn committed_model_matrix_is_complete_and_consistent() {
 
 /// Keep the independently executed manual replication separate from run 3, while gating its
 /// preregistered controls, full matrix, recorded provenance, and public address redaction.
-#[test]
-fn published_manual_replication_matches_its_preregistration() {
-    let dir = format!("{DIR}/manual_replication_20261019");
+fn assert_manual_replication(dir: &str) {
     let expected: Value = serde_json::from_str(
         &fs::read_to_string(format!("{DIR}/controls_expected.json")).expect("controls_expected"),
     )
@@ -608,6 +606,91 @@ fn published_manual_replication_matches_its_preregistration() {
             );
         }
     }
+}
+
+#[test]
+fn published_manual_replication_matches_its_preregistration() {
+    assert_manual_replication(&format!("{DIR}/manual_replication_20261019"));
+}
+
+#[test]
+fn published_manual_02_matches_its_preregistration_and_source_hashes() {
+    let dir = format!("{DIR}/manual_replication_20261022");
+    assert_manual_replication(&dir);
+
+    let mut got: Vec<_> = fs::read_dir(&dir)
+        .expect("read manual-02 publication directory")
+        .map(|entry| {
+            entry
+                .expect("manual-02 entry")
+                .file_name()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    got.sort();
+    let mut expected = vec![
+        "README.md",
+        "publication_manifest.json",
+        "controls_results.json",
+        "model_matrix.json",
+        "visual_report.html",
+        "decision_distribution.svg",
+    ];
+    expected.sort();
+    assert_eq!(
+        got.iter().map(String::as_str).collect::<Vec<_>>(),
+        expected,
+        "manual-02 must contain exactly six reviewed files"
+    );
+
+    let manifest: Value = serde_json::from_slice(
+        &fs::read(format!("{dir}/publication_manifest.json")).expect("publication manifest"),
+    )
+    .expect("parse publication manifest");
+    assert_eq!(manifest["publication_stage"], "publication_copy");
+    assert_eq!(manifest["source_run_id"], "full-20261022T105748Z-668695e4");
+    assert_eq!(manifest["removed_sensitive_key_count"], 0);
+
+    let controls = fs::read(format!("{dir}/controls_results.json")).expect("manual-02 controls");
+    let matrix_bytes = fs::read(format!("{dir}/model_matrix.json")).expect("manual-02 matrix");
+    let c_hash = sha256_hex(&controls);
+    let m_hash = sha256_hex(&matrix_bytes);
+    let note = fs::read_to_string(format!("{dir}/README.md")).expect("manual-02 README");
+    let html = fs::read_to_string(format!("{dir}/visual_report.html")).expect("manual-02 HTML");
+    for hash in [&c_hash, &m_hash] {
+        assert!(
+            note.contains(hash.as_str()),
+            "manual-02 README input hash mismatch"
+        );
+        assert!(
+            html.contains(hash.as_str()),
+            "manual-02 HTML input hash mismatch"
+        );
+    }
+
+    let matrix: Value = serde_json::from_slice(&matrix_bytes).expect("parse manual-02 matrix");
+    let mut counts = [0usize; 4];
+    for run in matrix["runs"].as_array().expect("manual-02 runs") {
+        let d = run["decision"].as_str().expect("manual-02 decision");
+        let class = if d == "Allow" {
+            0
+        } else if d.starts_with("Deny / ") {
+            1
+        } else if d.starts_with("Indeterminate / ") {
+            2
+        } else if d.starts_with("no mediation:") {
+            3
+        } else {
+            panic!("unexpected manual-02 decision")
+        };
+        counts[class] += 1;
+    }
+    assert_eq!(counts, [4, 13, 8, 5]);
+    assert!(
+        note.contains("| **Total** | **4** | **13** | **8** | **5** |"),
+        "manual-02 README must report the observed outcome counts"
+    );
 }
 
 // ---- regression reproductions for the three remaining gate gaps (red before the hardening) ----

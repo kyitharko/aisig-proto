@@ -1,8 +1,9 @@
 # Public release preparation
 
-**Status: preparation, not publication.** The current source snapshot has no remote and has
-not been pushed. Complete the model simulation and review its actual results before publishing
-a demo claim. Source publication can proceed separately if the prototype limitations are clear.
+This checklist records the preparation of the synthetic research prototype for a public
+repository. The model demo and manual replication have been executed and their sanitized
+results committed. Apply the checks below to the exact commit being published; this document
+does not indicate whether a GitHub remote or release exists at the time it is read.
 
 ## License and provenance
 
@@ -36,6 +37,14 @@ a demo claim. Source publication can proceed separately if the prototype limitat
 
 ## Discovery and communication
 
+- Suggested repository description (edit to fit GitHub's About field):
+  `Research prototype: provider-side authorization of AI-agent tool proposals (Rust + n8n; synthetic only).`
+- Suggested topics: `rust`, `ai-security`, `agent-security`, `authorization`,
+  `security-research`. Set these on GitHub after the repository is public, and
+  upload [`assets/social-preview.png`](assets/social-preview.png) under
+  **Settings → Social preview**. Pin the published repository to the maintainer's
+  GitHub profile if it represents their current work. These metadata changes
+  are not made by a source patch.
 - Use a short repository description and relevant GitHub topics such as `rust`,
   `ai-security`, `authorization`, `security-research` and `agent-safety`. GitHub's topic feature
   helps people find related projects:
@@ -50,3 +59,7 @@ a demo claim. Source publication can proceed separately if the prototype limitat
 
 Publication and outward announcements should follow a review of the final repository, license,
 model outputs and exact public URL. This file does not create a GitHub repository or a live API.
+
+For the screen-recording sequence, use [demo-walkthrough.md](demo-walkthrough.md). A
+separate publication kit contains an article draft, a short post and a simple measurement
+worksheet; those drafts need the final public URL and a human review before posting.

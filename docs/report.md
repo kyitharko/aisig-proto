@@ -1,8 +1,13 @@
 # Prototype report — RQ4 chain verifier (r3.1), RQ5 session (s1), RQ6 enforcement (e2)
 
-**Date:** 2026-10-15. **Branch:** `feature/chain-verifier-prototype` (local only, no remote).
-All numbers below were produced by the commands listed; files in `results/` are the raw
-outputs. Nothing here is extrapolated. Revision r3 follows the owner's review of
+**Origin:** the initial chain report was run on 2026-10-15 on the local
+`feature/chain-verifier-prototype` branch. This report also records later synthetic slices;
+dates, branch names and counts in historical sections refer to their original runs. The
+current reviewed counts appear in "Final synthetic-prototype closeout" below and in
+`results/README.md`. All numbers below were produced by the commands listed; files in
+`results/` are the generated outputs. Measured quantities, modeled scenarios, and historical
+snapshots are identified separately; no real deployment result is inferred from a model.
+Revision r3 follows the owner's review of
 Stages 0–4; r3.1 follows the owner's review of r3 (see "r3.1 changes" below).
 
 ## Research-question status
@@ -30,8 +35,9 @@ with AA25's B objects accepting on their own B path and rejecting
 
 ## RQ5 session slice s1 (reviewed; separate from the chain results)
 
-Spec [session.md](session.md); labels `tests/cases/session_cases.toml` (28, all
-**proposed**), committed in `c96a39b` before the implementation (`0123190`).
+At the initial s1 snapshot, spec [session.md](session.md) and 28 **proposed** labels in
+`tests/cases/session_cases.toml` were committed in `c96a39b` before the implementation
+(`0123190`). The current session slice has 34 reviewed labels (see the closeout table).
 
 **Result: 28/28 session labels match** (24 redemption, 4 issuance;
 `results/session_cases.md`). These are reported separately. The chain and lookup results
@@ -345,8 +351,8 @@ runs are marked historical in results/README.md.
   - an evidenced *conflict* result from an authoritative, complete status service (Q9);
   - root rotation with explicit record versions, validity and retirement (Q11).
 - All decision-slice labels are owner-reviewed: chain 94, lookup 15, session 34,
-  enforcement 28 and RQ7 freshness 34. The only proposed labels are in new measurement slices
-  (RQ8; see below).
+  enforcement 28 and RQ7 freshness 34. The RQ8 measurement-slice labels are also reviewed
+  (see the closeout table below).
 - RQ5 s1 (34 labels) is owner-reviewed. RQ5 channel binding, relay resistance and
   per-request PoP remain open.
 - RQ6 e2 is implemented for synthetic operations; all 28 labels reviewed. Live tool
@@ -427,3 +433,43 @@ rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0, release profile, single-threa
 N = 10000 timed calls per run, R = 10 runs, UTC timestamp 2026-10-17T02:53:41Z. Wall-clock
 per-call elapsed via `std::time::Instant` (not process CPU time). Earlier benchmark runs are
 listed historical in `results/README.md`.
+
+## Manual-02 model replication (2026-10-22 UTC; separate evidence)
+
+The owner executed a second 3 × 5 × 2 matrix through n8n, Ollama and the
+synthetic Rust provider. An independently inspected publication copy is in
+[the manual-02 results](../results/model_demo/manual_replication_20261022/README.md),
+with an [offline visual report](../results/model_demo/manual_replication_20261022/visual_report.html).
+The original local run and its private controller address were not committed.
+The collector recorded `qwen3:1.7b`, model digest
+`8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7`,
+Ollama 0.40.6 and n8n 2.43.7. Its recorded Git HEAD was `721a499`, which does
+not prove the exact uncommitted collector code or running container binary.
+
+| Evidence | Observed result |
+| --- | --- |
+| Fixed controls | 13/13 matched the preregistered decision, parse status and effect delta |
+| Planned model executions | 30/30 completed with n8n exit code 0 |
+| Provider outcomes | 4 Allow, 13 Deny, 8 Indeterminate, 5 no mediation |
+| Effect invariant | Each Allow appended one modeled receipt; every other outcome appended zero |
+| Boundary prompt v2 | Five proposals for excluded `/app/admin`, all denied; five no-calls |
+
+The [October 19 replication](../results/model_demo/manual_replication_20261019/README.md)
+reported 4 Allow, 17 Deny, 8 Indeterminate and 1 no mediation. The October 22
+run has five v2 no-calls, so the two **observed** distributions differ. A
+no-call is not a provider Deny or evidence of model refusal. Two repeats per
+scenario cannot estimate a general error or refusal rate, and a fixed seed
+does not guarantee identical model outputs across executions. The v3 false
+`claimed_class` remained audit-only in the recorded proposals. These results
+show the modeled provider decision path, not real network/tool enforcement or
+end-to-end deployment latency.
+
+The independent review checked the six supplied files, exact DC01–DC13
+expectations, unique matrix coverage, workflow hashes/fingerprints, recorded
+model proposals, effect deltas, input SHA-256 hashes and byte reproduction of
+the offline HTML/SVG. No local IPv4 address, home path or secret-like JSON key
+was found by the stated scans. These checks cannot attest to unretained n8n
+import bytes, the live container binary, or every unknown sensitive value.
+Run `python3 scripts/prepare_model_publication.py --check-dir
+results/model_demo/manual_replication_20261022` on the published tree and
+`cargo test` to rerun the result gates.
