@@ -1,0 +1,49 @@
+name: Experiment reproduction
+description: Share a local replication of the synthetic cases or model demo.
+title: "[reproduction] "
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Share sanitized observations only. Do not post credentials, raw n8n
+        exports, real target details, or private network addresses. A model
+        demonstration is not evidence of real tool enforcement.
+  - type: input
+    id: commit
+    attributes:
+      label: Repository commit
+      description: The exact commit you ran.
+    validations:
+      required: true
+  - type: dropdown
+    id: procedure
+    attributes:
+      label: Procedure
+      options:
+        - Reviewed Rust case evaluations
+        - Fixed demo controls (13)
+        - Full n8n/Ollama matrix (30)
+        - Other synthetic experiment
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands and environment
+      description: Include commands, relevant versions, and model digest when applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Observed results
+      description: Report denominators, decisions, effect deltas, and any gate failure.
+    validations:
+      required: true
+  - type: textarea
+    id: differences
+    attributes:
+      label: Differences from the published results
+      description: State any deviation, or say none. Do not infer model determinism from a small sample.
+    validations:
+      required: true
