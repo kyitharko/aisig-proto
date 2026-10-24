@@ -1,0 +1,44 @@
+name: Bug report (synthetic prototype)
+description: Report a reproducible code, test, or documentation defect.
+title: "[bug] "
+body:
+  - type: markdown
+    attributes:
+      value: >
+        This is a synthetic research prototype. For security vulnerabilities,
+        follow SECURITY.md and do not disclose exploit details in a public issue.
+        Do not include secrets, real targets, or private network addresses.
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or version
+      description: Paste the Git commit SHA or the release name.
+      placeholder: e.g. 2aff77a
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include the exact command and minimal synthetic input.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and logs
+      description: Rust/Python versions and relevant sanitized output, if available.
+    validations:
+      required: false
