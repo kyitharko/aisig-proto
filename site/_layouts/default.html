@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{ site.description | escape }}">
+  <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title | escape }}</title>
+  <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header class="masthead">
+    <div class="container">
+      <a class="brand" href="{{ '/' | relative_url }}">AISIG <span>research prototype</span></a>
+      <nav aria-label="Primary">
+        <a href="{{ '/docs/' | relative_url }}">Documentation</a>
+        <a href="{{ '/results/' | relative_url }}">Results</a>
+        <a href="{{ '/docs/automated-experiments.html' | relative_url }}">Run locally</a>
+        <a href="https://github.com/kyitharko/aisig-proto">GitHub</a>
+      </nav>
+    </div>
+  </header>
+  <div class="shell container">
+    <aside class="sidebar" aria-label="Documentation navigation">
+      <h2>Start here</h2>
+      <a href="{{ '/docs/' | relative_url }}">Reading map</a>
+      <a href="{{ '/docs/limitations.html' | relative_url }}">Limits</a>
+      <h2>Research</h2>
+      <a href="{{ '/docs/rq123.html' | relative_url }}">RQ1–RQ3 · authority</a>
+      <a href="{{ '/docs/spec.html' | relative_url }}">RQ4 · chain and scope</a>
+      <a href="{{ '/docs/session.html' | relative_url }}">RQ5 · sessions</a>
+      <a href="{{ '/docs/enforcement.html' | relative_url }}">RQ6 · mediation</a>
+      <a href="{{ '/docs/freshness.html' | relative_url }}">RQ7 · freshness</a>
+      <a href="{{ '/docs/rq8.html' | relative_url }}">RQ8 · measurements</a>
+      <h2>Evidence</h2>
+      <a href="{{ '/docs/threat-model.html' | relative_url }}">Threat model</a>
+      <a href="{{ '/docs/experiment.html' | relative_url }}">Experiment design</a>
+      <a href="{{ '/results/' | relative_url }}">Results index</a>
+      <a href="{{ '/results/model_demo/manual_replication_20261022/visual_report.html' | relative_url }}">Visual report ↗</a>
+      <h2>Reproduce</h2>
+      <a href="{{ '/docs/automated-experiments.html' | relative_url }}">Scripted lab</a>
+      <a href="{{ '/docs/manual-experiments.html' | relative_url }}">Manual lab</a>
+      <a href="{{ '/docs/experiment-workbook.html' | relative_url }}">Workbook</a>
+    </aside>
+    <main id="content" class="content">
+      {{ content }}
+      <footer>
+        <a href="{{ '/docs/' | relative_url }}">Documentation map</a>
+        <span>·</span>
+        <a href="https://github.com/kyitharko/aisig-proto/blob/main/LICENSE">Apache-2.0</a>
+        <span>· Synthetic, AI-assisted, not independently audited</span>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

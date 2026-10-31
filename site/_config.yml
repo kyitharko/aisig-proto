@@ -1,0 +1,18 @@
+title: AISIG research prototype
+description: Synthetic provider-side authorization for AI-agent tool proposals
+url: https://kyitharko.github.io
+baseurl: /aisig-proto
+markdown: kramdown
+relative_links:
+  enabled: true
+  collections: false
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: default
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
