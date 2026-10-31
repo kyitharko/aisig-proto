@@ -1,0 +1,50 @@
+:root {
+  color-scheme: light;
+  --ink: #18303b;
+  --muted: #536672;
+  --accent: #0c6672;
+  --border: #d7e2e4;
+  --wash: #f3f7f7;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; color: var(--ink); background: #fff; line-height: 1.65; }
+a { color: #075f77; text-underline-offset: .16em; }
+a:hover { color: #063e55; }
+:focus-visible { outline: 3px solid #e5a526; outline-offset: 3px; }
+.container { width: min(100% - 2rem, 82rem); margin-inline: auto; }
+.skip { position: absolute; top: -4rem; left: 1rem; background: white; padding: .6rem; z-index: 5; }
+.skip:focus { top: .5rem; }
+.masthead { background: #123943; color: white; }
+.masthead .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem 2rem; padding-block: .8rem; }
+.masthead a { color: white; text-decoration: none; }
+.brand { font-weight: 750; font-size: 1.15rem; }
+.brand span { font-weight: 400; font-size: .85rem; opacity: .82; }
+.masthead nav { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; font-size: .92rem; }
+.masthead nav a:hover, .sidebar a:hover { text-decoration: underline; }
+.shell { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 2.5rem; }
+.sidebar { align-self: start; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1rem 0 2rem; font-size: .88rem; }
+.sidebar h2 { color: var(--muted); font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; margin: 1.2rem 0 .35rem; }
+.sidebar a { display: block; padding: .16rem .4rem; border-radius: .25rem; text-decoration: none; }
+.content { min-width: 0; padding: 2rem 0 5rem; max-width: 68rem; }
+.content h1 { line-height: 1.2; font-size: clamp(1.8rem, 3vw, 2.7rem); margin-top: .2rem; }
+.content h2 { border-top: 1px solid var(--border); padding-top: 1.35rem; margin-top: 2.7rem; }
+.content h3 { margin-top: 1.9rem; }
+.content p, .content li { max-width: 80ch; }
+.content table { display: block; overflow-x: auto; border-collapse: collapse; margin-block: 1.4rem; }
+.content th, .content td { border: 1px solid var(--border); padding: .55rem .7rem; text-align: left; min-width: 7rem; }
+.content th { background: var(--wash); }
+.content pre { padding: 1rem; background: #eff4f5; overflow-x: auto; border-radius: .4rem; font-size: .87rem; }
+.content :not(pre) > code { background: #eef3f4; padding: .08rem .3rem; border-radius: .2rem; overflow-wrap: anywhere; }
+.content blockquote { border-left: .25rem solid var(--accent); margin-left: 0; padding-left: 1rem; color: var(--muted); }
+.content img { max-width: 100%; height: auto; }
+footer { border-top: 1px solid var(--border); margin-top: 4rem; padding-top: 1rem; color: var(--muted); font-size: .85rem; }
+footer span { margin-inline: .3rem; }
+@media (max-width: 760px) {
+  .shell { display: block; }
+  .sidebar { position: static; max-height: none; display: flex; flex-wrap: wrap; gap: 0 .4rem; border-bottom: 1px solid var(--border); padding: .6rem 0; }
+  .sidebar h2 { width: 100%; margin-top: .6rem; }
+  .sidebar a { padding: .12rem .35rem; }
+  .content { padding-top: 1.2rem; }
+}

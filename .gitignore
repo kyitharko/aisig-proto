@@ -32,3 +32,7 @@ client-data/
 # Python bytecode cache
 __pycache__/
 *.pyc
+
+# Generated GitHub Pages files
+/site-staging/
+/_site/

@@ -1,0 +1,90 @@
+name: Documentation site
+
+# Deployment policy:
+#   - Pull requests: build + check only, and publish _site as a downloadable
+#     "docs-preview" artifact. Never deploy.
+#   - Pushes to the permanent `docs-publish` branch (no paths filter, so the
+#     initial push and every deliberate promotion trigger) deploy the site.
+#   - A manual run (workflow_dispatch) deploys only when it is run on
+#     `docs-publish`; selecting main or any other ref builds and checks but
+#     does not deploy.
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'results/**'
+      - 'site/**'
+      - 'scripts/build_docs_site.py'
+      - 'scripts/check_docs_site.py'
+      - 'scripts/test_docs_site.py'
+      - '.github/workflows/docs-site.yml'
+  push:
+    branches: [docs-publish]
+  workflow_dispatch:
+
+# Default: read-only. Only the deploy job is granted Pages write below.
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-site-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check staging and links
+        # Pin generated GitHub source links to the exact commit being built so the published
+        # documentation and the code/JSON it links to stay one snapshot. On a pull request the
+        # previewed commit is the PR head; on a docs-publish push/dispatch it is the pushed commit.
+        env:
+          BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 scripts/test_docs_site.py
+          python3 scripts/build_docs_site.py --output site-staging --ref "$BUILD_SHA"
+      - name: Build GitHub Pages site with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./site-staging
+          destination: ./_site
+      - name: Check rendered pages and internal links
+        run: python3 scripts/check_docs_site.py _site
+      - name: Upload PR preview artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-preview
+          path: ./_site
+          if-no-files-found: error
+      - name: Upload Pages artifact (docs-publish only)
+        if: >-
+          github.ref == 'refs/heads/docs-publish' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    # Deploy only from the docs-publish branch, and only on a push or a manual
+    # run. A PR, or a manual run on any other ref, is skipped here.
+    if: >-
+      github.ref == 'refs/heads/docs-publish' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Set up Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy approved artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

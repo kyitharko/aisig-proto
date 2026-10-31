@@ -57,6 +57,7 @@ For a security finding, follow the [security policy](SECURITY.md) and avoid publ
 
 ## Documents
 
+- [Documentation map](docs/README.md) — reading order by RQ, method, evidence, reproduction, and limits
 - [docs/spec.md](docs/spec.md) — glossary, data model, signed bytes, scope semantics, decision rule, owner decisions
 - [docs/threat-model.md](docs/threat-model.md) — actors, threats in scope, non-goals, what tests can and cannot show
 - [docs/experiment.md](docs/experiment.md) — base fixture, 94 chain cases and 15 scope lookups with review status, oracle, metrics, benchmark protocol
