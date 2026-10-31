@@ -47,6 +47,37 @@ class DocsSiteTests(unittest.TestCase):
             url = rewrite_url("../demo/example.json#sample", Path("docs/page.md"), Path("docs/page.md"), set(), root)
             self.assertEqual(url, "https://github.com/kyitharko/aisig-proto/blob/main/demo/example.json#sample")
 
+    def test_external_source_link_is_pinned_to_supplied_commit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "demo").mkdir()
+            (root / "demo/example.json").write_text("{}")
+            sha = "0123456789abcdef0123456789abcdef01234567"
+            # Query string, fragment and percent-encoding survive; the mutable branch is replaced
+            # by the exact build commit.
+            url = rewrite_url(
+                "../demo/example.json?plain=1#L3%20L4", Path("docs/page.md"), Path("docs/page.md"), set(), root, sha
+            )
+            self.assertEqual(
+                url, f"https://github.com/kyitharko/aisig-proto/blob/{sha}/demo/example.json?plain=1#L3%20L4"
+            )
+            self.assertNotIn("/blob/main/", url)
+
+    def test_internal_doc_link_stays_a_site_link_even_when_pinned(self) -> None:
+        # An internal documentation link must remain a relative site link; the commit pin only
+        # affects links that leave the website to repository source.
+        url = rewrite_url(
+            "session.md#slice", Path("docs/index.md"), Path("docs/index.md"), {Path("docs/session.md")},
+            Path("."), "0123456789abcdef0123456789abcdef01234567",
+        )
+        self.assertEqual(url, "session.html#slice")
+        self.assertNotIn("github.com", url)
+
+    def test_invalid_ref_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, "commit SHA"):
+                build(ROOT, Path(tmp) / "site", "feature/not-a-sha; rm -rf /")
+
     def test_escaping_link_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(ValueError, "escapes repository"):

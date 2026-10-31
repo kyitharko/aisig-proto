@@ -38,9 +38,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check staging and links
+        # Pin generated GitHub source links to the exact commit being built so the published
+        # documentation and the code/JSON it links to stay one snapshot. On a pull request the
+        # previewed commit is the PR head; on a docs-publish push/dispatch it is the pushed commit.
+        env:
+          BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python3 scripts/test_docs_site.py
-          python3 scripts/build_docs_site.py --output site-staging
+          python3 scripts/build_docs_site.py --output site-staging --ref "$BUILD_SHA"
       - name: Build GitHub Pages site with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:

@@ -18,6 +18,22 @@ ROOT = Path(__file__).resolve().parents[1]
 LINK = re.compile(r"(?<!!)\[([^\]]+)\]\((<[^>]+>|[^\s)]+)(\s+[^)]*)?\)")
 IMAGE = re.compile(r"!\[([^\]]*)\]\((<[^>]+>|[^\s)]+)(\s+[^)]*)?\)")
 CGNAT_ADDRESS = re.compile(rb"\b100\.(?:6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}\b")
+# A generated GitHub source link is pinned to the exact commit being built so the published
+# documentation and the code/JSON it points at stay the same snapshot. Local staging falls
+# back to the literal branch "main"; CI passes the build commit (see --ref).
+COMMIT_SHA = re.compile(r"^[0-9a-f]{7,40}$")
+DEFAULT_REF = "main"
+
+
+def validate_ref(ref: str) -> str:
+    """Accept only a lowercase-hex commit SHA or the literal default branch.
+
+    This keeps an arbitrary, unvalidated string from being interpolated into the generated
+    GitHub URLs; a supplied ref must be a real commit SHA.
+    """
+    if ref == DEFAULT_REF or COMMIT_SHA.fullmatch(ref):
+        return ref
+    raise ValueError(f"ref must be a commit SHA (lowercase hex, 7-40 chars) or {DEFAULT_REF!r}: {ref!r}")
 
 
 def selected_sources(root: Path) -> dict[Path, Path]:
@@ -53,7 +69,7 @@ def selected_sources(root: Path) -> dict[Path, Path]:
     return paths
 
 
-def rewrite_url(raw: str, source: Path, output: Path, staged: set[Path], root: Path) -> str:
+def rewrite_url(raw: str, source: Path, output: Path, staged: set[Path], root: Path, ref: str = DEFAULT_REF) -> str:
     url = raw[1:-1] if raw.startswith("<") and raw.endswith(">") else raw
     split = urlsplit(url)
     if split.scheme or split.netloc or not split.path:
@@ -84,7 +100,7 @@ def rewrite_url(raw: str, source: Path, output: Path, staged: set[Path], root: P
         target = source_target
     else:
         raise ValueError(f"{source}: missing relative link: {url}")
-    github_path = f"/kyitharko/aisig-proto/{kind}/main/{quote(target.as_posix(), safe='/')}"
+    github_path = f"/kyitharko/aisig-proto/{kind}/{ref}/{quote(target.as_posix(), safe='/')}"
     return urlunsplit(("https", "github.com", github_path, split.query, split.fragment))
 
 
@@ -122,7 +138,7 @@ def prepare_markdown(text: str) -> str:
     return f"{fm}{{% raw %}}\n{body.lstrip(chr(10))}\n{{% endraw %}}\n"
 
 
-def rewrite_markdown(text: str, source: Path, output: Path, staged: set[Path], root: Path) -> str:
+def rewrite_markdown(text: str, source: Path, output: Path, staged: set[Path], root: Path, ref: str = DEFAULT_REF) -> str:
     # Fenced code is copied literally. All ordinary relative links must resolve.
     lines: list[str] = []
     fence: str | None = None
@@ -140,7 +156,7 @@ def rewrite_markdown(text: str, source: Path, output: Path, staged: set[Path], r
             lines.append(line)
             continue
         def replace(m: re.Match[str], prefix: str) -> str:
-            new = rewrite_url(m.group(2), source, output, staged, root)
+            new = rewrite_url(m.group(2), source, output, staged, root, ref)
             return f"{prefix}[{m.group(1)}]({new}{m.group(3) or ''})"
         line = IMAGE.sub(lambda m: replace(m, "!"), line)
         line = LINK.sub(lambda m: replace(m, ""), line)
@@ -148,7 +164,8 @@ def rewrite_markdown(text: str, source: Path, output: Path, staged: set[Path], r
     return "".join(lines)
 
 
-def build(root: Path, destination: Path) -> list[Path]:
+def build(root: Path, destination: Path, ref: str = DEFAULT_REF) -> list[Path]:
+    ref = validate_ref(ref)
     root = root.resolve()
     destination = destination.resolve()
     protected = (root / "docs", root / "results", root / "site")
@@ -166,7 +183,7 @@ def build(root: Path, destination: Path) -> list[Path]:
     for output, source in paths.items():
         body = (root / source).read_bytes()
         if output.suffix == ".md":
-            rendered = rewrite_markdown(body.decode("utf-8"), source, output, staged, root)
+            rendered = rewrite_markdown(body.decode("utf-8"), source, output, staged, root, ref)
             body = prepare_markdown(rendered).encode("utf-8")
         content[output] = body
     if any(CGNAT_ADDRESS.search(body) or b"resumeToken" in body for body in content.values()):
@@ -181,9 +198,16 @@ def build(root: Path, destination: Path) -> list[Path]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="new directory for Jekyll sources")
+    parser.add_argument(
+        "--ref",
+        default=DEFAULT_REF,
+        help="commit SHA to pin generated GitHub source links to (CI passes the build commit; "
+        f"local builds default to {DEFAULT_REF!r})",
+    )
     args = parser.parse_args()
-    paths = build(ROOT, args.output)
-    print(f"Staged {len(paths)} allowlisted files at {args.output}; no raw JSON or source code.")
+    paths = build(ROOT, args.output, args.ref)
+    print(f"Staged {len(paths)} allowlisted files at {args.output} (source links pinned to {args.ref}); "
+          "no raw JSON or source code.")
 
 
 if __name__ == "__main__":

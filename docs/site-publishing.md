@@ -39,9 +39,21 @@ URL is `https://kyitharko.github.io/aisig-proto/`.
   sanitized visual reports and distribution SVGs for the recorded model demos.
 - Layout and CSS in `site/`. The site index summarizes the current synthetic
   results, while original dated records remain unchanged.
-- Links to code, workflow JSON, raw result JSON, security policy and license
-  point back to the GitHub repository rather than copying those files to
-  the Pages artifact.
+- Links to code, workflow JSON and raw result JSON point back to the GitHub
+  repository rather than copying those files to the Pages artifact. The builder
+  (`scripts/build_docs_site.py`) rewrites each such relative link to an absolute
+  GitHub URL **pinned to the exact commit that produced the build** — the
+  workflow passes that commit to `--ref` (the PR head for a preview, the
+  promoted `docs-publish` commit for a deployment). A reader therefore sees the
+  code and JSON as they were in the documentation snapshot, not whatever `main`
+  later becomes. Release-note links that intentionally cite the historical
+  `v0.1.0-research` tag are left on that tag.
+- Not every link is pinned, and that is deliberate. A few hand-authored links
+  point to the repository's **current** terms rather than a snapshot: the page
+  footer's **License** link (`blob/main/LICENSE`), the **security policy** link
+  in the reading map (`blob/main/SECURITY.md`), and the masthead/footer links to
+  the repository root. These are navigational and legal references, not evidence
+  for a result, so tracking `main` is correct for them.
 
 Raw model exports, local experiment files, keys, downloaded model weights,
 Rust source, and Docker files are **not staged**. The website is no more
