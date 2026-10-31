@@ -1,16 +1,14 @@
 name: Documentation site
 
+# Deployment policy:
+#   - Pull requests: build + check only, and publish _site as a downloadable
+#     "docs-preview" artifact. Never deploy.
+#   - Pushes to the permanent `docs-publish` branch (no paths filter, so the
+#     initial push and every deliberate promotion trigger) deploy the site.
+#   - A manual run (workflow_dispatch) deploys only when it is run on
+#     `docs-publish`; selecting main or any other ref builds and checks but
+#     does not deploy.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'docs/**'
-      - 'results/**'
-      - 'site/**'
-      - 'scripts/build_docs_site.py'
-      - 'scripts/check_docs_site.py'
-      - 'scripts/test_docs_site.py'
-      - '.github/workflows/docs-site.yml'
   pull_request:
     paths:
       - 'docs/**'
@@ -20,8 +18,11 @@ on:
       - 'scripts/check_docs_site.py'
       - 'scripts/test_docs_site.py'
       - '.github/workflows/docs-site.yml'
+  push:
+    branches: [docs-publish]
   workflow_dispatch:
 
+# Default: read-only. Only the deploy job is granted Pages write below.
 permissions:
   contents: read
 
@@ -32,6 +33,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Check staging and links
@@ -45,15 +48,28 @@ jobs:
           destination: ./_site
       - name: Check rendered pages and internal links
         run: python3 scripts/check_docs_site.py _site
-      - name: Upload Pages artifact
-        if: github.event_name != 'pull_request'
+      - name: Upload PR preview artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-preview
+          path: ./_site
+          if-no-files-found: error
+      - name: Upload Pages artifact (docs-publish only)
+        if: >-
+          github.ref == 'refs/heads/docs-publish' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./_site
 
   deploy:
-    if: github.event_name != 'pull_request'
     needs: build
+    # Deploy only from the docs-publish branch, and only on a push or a manual
+    # run. A PR, or a manual run on any other ref, is skipped here.
+    if: >-
+      github.ref == 'refs/heads/docs-publish' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       pages: write

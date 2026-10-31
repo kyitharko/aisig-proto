@@ -6,17 +6,32 @@ orders the research questions, method, results, and reproduction guides.
 
 ## Publication path
 
-The `docs-site.yml` workflow stages a **limited selection** of Markdown and
-visual reports with `scripts/build_docs_site.py`, builds them with GitHub
-Pages' Jekyll action, and checks the rendered links. Pull requests build and
-check the site without deploying it. A successful push to `main` deploys
-the staged site after the repository's Pages source has been set to
-**GitHub Actions**.
+Website releases are controlled by a separate, permanent **`docs-publish`**
+branch; `main` is never deployed directly. The `docs-site.yml` workflow stages a
+**limited selection** of Markdown and visual reports with
+`scripts/build_docs_site.py`, builds them with GitHub Pages' Jekyll action, and
+checks the rendered links. The flow is:
 
-The project URL is `https://kyitharko.github.io/aisig-proto/`. If it does not
-load, check **Settings → Pages → Build and deployment → Source** and choose
-**GitHub Actions**; then run `Documentation site` under **Actions** using
-`workflow_dispatch` or push a new docs change. The site is public.
+1. **Open a pull request.** The workflow builds and link-checks the site and
+   uploads `_site` as a downloadable **`docs-preview`** artifact (under the PR's
+   workflow run → *Artifacts*). Pull requests never deploy.
+2. **Inspect `docs-preview`** to confirm the rendered pages and links.
+3. **Merge the approved changes into `main`.** Merging to `main` still does not
+   deploy.
+4. **Deliberately promote to `docs-publish`:** create the branch from, or
+   fast-forward it to, the approved `main` commit (for example
+   `git push origin <approved-main-sha>:refs/heads/docs-publish`). That push —
+   with no `paths` filter — triggers the deploy, as does a manual
+   `workflow_dispatch` run selected on `docs-publish`.
+5. The deploy job (and only it) holds `pages: write` / `id-token: write` and
+   publishes the Pages artifact. A PR, or a manual run on `main` or any other
+   ref, is **not** deployed.
+
+Before the first deploy, set **Settings → Pages → Build and deployment →
+Source** to **GitHub Actions**. If the `github-pages` environment has a branch
+restriction (**Settings → Environments → github-pages → Deployment branches**),
+it must permit **`docs-publish`**, or the deploy will be blocked. The project
+URL is `https://kyitharko.github.io/aisig-proto/`.
 
 ## What is published
 
@@ -46,6 +61,7 @@ The build command requires a **new** output directory. Delete the generated
 Jekyll HTML and runs `python3 scripts/check_docs_site.py _site` to catch
 broken internal links. It does not modify case labels or experiment results.
 
-The released `v0.1.0-research` tag remains a historical snapshot; this
-site tracks the current `main` branch. When citing a result, cite the
-linked dated evidence and commit/tag, not the mutable homepage alone.
+The released `v0.1.0-research` tag remains a historical snapshot; the live
+site tracks whatever approved `main` commit was promoted to `docs-publish`.
+When citing a result, cite the linked dated evidence and commit/tag, not the
+mutable homepage alone.
