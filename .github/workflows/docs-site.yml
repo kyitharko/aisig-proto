@@ -1,0 +1,69 @@
+name: Documentation site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'results/**'
+      - 'site/**'
+      - 'scripts/build_docs_site.py'
+      - 'scripts/check_docs_site.py'
+      - 'scripts/test_docs_site.py'
+      - '.github/workflows/docs-site.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'results/**'
+      - 'site/**'
+      - 'scripts/build_docs_site.py'
+      - 'scripts/check_docs_site.py'
+      - 'scripts/test_docs_site.py'
+      - '.github/workflows/docs-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-site-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check staging and links
+        run: |
+          python3 scripts/test_docs_site.py
+          python3 scripts/build_docs_site.py --output site-staging
+      - name: Build GitHub Pages site with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./site-staging
+          destination: ./_site
+      - name: Check rendered pages and internal links
+        run: python3 scripts/check_docs_site.py _site
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Set up Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy approved artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
