@@ -5,7 +5,8 @@ authority and decides whether a proposed operation may append to a modeled
 in-memory effect sink. It has not been independently audited and does not
 enforce actions against real tools or prove control of a real asset.
 
-**New reader:** [research questions](#research-questions) → [method and evidence](#method-and-evidence)
+**New reader:** [architecture overview](architecture-overview.md) →
+[research questions](#research-questions) → [method and evidence](#method-and-evidence)
 → [limits](limitations.md). **Trying the demo:** [scripted local setup](automated-experiments.md)
 → [manual workbook](experiment-workbook.md). **Recorded result:**
 [manual-02 visual report](../results/model_demo/manual_replication_20261022/visual_report.html).
