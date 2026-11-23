@@ -11,6 +11,10 @@ enforce actions against real tools or prove control of a real asset.
 → [manual workbook](experiment-workbook.md). **Recorded result:**
 [manual-02 visual report](../results/model_demo/manual_replication_20261022/visual_report.html).
 
+## Current research guideline
+
+The [five-stage roadmap](research-roadmap.md) guides specification, a mock enforcement boundary, developer integration, independent review and outreach. [Stage 1 protocol profile draft](protocol-profile-draft.md) maps existing synthetic decisions to external standards and records the unimplemented joins and open choices. It is a **proposal for review**, while the per-RQ documents below remain authoritative for current behavior.
+
 ## Research questions
 
 The RQ number names a *question*, and each linked page describes the implemented
