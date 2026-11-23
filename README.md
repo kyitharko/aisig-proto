@@ -1,5 +1,7 @@
 # aisig-proto — provider-verified authorization chains (research prototype)
 
+> **Start here:** For a high-level explanation of AISIG, read the [Architecture Overview](docs/architecture-overview.md). It introduces the trust chains, session binding, provider-side mediation, decision outcomes, experiment context, and current limitations.
+
 Research prototype. It asks whether an AI-agent provider P can check that an
 engagement grant for security testing is backed by a non-amplifying chain of authority:
 pinned organization root → admin delegation → issuer delegation → tester grant.
