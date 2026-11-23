@@ -13,7 +13,7 @@ enforce actions against real tools or prove control of a real asset.
 
 ## Current research guideline
 
-The [five-stage roadmap](research-roadmap.md) guides specification, a mock enforcement boundary, developer integration, independent review and outreach. [Stage 1 protocol profile draft](protocol-profile-draft.md) maps existing synthetic decisions to external standards and records the unimplemented joins and open choices. It is a **proposal for review**, while the per-RQ documents below remain authoritative for current behavior.
+The [five-stage roadmap](research-roadmap.md) guides specification, a mock enforcement boundary, developer integration, independent review and outreach. [Stage 1 protocol profile draft](protocol-profile-draft.md) maps existing synthetic decisions to external standards and records the unimplemented joins and open choices. The [composition draft](composition-draft.md) expands the first open join; no composition is implemented yet. It is a **proposal for review**, while the per-RQ documents below remain authoritative for current behavior.
 
 ## Research questions
 
