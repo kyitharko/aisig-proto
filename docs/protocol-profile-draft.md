@@ -67,7 +67,7 @@ Run the same vector corpus against the Rust verifier and a genuinely independent
 ## 7. Decisions required for a normative revision
 
 1. **Authority:** real organization/asset vetting, proof of live control, key custody, rotation and accountable registry updates. A signed manifest hash alone cannot settle this.
-2. **Composition:** exactly how the two current decision lines join, which identities and status evidence they share, and conflict semantics for multiple paths. The implementation currently has no such join.
+2. **Composition:** exactly how the two current decision lines join, which identities and status evidence they share, and conflict semantics for multiple paths. The implementation currently has no such join. See the [stage 1 composition draft](composition-draft.md) for a conservative proposed conjunction, cross-line binding options and pre-implementation negative controls.
 3. **Wire format:** freeze fields, canonicalization and signature grammar, and choose whether to retain the research envelope or profile an existing JWS/COSE format; obtain independent vectors.
 4. **Status:** persistent sticky revocation/HWM, response distribution, freshness bound per deployment, caching/restart behavior, and the difference between “stop accepting” and “learn Revoked.”
 5. **Real PEP:** bind authenticated session/workload, operation target and bounded side effects to a sole execution path; specify time-of-check/use, bypass and fail-closed behavior.
